@@ -33,25 +33,17 @@ if( params.revRead == 0 ){
     Channel
 	.fromPath( params.reads )
 	.ifEmpty { error "Cannot find any reads matching: ${params.reads}" }
-    	.map { filename -> tuple(filename.baseName,tuple(file(filename),filename.baseName))}
-	.set { INPUT_FASTQ }
-    Channel
-	.fromPath( params.reads )
-	.ifEmpty { error "Cannot find any reads matching: ${params.reads}" }
-	.map { filename -> tuple(filename.baseName,tuple(file(filename),filename.baseName))}
-	.set { INPUT_FASTQ_TO_QC }
+    	.map { filename -> tuple(filename.baseName.substring(0, filename.baseName.length()-1),
+				 file(filename))}
+	.into { INPUT_FASTQ ; INPUT_FASTQ_TO_QC }
 
 } else {
     Channel
-        .fromFilePairs( params.reads )
-        .ifEmpty { error "Cannot find any reads matching: ${params.reads}" }
-        .set { INPUT_FASTQ }
-
-    Channel
-        .fromFilePairs( params.reads )
-        .ifEmpty { error "Cannot find any reads matching: ${params.reads}" }
-        .set { INPUT_FASTQ_TO_QC }
+	.fromFilePairs( params.reads )
+	.ifEmpty { error "Cannot find any reads matching: ${params.reads}" }
+	.into { INPUT_FASTQ ; INPUT_FASTQ_TO_QC }
 }
+
 
 
 // Header log info
@@ -109,11 +101,8 @@ process runFastQC {
     """
     mkdir ${pairId}_fastqc
 
-    if [ ${params.revRead} -eq 1 ]; then
-        fastqc --outdir ${pairId}_fastqc ${in_fastq.get(0)} ${in_fastq.get(1)}
-    else
-        fastqc --outdir ${pairId}_fastqc ${in_fastq.get(0)}
-    fi
+    fastqc --outdir ${pairId}_fastqc ${in_fastq.join(' ')}
+
     """
 }
 
@@ -143,16 +132,13 @@ process FilterAndTrim {
 
     script:
     """
-   #!/usr/bin/env Rscript
+    #!/usr/bin/env Rscript
     source("${workflow.projectDir}/scripts/util.R")  
 
-    if ( ${params.revRead} == 1 ) {
-        filterReads("${pairId}", "${fastq.get(0)}","${fastq.get(1)}",
-                     minLen=${params.minLength}, maxEE=${params.maxEE})
-    } else {
-        filterReads("${pairId}", "${fastq.get(0)}", 
-                     minLen=${params.minLength}, maxEE=${params.maxEE})
-    }
+    fastqs <- c("${fastq.join('","')}")
+
+    filterReads("${pairId}", "${fastq.join('","')}", 
+                minLen=${params.minLength}, maxEE=${params.maxEE})
     """
 }
 
@@ -164,10 +150,10 @@ process FilterAndTrim {
 
 process LearnErrors {
     // Build error model using dada2. 
-    tag { "LearnErrors" }
+    tag { "LearnErrors.${pairId}" }
     publishDir "${params.outdir}/ErrorModel", mode: "copy", overwrite: false
     errorStrategy "${params.errorsHandling}"
-    
+
     input:
 	set val(pairId), file(fastq) from FASTQ_TRIMMED_FOR_MODEL
     output:
@@ -176,13 +162,13 @@ process LearnErrors {
     script:
     """
     #!/usr/bin/env Rscript
-    source("${workflow.projectDir}/scripts/util.R")  
+    source("${workflow.projectDir}/scripts/util.R") 
+
+    fastqs <- c("${fastq.join('","')}")
+    learnErrorRates(fastqs[1],"${pairId}1")
 
     if (${params.revRead} == 1) {
-        learnErrorRates("${fastq.get(0)}","${pairId}1")
-        learnErrorRates("${fastq.get(1)}","${pairId}2")
-    } else {
-        learnErrorRates("${fastq}","${pairId}")
+        learnErrorRates(fastqs[2],"${pairId}2")
     }
     """
 }
@@ -194,7 +180,7 @@ process LearnErrors {
  */
 
 process Denoise {
-    tag { "Denoising" }
+    tag { "Denoising.${pairId}" }
     publishDir "${params.outdir}/Denoising", mode: "copy", overwrite: false
     errorStrategy "${params.errorsHandling}"
     
@@ -205,15 +191,16 @@ process Denoise {
     script:
     """
     #!/usr/bin/env Rscript
-    source("${workflow.projectDir}/scripts/util.R")  
+    source("${workflow.projectDir}/scripts/util.R")
+
+    errors <- c("${err.join('","')}")
+    fastqs <- c("${fastq.join('","')}")
+
+    dadaDenoise(errors[1], fastqs[1], "${pairId}1")
 
     if (${params.revRead} == 1) {
-        dadaDenoise("${err.get(0)}","${fastq.get(0)}","${pairId}1")
-        dadaDenoise("${err.get(1)}","${fastq.get(1)}","${pairId}2")
-    } else {
-        dadaDenoise("${err.get(0)}","${fastq.get(0)}","${pairId}1")
+        dadaDenoise(errors[2], fastqs[2], "${pairId}2")
     }
-
     """
 }
 
@@ -224,12 +211,12 @@ process Denoise {
  */
 
 process Deunique {
-    tag { "Deunique" }
+    tag { "Deunique.${pairId}" }
     publishDir "${params.outdir}/denoisedFasta", mode: "copy", overwrite: false
     errorStrategy "${params.errorsHandling}"
     
     input:
-        set val(pairId), file(derep_rds), file(ids) from DADA_RDS.join(FILTERED_READS_IDS)
+        set val(pairId), file(derep_rds), file(dada_rds), file(ids) from DADA_RDS.join(FILTERED_READS_IDS)
     
     output:
         set val(pairId),file("${pairId}*.denoised.fasta") into DADA_FASTA
@@ -238,11 +225,15 @@ process Deunique {
     #!/usr/bin/env Rscript
     source("${workflow.projectDir}/scripts/util.R")  
 
-    readsFromDenoised("${dada_rds.get(0)}","${derep_rds.get(0)}","${pairId}1","${ids.get(0)}")
+    derep_rds <- c("${derep_rds.join('","')}")
+    dada_rds <- c("${dada_rds.join('","')}")
+    ids <- c("${ids.join('","')}")
+
+    readsFromDenoised(dada_rds[1],derep_rds[1],"${pairId}1",ids[1])
 
     if (${params.revRead} == 1) {
-    readsFromDenoised("${dada_rds.get(1)}","${derep_rds.get(1)}","${pairId}2","${ids.get(1)}")
-}
+        readsFromDenoised(dada_rds[2],derep_rds[2],"${pairId}2",ids[2])
+    }
     """
 }
 
@@ -254,7 +245,7 @@ process Deunique {
 
 process ReadsMerging {
 
-    tag { "ContigsMerging" }
+    tag { "ContigsMerging.${pairId}" }
     publishDir "${params.outdir}/ReadsMerging", mode: "copy", overwrite: false
     errorStrategy "${params.errorsHandling}"
 
@@ -265,11 +256,14 @@ process ReadsMerging {
 	
     script:
     """
-    if (${params.revRead}) {
-       ${params.scripts}/mothur.sh --step=merging --pairId=${pairId} --fwdFasta=${fasta.get(0)} --revFasta=${fasta.get(1)}
-    } else {
-      ${params.scripts}/mothur.sh --step=merging --pairId=${pairId} --fwdFasta=${fasta.get(0)}
-    }
+    fastas=(${fasta.join(' ')})
+
+    if [ ${params.revRead} -eq 1 ]; then
+       ${params.scripts}/mothur.sh --step=merging --pairId=${pairId} --fwdFasta=\${fastas[0]} --revFasta=\${fastas[1]} ;
+    else 
+       # skip this step
+       cp ${fasta} ${pairId}.merging.fasta
+    fi
     """
 }
 
@@ -283,7 +277,7 @@ process ReadsMerging {
 
 process OutliersRemoval {
 
-    tag { "outlierRemoval" }
+    tag { "outlierRemoval.${pairId}" }
     publishDir "${params.outdir}/OutlierRemoval", mode: "copy", overwrite: false
     errorStrategy "${params.errorsHandling}"
     
@@ -313,7 +307,7 @@ process OutliersRemoval {
  */
 
 process Dereplication {
-    tag { "dereplication" }
+    tag { "dereplication.${pairId}" }
     publishDir "${params.outdir}/OutlierRemoval", mode: "copy", overwrite: false
     errorStrategy "${params.errorsHandling}"
     
@@ -375,7 +369,7 @@ process MultipleSequenceAlignment {
 
 
 process ChimeraRemoval {
-    tag { "chimeraRemoval" }
+    tag { "chimeraRemoval.${pairId}" }
     publishDir "${params.outdir}/chimeraRemoval", mode: "copy", overwrite: false
     errorStrategy "${params.errorsHandling}"
     
@@ -402,7 +396,7 @@ process ChimeraRemoval {
 
 
 process TaxaFiltering {
-    tag { "taxaFilter" }
+    tag { "taxaFilter.${pairId}" }
     publishDir "${params.outdir}/taxaFiltering", mode: "copy", overwrite: false
     errorStrategy "${params.errorsHandling}"
     
