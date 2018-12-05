@@ -1,0 +1,5 @@
+Nov-26 18:44:11.077 [main] DEBUG nextflow.cli.Launcher - $> /home/cedric/.local/bin/nextflow run 16S-pipeline -profile local
+Nov-26 18:44:11.175 [main] INFO  nextflow.cli.CmdRun - N E X T F L O W  ~  version 0.31.1
+Nov-26 18:44:11.284 [main] DEBUG nextflow.scm.AssetManager - Listing projects in folder: /home/cedric/.nextflow/assets
+Nov-26 18:44:11.296 [main] INFO  nextflow.cli.CmdRun - Pulling nextflow-io/16S-pipeline ...
+Nov-26 18:44:11.297 [main] DEBUG nextflow.scm.RepositoryProvider - Request [credentials -:-] -> https://api.github.com/repos/nextflow-io/16S-pipeline/contents/nextflow.config
