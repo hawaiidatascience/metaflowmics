@@ -41,6 +41,9 @@ do
 	refTax="${arg#*=}"
 	taxRad=`basename $refTax .tax`;;
 
+    --distCutoff=*)
+	distCutoff="${arg#*=}" ;;
+
     *)
 	echo "$arg: Unknown option";;    
     esac
@@ -96,6 +99,11 @@ elif [ $step == "taxaFilter" ]; then
 	 "remove.lineage(taxonomy=${faRad}.${suffixTax}, name=${inputNames}, fasta=${inputFasta},taxon=-unknown)")
     outputs_mothur=("${namesRad}.pick.names" "${faRad}.pick.fasta")
     outputs_renamed=("${out}.names" "${out}.fasta")
+
+elif [ $step == "clustering" ]; then
+    cmd=("cluster(name=${inputNames}, fasta=${inputFasta}, method=dgc)")
+    outputs_mothur=("${faRad}.dgc.list" "${faRad}.dgc.sabund" "${faRad}.dgc.rabund")
+    outputs_renamed=("${out}.list" "${out}.sabund" "${out}.rabund")
     
 #elif [ $step == "Classification" ]; then
     

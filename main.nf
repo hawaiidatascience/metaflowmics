@@ -44,8 +44,6 @@ if( params.revRead == 0 ){
 	.into { INPUT_FASTQ ; INPUT_FASTQ_TO_QC }
 }
 
-
-
 // Header log info
 def summary = [:]
 summary['Run Name'] = custom_runName ?: workflow.runName
@@ -88,7 +86,7 @@ Not implemented yet:
  */
 
 process runFastQC {
-    tag { "rFQC.${pairId}" }
+    tag { "FastQC.${pairId}" }
     publishDir "${params.outdir}/qualityControl", mode: "copy", overwrite: false
     errorStrategy "${params.errorsHandling}"
     
@@ -120,7 +118,7 @@ process runFastQC {
 
 process FilterAndTrim {
     // Quality filter and trimming using dada2. 
-    tag { "FilterAndTrim" }
+    tag { "FilterAndTrim.${pairId}" }
     publishDir "${params.outdir}/FilterAndTrim", mode: "copy", overwrite: false
     errorStrategy "${params.errorsHandling}"
     
@@ -419,10 +417,33 @@ process TaxaFiltering {
         --inputFasta=${fasta} \
         --inputNames=${names} \
         --refAln=${params.referenceAln} \
-        --refTax=${params.referenceTax}
-    
+        --refTax=${params.referenceTax}    
     """
 }
+
+process Clustering {
+    tag { "clustering.${pairId}" }
+    publishDir "${params.outdir}/clustering", mode: "copy", overwrite: false
+    errorStrategy "${params.errorsHandling}"
+    
+    input:
+	set val(pairId), file(fasta), file(names) \
+    from TAXA_FILTERED_CONTIGS
+
+    output:
+	set val(pairId), file("${pairId}.clustering.list"), file("${pairId}.clustering.sabund") \
+    into CLUSTERED_CONTIGS
+
+    script:
+    """
+    ${params.scripts}/mothur.sh \
+        --step=clustering \
+        --pairId=${pairId} \
+        --inputFasta=${fasta} \
+        --inputNames=${names}
+    """
+}
+
 
 // /*
 //  *
