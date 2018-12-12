@@ -14,20 +14,12 @@ def helpMessage() {
  * SET UP CONFIGURATION VARIABLES
  */
 
-
 // Show help message
 params.help = false
 if (params.help){
     helpMessage()
     exit 0
 }
-
-// Has the run name been specified by the user?
-custom_runName = params.name
-if( !(workflow.runName ==~ /[a-z]+_[a-z]+/) ){
-  custom_runName = workflow.runName
-}
-
 
 if( params.revRead == 0 ){
     Channel
@@ -46,7 +38,7 @@ if( params.revRead == 0 ){
 
 // Header log info
 def summary = [:]
-summary['Run Name'] = custom_runName ?: workflow.runName
+summary['Run Name'] = workflow.runName
 summary['Reads'] = params.reads
 summary['Output dir'] = params.outdir
 summary['Working dir'] = workflow.workDir
