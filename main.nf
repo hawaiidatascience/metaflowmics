@@ -290,151 +290,165 @@ process OutliersRemoval {
     """
 }
 
+
+process Subsampling {
+    tag { "subsampling" }
+    publishDir "${params.outdir}/subsampling", mode: "copy", overwrite: false
+    errorStrategy "${params.errorsHandling}"
+    
+    input:
+	file f from FILTERED_CONTIGS.collect()
+    output:
+	set file("samples_merged.subsampling.fasta"), file("subsampling.groups") into SUBSAMPLED_CONTIGS
+
+    script:
+    """
+    ${params.scripts}/mothur.sh --step=subsampling --pairId=all
+    """
+}
+
+
 /*
  *
  * Step 7: Dereplication
  *
  */
 
-process Dereplication {
-    tag { "dereplication.${pairId}" }
-    publishDir "${params.outdir}/OutlierRemoval", mode: "copy", overwrite: false
-    errorStrategy "${params.errorsHandling}"
+// process Dereplication {
+//     tag { "dereplication.${pairId}" }
+//     publishDir "${params.outdir}/OutlierRemoval", mode: "copy", overwrite: false
+//     errorStrategy "${params.errorsHandling}"
     
-    input:
-        set val(pairId), file(fasta) from FILTERED_CONTIGS
-    output:
-	set val(pairId), file("${pairId}.dereplication.names"), file("${pairId}.dereplication.fasta") into DEREP_CONTIGS_MSA
+//     input:
+//         set val(pairId), file(fasta) from FILTERED_CONTIGS
+//     output:
+// 	set val(pairId), file("${pairId}.dereplication.names"), file("${pairId}.dereplication.fasta") into DEREP_CONTIGS_MSA
 
-    script:
-    """
-    ${params.scripts}/mothur.sh --step=dereplication --pairId=${pairId} --inputFasta=${fasta}
-    """
-}
+//     script:
+//     """
+//     ${params.scripts}/mothur.sh --step=dereplication --pairId=${pairId} --inputFasta=${fasta}
+//     """
+// }
 
-/*
- *
- * Step 8: Multiple sequence alignment
- *   and filter out of bad alignments 
- *   using a start-end optimization at 95%
- *
- */
+// /*
+//  *
+//  * Step 8: Multiple sequence alignment
+//  *   and filter out of bad alignments 
+//  *   using a start-end optimization at 95%
+//  *
+//  */
 
-process MultipleSequenceAlignment {
-    tag { "MSA" }
-    publishDir "${params.outdir}/MultipleSequenceALignment", mode: "copy", overwrite: false
-    errorStrategy "${params.errorsHandling}"
+// process MultipleSequenceAlignment {
+//     tag { "MSA" }
+//     publishDir "${params.outdir}/MultipleSequenceALignment", mode: "copy", overwrite: false
+//     errorStrategy "${params.errorsHandling}"
     
-    input:
-        set val(pairId), file(names), file(fasta) from DEREP_CONTIGS_MSA
-    output:
-        set val(pairId), file("${pairId}.filter.start_end.names"), file("${pairId}.filter.start_end.fasta") into DEREP_CONTIGS_ALN
-        file("${pairId}.filter.start_end.summary") into ALN_SUMMARY
+//     input:
+//         set val(pairId), file(names), file(fasta) from DEREP_CONTIGS_MSA
+//     output:
+//         set val(pairId), file("${pairId}.filter.start_end.names"), file("${pairId}.filter.start_end.fasta") into DEREP_CONTIGS_ALN
+//         file("${pairId}.filter.start_end.summary") into ALN_SUMMARY
     
-    script:
-    """
-    ${params.scripts}/mothur.sh \
-       --step=MSA \
-       --pairId=${pairId} \
-       --inputFasta=${fasta} \
-       --refAln=${params.referenceAln}
+//     script:
+//     """
+//     ${params.scripts}/mothur.sh \
+//        --step=MSA \
+//        --pairId=${pairId} \
+//        --inputFasta=${fasta} \
+//        --refAln=${params.referenceAln}
 
-    ${params.scripts}/mothur.sh \
-       --step=filter \
-       --pairId=${pairId} \
-       --inputFasta=${fasta} \
-       --inputNames=${names} \
-       --criteria=${params.criteria} \
-       --optimize=start-end
+//     ${params.scripts}/mothur.sh \
+//        --step=filter \
+//        --pairId=${pairId} \
+//        --inputFasta=${fasta} \
+//        --inputNames=${names} \
+//        --criteria=${params.criteria} \
+//        --optimize=start-end
 
-    ${params.scripts}/mothur.sh --step=summary --pairId=${pairId} --inputFasta=${pairId}.filter.start_end.fasta
-    """
-}
+//     ${params.scripts}/mothur.sh --step=summary --pairId=${pairId} --inputFasta=${pairId}.filter.start_end.fasta
+//     """
+// }
 
-/*
- *
- * Step 9: Chimera removal
- *
- */
+// /*
+//  *
+//  * Step 9: Chimera removal
+//  *
+//  */
 
 
-process ChimeraRemoval {
-    tag { "chimeraRemoval.${pairId}" }
-    publishDir "${params.outdir}/chimeraRemoval", mode: "copy", overwrite: false
-    errorStrategy "${params.errorsHandling}"
+// process ChimeraRemoval {
+//     tag { "chimeraRemoval.${pairId}" }
+//     publishDir "${params.outdir}/chimeraRemoval", mode: "copy", overwrite: false
+//     errorStrategy "${params.errorsHandling}"
     
-    input:
-	set val(pairId), file(names), file(fasta) from DEREP_CONTIGS_ALN
+//     input:
+// 	set val(pairId), file(names), file(fasta) from DEREP_CONTIGS_ALN
 
-    output:
-        set val(pairId), file("${pairId}.chimera.names"), file("${pairId}.chimera.fasta") \
-        into NO_CHIMERA_FASTA
+//     output:
+//         set val(pairId), file("${pairId}.chimera.names"), file("${pairId}.chimera.fasta") \
+//         into NO_CHIMERA_FASTA
     
-    script:
-    """
-    ${params.scripts}/mothur.sh --step=chimera --pairId=${pairId} --inputFasta=${fasta} --inputNames=${names} 
-    """
-}
+//     script:
+//     """
+//     ${params.scripts}/mothur.sh --step=chimera --pairId=${pairId} --inputFasta=${fasta} --inputNames=${names} 
+//     """
+// }
 
-/*
- *
- * Step 10 (optional?): Taxa filtering
- *   user-defined taxa list to exclude
- *   (parameter to add) 
- *
- */
+// /*
+//  *
+//  * Step 10 (optional?): Taxa filtering
+//  *   user-defined taxa list to exclude
+//  *   (parameter to add) 
+//  *
+//  */
 
 
-process TaxaFiltering {
-    tag { "taxaFilter.${pairId}" }
-    publishDir "${params.outdir}/taxaFiltering", mode: "copy", overwrite: false
-    errorStrategy "${params.errorsHandling}"
+// process TaxaFiltering {
+//     tag { "taxaFilter.${pairId}" }
+//     publishDir "${params.outdir}/taxaFiltering", mode: "copy", overwrite: false
+//     errorStrategy "${params.errorsHandling}"
     
-    input:
-	set val(pairId), file(names), file(fasta) \
-    from NO_CHIMERA_FASTA
+//     input:
+// 	set val(pairId), file(names), file(fasta) \
+//     from NO_CHIMERA_FASTA
 
-    output:
-	set val(pairId), file("${pairId}.taxaFilter.fasta"), file("${pairId}.taxaFilter.names") \
-    into TAXA_FILTERED_CONTIGS
+//     output:
+// 	set val(pairId), file("${pairId}.taxaFilter.fasta"), file("${pairId}.taxaFilter.names") \
+//     into TAXA_FILTERED_CONTIGS
 
-    when:
-	params.taxaFilter == 1
+//     when:
+// 	params.taxaFilter == 1
     
-    script:
-    """
-    ${params.scripts}/mothur.sh \
-        --step=taxaFilter \
-        --pairId=${pairId} \
-        --inputFasta=${fasta} \
-        --inputNames=${names} \
-        --refAln=${params.referenceAln} \
-        --refTax=${params.referenceTax}    
-    """
-}
+//     script:
+//     """
+//     ${params.scripts}/mothur.sh \
+//         --step=taxaFilter \
+//         --pairId=${pairId} \
+//         --inputFasta=${fasta} \
+//         --inputNames=${names} \
+//         --refAln=${params.referenceAln} \
+//         --refTax=${params.referenceTax}    
+//     """
+// }
 
-process Clustering {
-    tag { "clustering.${pairId}" }
-    publishDir "${params.outdir}/clustering", mode: "copy", overwrite: false
-    errorStrategy "${params.errorsHandling}"
+
+// process Clustering {
+//     tag { "clustering.${pairId}" }
+//     publishDir "${params.outdir}/clustering", mode: "copy", overwrite: false
+//     errorStrategy "${params.errorsHandling}"
     
-    input:
-	set val(pairId), file(fasta), file(names) \
-    from TAXA_FILTERED_CONTIGS
+//     input:
+// 	file files from TAXA_FILTERED_CONTIGS.collect()
+//         each idThreshold from (95,97,99,100)
+//     output:
+// 	set val(pairId), file("${pairId}.clustering.list"), file("${pairId}.clustering.sabund") into CLUSTERED_CONTIGS
 
-    output:
-	set val(pairId), file("${pairId}.clustering.list"), file("${pairId}.clustering.sabund") \
-    into CLUSTERED_CONTIGS
+//     script:
+//     """
+//     ${params.scripts}/mothur.sh --step=clustering
+//     """
+// }
 
-    script:
-    """
-    ${params.scripts}/mothur.sh \
-        --step=clustering \
-        --pairId=${pairId} \
-        --inputFasta=${fasta} \
-        --inputNames=${names}
-    """
-}
 
 
 // /*

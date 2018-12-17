@@ -41,8 +41,8 @@ do
 	refTax="${arg#*=}"
 	taxRad=`basename $refTax .tax`;;
 
-    --distCutoff=*)
-	distCutoff="${arg#*=}" ;;
+    --clustId=*)
+	clustId="${arg#*=}" ;;
 
     *)
 	echo "$arg: Unknown option";;    
@@ -73,6 +73,15 @@ elif [ $step == "summary" ]; then
     cmd=("summary.seqs(fasta=${inputFasta})")
     # outputs_mothur=("${faRad}.summary")
     # outputs_renamed=("${faRad}.summary")
+
+elif [ $step == "subsampling" ]; then
+    fastas=`echo $(ls *.fasta) | sed 's/\ /-/g'`
+    groups=`ls -l *.fasta | awk '{print $9}' | awk 'BEGIN{FS="."} {$NF=FILENAME; print $1}' | paste -sd "-" -`
+    cat *.fasta > samples_merged.fasta
+    cmd=("make.group(fasta=${fastas}, groups=${groups}) ; "
+	 "sub.sample(persample=true,fasta=samples_merged.fasta, group=groups)")
+    outputs_mothur=("samples_merged.subsample.fasta" "groupssubsample")
+    outputs_renamed=("samples_merged.subsampling.fasta" "subsampling.groups")
     
 elif [ $step == "dereplication" ]; then
     cmd=("unique.seqs(fasta=${inputFasta})")
