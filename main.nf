@@ -274,19 +274,143 @@ process OutliersRemoval {
     input:
         set val(pairId), file(fasta) from CONTIGS_FASTA
     output:
-	set val(pairId), file("${pairId}.filter.minoverlap_mismatches_minlength_maxlength.fasta") into FILTERED_CONTIGS
-        file("${pairId}.filter.minoverlap_mismatches_minlength_maxlength.summary") into SUMMARIES
+	set val(pairId), file("${pairId}.screening.minoverlap_mismatches_minlength_maxlength.fasta") into FILTERED_CONTIGS
+        file("${pairId}.screening.minoverlap_mismatches_minlength_maxlength.summary") into SUMMARIES
 
     script:
     """
     ${params.scripts}/mothur.sh \
-       --step=filter \
+       --step=screening \
        --pairId=${pairId} \
        --inputFasta=${fasta} \
        --optimize=minoverlap-mismatches-minlength-maxlength \
        --criteria=${params.criteria}
 
-    ${params.scripts}/mothur.sh --step=summary --pairId=${pairId} --inputFasta=${pairId}.filter.minoverlap_mismatches_minlength_maxlength.fasta
+    ${params.scripts}/mothur.sh --step=summary --pairId=${pairId} --inputFasta=${pairId}.screening.minoverlap_mismatches_minlength_maxlength.fasta
+    """
+}
+
+
+process Dereplication {
+    tag { "dereplication" }
+    publishDir "${params.outdir}/OutlierRemoval", mode: "copy", overwrite: false
+    errorStrategy "${params.errorsHandling}"
+    
+    input:
+        file f from FILTERED_CONTIGS.collect()
+    output:
+	set file("all.dereplication.groups"), file("all.dereplication.count_table"), file("all.dereplication.names"), file("all.dereplication.fasta") \
+    into DEREP_CONTIGS_MSA
+
+    script:
+    """
+    fastas=\$(echo \$(ls *.fasta) | sed 's/\\ /-/g')
+    groups=`ls -l *.fasta | awk '{print \$9}' | awk 'BEGIN{FS="."} {\$NF=FILENAME; print \$1}' | paste -sd "-" -`
+    cat *.fasta > samples_merged.fasta
+    mothur "#make.group(fasta=\$fastas, groups=\$groups)"
+    mv groups all.dereplication.groups
+
+    ${params.scripts}/mothur.sh --step=dereplication  --inputFasta=samples_merged.fasta --inputGroups=all.dereplication.groups
+    """
+}
+
+/*
+ *
+ * Step 8: Multiple sequence alignment
+ *   and filter out of bad alignments 
+ *   using a start-end optimization at 95%
+ *
+ */
+
+process MultipleSequenceAlignment {
+    tag { "MSA" }
+    publishDir "${params.outdir}/MultipleSequenceALignment", mode: "copy", overwrite: false
+    errorStrategy "${params.errorsHandling}"
+    
+    input:
+        set file(groups), file(counts), file(names), file(fasta) from DEREP_CONTIGS_MSA
+    output:
+        set file("all.screening.start_end.groups"), file("all.screening.start_end.names"), file("all.screening.start_end.fasta") into DEREP_CONTIGS_ALN
+        file("all.screening.start_end.summary") into ALN_SUMMARY
+    
+    script:
+    """
+    ${params.scripts}/mothur.sh \
+       --step=MSA \
+       --inputFasta=${fasta} \
+       --refAln=${params.referenceAln}
+
+    ${params.scripts}/mothur.sh \
+       --step=screening \
+       --inputFasta=all.MSA.fasta \
+       --inputNames=${names} \
+       --inputGroups=${groups} \
+       --criteria=${params.criteria} \
+       --optimize=start-end
+
+    ${params.scripts}/mothur.sh --step=summary --inputFasta=all.screening.start_end.fasta
+    """
+}
+
+/*
+ *
+ * Step 9: Chimera removal
+ *
+ */
+
+
+process ChimeraRemoval {
+    tag { "chimeraRemoval" }
+    publishDir "${params.outdir}/chimeraRemoval", mode: "copy", overwrite: false
+    errorStrategy "${params.errorsHandling}"
+    
+    input:
+	set file(groups), file(names), file(fasta) from DEREP_CONTIGS_ALN
+
+    output:
+        set file("all.chimera.groups"), file("all.chimera.names"), file("all.chimera.fasta") \
+        into NO_CHIMERA_FASTA
+    
+    script:
+    """
+    ${params.scripts}/mothur.sh --step=chimera --inputFasta=${fasta} --inputNames=${names} --inputGroups=${groups} 
+    """
+}
+
+/*
+ *
+ * Step 10 (optional?): Taxa filtering
+ *   user-defined taxa list to exclude
+ *   (parameter to add) 
+ *
+ */
+
+
+process TaxaFiltering {
+    tag { "taxaFilter" }
+    publishDir "${params.outdir}/taxaFiltering", mode: "copy", overwrite: false
+    errorStrategy "${params.errorsHandling}"
+    
+    input:
+	set file(groups), file(names), file(fasta) \
+    from NO_CHIMERA_FASTA
+
+    output:
+	set file("all.taxaFilter.names"), file("all.taxaFilter.fasta"), file("all.taxaFilter.taxonomy"), file("all.taxaFilter.groups") \
+    into TAXA_FILTERED_CONTIGS
+
+    when:
+	params.taxaFilter == 1
+    
+    script:
+    """
+    ${params.scripts}/mothur.sh \
+        --step=taxaFilter \
+        --inputFasta=${fasta} \
+        --inputNames=${names} \
+        --inputGroups=${groups} \
+        --refAln=${params.referenceAln} \
+        --refTax=${params.referenceTax}    
     """
 }
 
@@ -297,239 +421,64 @@ process Subsampling {
     errorStrategy "${params.errorsHandling}"
     
     input:
-	file f from FILTERED_CONTIGS.collect()
+	set file(names),file(fasta),file(tax),file(groups) from TAXA_FILTERED_CONTIGS
     output:
-	set file("samples_merged.subsampling.fasta"), file("subsampling.groups") into SUBSAMPLED_CONTIGS
+	set file("all.subsampling.names"), file("all.subsampling.fasta"), file("all.subsampling.taxonomy"), file("all.subsampling.groups") into SUBSAMPLED_CONTIGS
 
     script:
     """
-    ${params.scripts}/mothur.sh --step=subsampling --pairId=all
+    ${params.scripts}/mothur.sh --step=subsampling --inputFasta=${fasta} --inputNames=${names} --inputGroups=${groups} --inputTax=${tax}
     """
 }
 
 
+process Clustering {
+    tag { "clustering" }
+    publishDir "${params.outdir}/clustering", mode: "copy", overwrite: false
+    errorStrategy "${params.errorsHandling}"
+    
+    input:
+	set file(names), file(fasta), file(tax), file(groups) from SUBSAMPLED_CONTIGS
+        each idThreshold from (0,0.01,0.03,0.05)
+    output:
+	set val(idThreshold), file("all.clustering.${idThreshold}.names"), file("all.clustering.${idThreshold}.fasta"), file("all.clustering.${idThreshold}.list"), file(tax), file(groups) \
+    into CLUSTERED_CONTIGS
+
+    script:
+    """
+    if [ ${idThreshold} -eq 0 ]; then
+        ${params.scripts}/mothur.sh --step=clustering --otuMethod=unique --inputFasta=${fasta} --inputNames=${names} --clustId=${idThreshold}
+    else
+        ${params.scripts}/mothur.sh --step=clustering --otuMethod=dgc --inputFasta=${fasta} --inputNames=${names} --clustId=${idThreshold}
+    fi
+    """
+}
+
+process Classification {
+    tag { "classification" }
+    publishDir "${params.outdir}/classification", mode: "copy", overwrite: false
+    errorStrategy "${params.errorsHandling}"
+    
+    input:
+	set val(idThreshold), file(names), file(fasta), file(list), file(tax), file(groups) from CLUSTERED_CONTIGS
+    output:
+	set val(idThreshold), file(names), file(fasta), file(list), file("all.classification.${idThreshold}.taxonomy"), file(groups) \
+    into CLASSIFIED_CONTIGS
+        file("all.classification.${idThreshold}.summary") into CLASSIFICATION_SUMMARY
+        set val(idThreshold), file("all.classification.${idThreshold}.shared") into ABUNDANCE_TABLE
+
+    script:
+    """
+    ${params.scripts}/mothur.sh --step=classification --inputNames=${names} --inputTax=${tax} --inputList=${list} --clustId=${idThreshold} --inputGroups=${groups}
+    """
+}
+
 /*
  *
- * Step 7: Dereplication
+ * Step 15: Pre-lulu step
+ *   - Blast each contig against each other
  *
  */
-
-// process Dereplication {
-//     tag { "dereplication.${pairId}" }
-//     publishDir "${params.outdir}/OutlierRemoval", mode: "copy", overwrite: false
-//     errorStrategy "${params.errorsHandling}"
-    
-//     input:
-//         set val(pairId), file(fasta) from FILTERED_CONTIGS
-//     output:
-// 	set val(pairId), file("${pairId}.dereplication.names"), file("${pairId}.dereplication.fasta") into DEREP_CONTIGS_MSA
-
-//     script:
-//     """
-//     ${params.scripts}/mothur.sh --step=dereplication --pairId=${pairId} --inputFasta=${fasta}
-//     """
-// }
-
-// /*
-//  *
-//  * Step 8: Multiple sequence alignment
-//  *   and filter out of bad alignments 
-//  *   using a start-end optimization at 95%
-//  *
-//  */
-
-// process MultipleSequenceAlignment {
-//     tag { "MSA" }
-//     publishDir "${params.outdir}/MultipleSequenceALignment", mode: "copy", overwrite: false
-//     errorStrategy "${params.errorsHandling}"
-    
-//     input:
-//         set val(pairId), file(names), file(fasta) from DEREP_CONTIGS_MSA
-//     output:
-//         set val(pairId), file("${pairId}.filter.start_end.names"), file("${pairId}.filter.start_end.fasta") into DEREP_CONTIGS_ALN
-//         file("${pairId}.filter.start_end.summary") into ALN_SUMMARY
-    
-//     script:
-//     """
-//     ${params.scripts}/mothur.sh \
-//        --step=MSA \
-//        --pairId=${pairId} \
-//        --inputFasta=${fasta} \
-//        --refAln=${params.referenceAln}
-
-//     ${params.scripts}/mothur.sh \
-//        --step=filter \
-//        --pairId=${pairId} \
-//        --inputFasta=${fasta} \
-//        --inputNames=${names} \
-//        --criteria=${params.criteria} \
-//        --optimize=start-end
-
-//     ${params.scripts}/mothur.sh --step=summary --pairId=${pairId} --inputFasta=${pairId}.filter.start_end.fasta
-//     """
-// }
-
-// /*
-//  *
-//  * Step 9: Chimera removal
-//  *
-//  */
-
-
-// process ChimeraRemoval {
-//     tag { "chimeraRemoval.${pairId}" }
-//     publishDir "${params.outdir}/chimeraRemoval", mode: "copy", overwrite: false
-//     errorStrategy "${params.errorsHandling}"
-    
-//     input:
-// 	set val(pairId), file(names), file(fasta) from DEREP_CONTIGS_ALN
-
-//     output:
-//         set val(pairId), file("${pairId}.chimera.names"), file("${pairId}.chimera.fasta") \
-//         into NO_CHIMERA_FASTA
-    
-//     script:
-//     """
-//     ${params.scripts}/mothur.sh --step=chimera --pairId=${pairId} --inputFasta=${fasta} --inputNames=${names} 
-//     """
-// }
-
-// /*
-//  *
-//  * Step 10 (optional?): Taxa filtering
-//  *   user-defined taxa list to exclude
-//  *   (parameter to add) 
-//  *
-//  */
-
-
-// process TaxaFiltering {
-//     tag { "taxaFilter.${pairId}" }
-//     publishDir "${params.outdir}/taxaFiltering", mode: "copy", overwrite: false
-//     errorStrategy "${params.errorsHandling}"
-    
-//     input:
-// 	set val(pairId), file(names), file(fasta) \
-//     from NO_CHIMERA_FASTA
-
-//     output:
-// 	set val(pairId), file("${pairId}.taxaFilter.fasta"), file("${pairId}.taxaFilter.names") \
-//     into TAXA_FILTERED_CONTIGS
-
-//     when:
-// 	params.taxaFilter == 1
-    
-//     script:
-//     """
-//     ${params.scripts}/mothur.sh \
-//         --step=taxaFilter \
-//         --pairId=${pairId} \
-//         --inputFasta=${fasta} \
-//         --inputNames=${names} \
-//         --refAln=${params.referenceAln} \
-//         --refTax=${params.referenceTax}    
-//     """
-// }
-
-
-// process Clustering {
-//     tag { "clustering.${pairId}" }
-//     publishDir "${params.outdir}/clustering", mode: "copy", overwrite: false
-//     errorStrategy "${params.errorsHandling}"
-    
-//     input:
-// 	file files from TAXA_FILTERED_CONTIGS.collect()
-//         each idThreshold from (95,97,99,100)
-//     output:
-// 	set val(pairId), file("${pairId}.clustering.list"), file("${pairId}.clustering.sabund") into CLUSTERED_CONTIGS
-
-//     script:
-//     """
-//     ${params.scripts}/mothur.sh --step=clustering
-//     """
-// }
-
-
-
-// /*
-//  *
-//  * Step 13: Merge individual Fasta files for OTU clustering
-//  *
-//  */
-
-// process MergeFastas {
-//     tag { "mergeFastas" }
-//     label "medium_computation"
-//     publishDir "${params.outdir}/MergedFastas", mode: "copy", overwrite: false
-//     errorStrategy "${params.errorsHandling}"
-    
-//     input:
-// 	file fastas from DADA_FASTA.collect()
-//     output:
-// 	set val(100), file("all_samples_merged.fasta") into ESV_ALL_SAMPLES_TO_CLUSTER
-//     script:
-//     """
-//     #!/usr/bin/env python3
-
-//     import sys
-//     sys.path.append("${workflow.projectDir}/scripts")
-//     from util import mergeSamplesFa
-
-//     mergeSamplesFa()
-    
-//     ## previous behaviour :  cat *dada.fasta > all_sample_merged.fasta
-//     """    
-// }
-
-// /*
-//  *
-//  * Step 14: Clustering
-//  *
-//  */
-
-// process Clustering {
-//     tag { "clustering" }
-//     label "medium_computation"    
-//     publishDir "${params.outdir}/MergedFastas", mode: "copy", overwrite: false
-//     errorStrategy "${params.errorsHandling}"
-    
-//     input:
-// 	each idThreshold from (95,97,99)
-//         set val(esvId),file(esvFasta) from ESV_ALL_SAMPLES_TO_CLUSTER
-//     output:
-// 	set val(idThreshold),file("otus${idThreshold}_seq.fasta") into OTU_ALL_SAMPLES,OTU_ALL_SAMPLES_LULU
-//         set val(idThreshold),file("otus${idThreshold}_table.csv") into ABUNDANCE_TABLES_OTU
-    
-//     script:
-//     """
-//     vsearch --threads ${task.cpus} \
-//             --cluster_size ${esvFasta} \
-//             --id 0.${idThreshold} \
-//             --strand plus \
-//             --sizein \
-//             --sizeout \
-//             --fasta_width 0 \
-//             --uc clusters${idThreshold}.uc \
-//             --relabel OTU${idThreshold}_ \
-//             --centroids otus${idThreshold}_seq.fasta \
-//             --otutabout otus${idThreshold}_table.tsv
-
-//     cat otus${idThreshold}_table.tsv | tr "\\t" "," > otus${idThreshold}_table.csv
-//     """
-// }
-
-// // Mix ESV and OTU channels
-
-// ABUNDANCE_TABLES = ABUNDANCE_TABLES_OTU.mix(ABUNDANCE_TABLES_ESV)
-// LULU_ALL_SAMPLES = OTU_ALL_SAMPLES_LULU.mix(ESV_ALL_SAMPLES_LULU)
-// ALL_SAMPLES = OTU_ALL_SAMPLES.mix(ESV_ALL_SAMPLES)
-
-// /*
-//  *
-//  * Step 15: Pre-lulu step
-//  *    - Blast each contig against each other
-//  *
-//  */
 
 // process PreLulu {
 //     tag { "preLulus" }
@@ -538,7 +487,7 @@ process Subsampling {
 //     errorStrategy "${params.errorsHandling}"
 
 //     input:
-// 	set val(idThreshold),file(fasta) from LULU_ALL_SAMPLES
+// 	set val(idThreshold),file(fasta) from FASTA_FOR_LULU
 //     output:
 // 	set val(idThreshold),file("match_list_${idThreshold}.txt") into MATCH_LISTS
 //     script:
@@ -611,35 +560,6 @@ process Subsampling {
 //     extractFastaLulu("${fasta}","${ids}","${idThreshold}")
 //     """
 // }    
-
-// /*
-//  *
-//  * Step 18: Annotation
-//  *
-//  */
-
-// process ClassificationVsearch  {
-//     tag { "classification" }
-//     label "medium_computation"
-//     publishDir "${params.outdir}/taxonomy", mode: "copy", overwrite: false
-//     errorStrategy "${params.errorsHandling}"
-
-//     input:
-// 	set idThreshold,file(fasta) from FASTAS_LULU
-//     output:
-//         set idThreshold,file("taxonomy_${idThreshold}.tsv") into TAXONOMY
-//     script:
-	
-//     """
-//     vsearch --threads ${task.cpus} \
-// 	    --db ${params.referenceVSEARCH} \
-// 	    --userfields query+target+id+alnlen+qcov+qstrand \
-// 	    --userout taxonomy_${idThreshold}.tsv \
-// 	    --alnout aln${idThreshold}.tsv \
-// 	    --usearch_global ${fasta} \
-// 	    --id ${params.taxaMinId}
-//     """
-// }
 
 // /*
 //  *

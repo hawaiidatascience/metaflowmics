@@ -1,0 +1,8 @@
+Dec-18 01:53:27.765 [main] DEBUG nextflow.cli.Launcher - $> /home/cedric/.local/bin/nextflow run 16S-pipeline -profile poire --revRead 1
+Dec-18 01:53:27.891 [main] INFO  nextflow.cli.CmdRun - N E X T F L O W  ~  version 18.10.1
+Dec-18 01:53:28.023 [main] DEBUG nextflow.scm.AssetManager - Listing projects in folder: /home/cedric/.nextflow/assets
+Dec-18 01:53:28.033 [main] INFO  nextflow.cli.CmdRun - Pulling nextflow-io/16S-pipeline ...
+Dec-18 01:53:28.034 [main] DEBUG nextflow.scm.RepositoryProvider - Request [credentials -:-] -> https://api.github.com/repos/nextflow-io/16S-pipeline/contents/nextflow.config
+Dec-18 01:53:28.897 [main] DEBUG nextflow.scm.AssetManager - Project manifest does not exist: https://api.github.com/repos/nextflow-io/16S-pipeline/contents/nextflow.config
+Dec-18 01:53:28.912 [main] DEBUG nextflow.scm.RepositoryProvider - Request [credentials -:-] -> https://api.github.com/repos/nextflow-io/16S-pipeline/contents/main.nf
+Dec-18 01:53:29.237 [main] DEBUG nextflow.scm.RepositoryProvider - Request [credentials -:-] -> https://api.github.com/repos/nextflow-io/16S-pipeline
