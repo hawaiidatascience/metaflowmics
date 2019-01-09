@@ -399,7 +399,7 @@ process Clustering {
         each idThreshold from (0,0.01,0.03,0.05)
     output:
 	set val(idThreshold),file("all.clustering.*.list"), file(tax) into CONTIGS_FOR_CLASSIFICATION
-        set val(idThreshold), file("all.clustering.*.shared") into ABUNDANCE_TABLES
+    set val(idThreshold), file("all.clustering.*.shared"), file("all.clustering.*.fasta") into ABUNDANCE_TABLES
         set val(idThreshold), file("all.clustering.*.fasta") into PRELULU_FASTA
 
     script:
@@ -414,13 +414,44 @@ process Classification {
     
     input:
 	set val(idThreshold), file(list), file(tax) from CONTIGS_FOR_CLASSIFICATION
-
     output:
-	set file("all.classification.*") into CLASSIFIED_CONTIGS
+	set val(idThreshold), file("all.classification.*.taxonomy"), file("all.classification.*.summary") into CLASSIFIED_CONTIGS
     script:
     """
     rad=`basename all.clustering.*.list .list`
     ${params.scripts}/mothur.sh --step=classification --rad=\${rad} --idThreshold=${idThreshold} --refTax=${params.referenceTax} --refAln=${params.referenceAln}
+    """
+}
+
+process CleanTables {
+    tag "cleanTable"
+    publishDir "${params.outdir}/clustering", mode: "copy", overwrite: false
+
+    input:
+	set val(idThreshold), file(table), file(fasta), file(taxonomy), file(taxSummary) from ABUNDANCE_TABLES.join(CLASSIFIED_CONTIGS)
+    output:
+	set val(idThreshold), file("all.abundanceTable.*.csv"), file("all.taxonomyTable.*.csv") into ABUNDANCE_TABLES_CLEAN
+    script:
+    """
+    #!/usr/bin/env python
+ 
+    from Bio import SeqIO
+    import pandas as pd
+    import re
+
+    taxonomyTable = pd.read_table("${taxonomy}", index_col=0)
+    abundanceTable = pd.read_table("${table}", index_col=1).drop(["label","numOtus"],axis=1)
+    mapping = pd.Series({ 
+                      re.split('[\\t|\\|]',seq.description)[1]: seq.id
+                      for seq in SeqIO.parse("${fasta}","fasta") 
+                  })
+
+    abundanceTable.columns = mapping[abundanceTable.columns]
+    taxonomyTable.index = mapping[taxonomyTable.index]
+
+    abundanceTable.T.to_csv("all.abundanceTable.${idThreshold}.csv")
+    taxonomyTable.to_csv("all.taxonomyTable.${idThreshold}.csv")
+    
     """
 }
 
@@ -460,7 +491,7 @@ process Lulu {
     errorStrategy "${params.errorsHandling}"
 
     input:
-	set val(idThreshold),file(matchlist),file(table) from MATCH_LISTS.join(ABUNDANCE_TABLES)
+	set val(idThreshold),file(matchlist),file(table),file(taxTable) from MATCH_LISTS.join(ABUNDANCE_TABLES_CLEAN)
     output:
 	set val(idThreshold),file("curated_table_${idThreshold}.csv") into ABUNDANCE_LULU
 	set val(idThreshold),file("curated_ids_${idThreshold}.csv") into IDS_LULU
