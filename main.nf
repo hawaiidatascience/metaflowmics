@@ -79,7 +79,7 @@ Not implemented yet:
 
 process runFastQC {
     tag { "FastQC.${pairId}" }
-    publishDir "${params.outdir}/qualityControl", mode: "copy", overwrite: false
+    publishDir "${params.outdir}/0-qualityControl", mode: "copy", overwrite: false
     
     input:
         set val(pairId), file(in_fastq) from INPUT_FASTQ_TO_QC
@@ -110,7 +110,7 @@ process runFastQC {
 process FilterAndTrim {
     // Quality filter and trimming using dada2. 
     tag { "FilterAndTrim.${pairId}" }
-    publishDir "${params.outdir}/FilterAndTrim", mode: "copy", overwrite: false
+    publishDir "${params.outdir}/1-filterAndTrim", mode: "copy", overwrite: false
     
     input:
         set val(pairId), file(fastq) from INPUT_FASTQ
@@ -139,7 +139,7 @@ process FilterAndTrim {
 process LearnErrors {
     // Build error model using dada2. 
     tag { "LearnErrors.${pairId}" }
-    publishDir "${params.outdir}/ErrorModel", mode: "copy", overwrite: false
+    publishDir "${params.outdir}/2-errorModel", mode: "copy", overwrite: false
 
     input:
 	set val(pairId), file(fastq) from FASTQ_TRIMMED_FOR_MODEL
@@ -168,7 +168,7 @@ process LearnErrors {
 
 process Denoise {
     tag { "Denoising.${pairId}" }
-    publishDir "${params.outdir}/Denoising", mode: "copy", overwrite: false
+    publishDir "${params.outdir}/3-denoising", mode: "copy", overwrite: false
     
     input:
         set val(pairId), file(err), file(fastq) from ERROR_MODEL.join(FASTQ_TRIMMED)
@@ -198,7 +198,7 @@ process Denoise {
 
 process Deunique {
     tag { "Deunique.${pairId}" }
-    publishDir "${params.outdir}/denoisedFasta", mode: "copy", overwrite: false
+    publishDir "${params.outdir}/4-denoisedFasta", mode: "copy", overwrite: false
     
     input:
         set val(pairId), file(derep_rds), file(dada_rds), file(ids) from DADA_RDS.join(FILTERED_READS_IDS)
@@ -231,7 +231,7 @@ process Deunique {
 process ReadsMerging {
 
     tag { "ContigsMerging.${pairId}" }
-    publishDir "${params.outdir}/ReadsMerging", mode: "copy", overwrite: false
+    publishDir "${params.outdir}/5-readsMerging", mode: "copy", overwrite: false
 
     input:
         set val(pairId), file(fasta) from DADA_FASTA
@@ -262,7 +262,7 @@ process ReadsMerging {
 process Screening {
 
     tag { "screening.${pairId}" }
-    publishDir "${params.outdir}/Screening", mode: "copy", overwrite: false
+    publishDir "${params.outdir}/6-screening", mode: "copy", overwrite: false
     
     input:
         set val(pairId), file(fasta) from CONTIGS_FASTA
@@ -286,7 +286,7 @@ process Screening {
 
 process Dereplication {
     tag { "dereplication" }
-    publishDir "${params.outdir}/Dereplication", mode: "copy", overwrite: false
+    publishDir "${params.outdir}/7-dereplication", mode: "copy", overwrite: false
     
     input:
         file(fasta) from FILTERED_CONTIGS.collect()
@@ -301,7 +301,7 @@ process Dereplication {
 
 process MultipleSequenceAlignment {
     tag { "MSA" }
-    publishDir "${params.outdir}/MultipleSequenceALignment", mode: "copy", overwrite: false
+    publishDir "${params.outdir}/8-multipleSequenceALignment", mode: "copy", overwrite: false
     
     input:
         set file(names), file(fasta), file(groups) from DEREP_CONTIGS
@@ -334,7 +334,7 @@ process MultipleSequenceAlignment {
 
 process ChimeraRemoval {
     tag { "chimeraRemoval" }
-    publishDir "${params.outdir}/chimeraRemoval", mode: "copy", overwrite: false
+    publishDir "${params.outdir}/9-chimeraRemoval", mode: "copy", overwrite: false
     
     input:
 	set file(names), file(fasta), file(groups) from DEREP_CONTIGS_ALN
@@ -350,7 +350,7 @@ process ChimeraRemoval {
 
 process TaxaFiltering {
     tag { "taxaFilter" }
-    publishDir "${params.outdir}/taxaFiltering", mode: "copy", overwrite: false
+    publishDir "${params.outdir}/10-taxaFiltering", mode: "copy", overwrite: false
     
     input:
 	set file(names), file(fasta), file(groups) from NO_CHIMERA_FASTA
@@ -377,7 +377,7 @@ process TaxaFiltering {
 
 process Subsampling {
     tag { "subsampling" }
-    publishDir "${params.outdir}/subsampling", mode: "copy", overwrite: false
+    publishDir "${params.outdir}/11-subsampling", mode: "copy", overwrite: false
     
     input:
 	set file(fasta), file(names), file(groups), file(tax) from TAXA_FILTERED_CONTIGS
@@ -392,15 +392,15 @@ process Subsampling {
 
 process Clustering {
     tag { "clustering" }
-    publishDir "${params.outdir}/clustering", mode: "copy", overwrite: false
+    publishDir "${params.outdir}/12-clustering", mode: "copy", overwrite: false
     
     input:
 	set file(fasta), file(names), file(groups), file(tax) from SUBSAMPLED_CONTIGS
         each idThreshold from (0,0.01,0.03,0.05)
     output:
 	set val(idThreshold),file("all.clustering.*.list"), file(tax) into CONTIGS_FOR_CLASSIFICATION
-    set val(idThreshold), file("all.clustering.*.shared"), file("all.clustering.*.fasta") into ABUNDANCE_TABLES
-        set val(idThreshold), file("all.clustering.*.fasta") into PRELULU_FASTA
+        set val(idThreshold), file("all.clustering.*.shared"), file("all.clustering.*.fasta") into ABUNDANCE_TABLES
+        set val(idThreshold), file("all.clustering.*.fasta") into PRELULU_FASTA, FASTA_TO_FILTER
 
     script:
     """
@@ -408,9 +408,9 @@ process Clustering {
     """
 }
 
-process Classification {
-    tag { "classification" }
-    publishDir "${params.outdir}/classification", mode: "copy", overwrite: false
+process PreClassification {
+    tag { "pre-classification" }
+    publishDir "${params.outdir}/13-preclassification", mode: "copy", overwrite: false
     
     input:
 	set val(idThreshold), file(list), file(tax) from CONTIGS_FOR_CLASSIFICATION
@@ -425,12 +425,13 @@ process Classification {
 
 process CleanTables {
     tag "cleanTable"
-    publishDir "${params.outdir}/clustering", mode: "copy", overwrite: false
+    publishDir "${params.outdir}/14-cleanTables", mode: "copy", overwrite: false
 
     input:
 	set val(idThreshold), file(table), file(fasta), file(taxonomy), file(taxSummary) from ABUNDANCE_TABLES.join(CLASSIFIED_CONTIGS)
     output:
 	set val(idThreshold), file("all.abundanceTable.*.csv"), file("all.taxonomyTable.*.csv") into ABUNDANCE_TABLES_CLEAN
+        set val(idThreshold), file("all.taxonomyTable.*.csv") into TAXONOMY_TO_FILTER
     script:
     """
     #!/usr/bin/env python
@@ -464,7 +465,7 @@ process CleanTables {
 
 process PreLulu {
     tag { "preLulus" }
-    publishDir "${params.outdir}/lulu", mode: "copy", overwrite: false
+    publishDir "${params.outdir}/15-lulu", mode: "copy", overwrite: false
 
     input:
 	set val(idThreshold),file(fasta) from PRELULU_FASTA
@@ -487,7 +488,7 @@ process PreLulu {
 
 process Lulu {
     tag { "Lulu" }
-    publishDir "${params.outdir}/lulu", mode: "copy", overwrite: false
+    publishDir "${params.outdir}/15-lulu", mode: "copy", overwrite: false
     errorStrategy "${params.errorsHandling}"
 
     input:
@@ -505,24 +506,28 @@ process Lulu {
     """
 }
 
-// process FillAbundanceTable {
-//     tag { "fillAbundanceTable" }
-//     publishDir "${params.outdir}/taxonomy", mode: "copy", overwrite: false
-//     errorStrategy "${params.errorsHandling}"
+process FilterFasta {
+    tag { "filterFasta" }
+    publishDir "${params.outdir}/15-lulu", mode: "copy", overwrite: false
+    errorStrategy "${params.errorsHandling}"
     
-//     input:
-// 	set idThreshold,file(table),file(tax) from ABUNDANCE_LULU.join(TAXONOMY)
-//     output:
-// 	file("abundance_table_annotated_ID=${idThreshold}.tsv") into TAXONOMY_ABUNDANCE
-//     script:
-//     """
-//     #!/usr/bin/env python3
+    input:
+	set idThreshold,file(ids),file(tax),file(fasta) from IDS_LULU.join(TAXONOMY_TO_FILTER).join(FASTA_TO_FILTER)
+    output:
+	set file("OTU_${idThreshold}.fasta"), file("taxonomy_${idThreshold}.csv")
+    script:
+    """
+    #!/usr/bin/env python3
 
-//     import sys
-//     sys.path.append("${workflow.projectDir}/scripts")
-//     from util import fillAbundances
+    import pandas as pd
+    from Bio import SeqIO
 
-//     fillAbundances("${table}","${tax}",${idThreshold})
-//     """
-// }
+    ids = [ name.strip() for name in open("${ids}","r").readlines() ]
+    fasta = [ seq for seq in SeqIO.parse("${fasta}","fasta") if seq.id in ids ]
+    SeqIO.write(fasta,"OTU_${idThreshold}.fasta","fasta")
+
+    taxonomyTable = pd.read_csv("${tax}",index_col=0)
+    taxonomyTable.loc[ids].to_csv("taxonomy_${idThreshold}.csv")    
+    """
+}
 

@@ -1,5 +1,5 @@
-# ITS-pipeline
+# 16S-pipeline
 
 ## Running the command
-`nextflow run newITS-pipeline -profile local --its ITS2 --revRead 1`
+`nextflow run 16S-pipeline -profile local --revRead 1`
 
