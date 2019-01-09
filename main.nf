@@ -51,31 +51,34 @@ log.info "========================================="
 
 /* Pipeline summary
 
-- make.contigs
-- make.fastq                            --> we'll need them later for dada2
-- screen.seqs (x2)                      --> quality control
-- unique.seqs; count.seqs               --> dereplication
+- fastqc
+
+****** dada2 ****** 
+- filterAndTrim
+- learnErrors
+- dada (denoising)
+******************
+
+- Deunique (convert unique reads to redundant)
+
+****** Mothur ******
+- make.contigs (if paired-end)
+- screen.seqs (optimization of minoverlap-mismatches-minlength-maxlength)
+- unique.seqs
 - align.seqs; filter.seqs; screen.seqs  --> alignment against reference for further filtering
 - chimera.seqs; remove.seqs             --> chimera removal
-- classify.seqs; remove.lineage         --> remove custom taxa (ex: unknown)
-- list.seqs; get.seqs                   --> conversion to dada2 format
-- dada2 denoising
-- abundance table
-- lulu             --> co-occurence pattern correction
-- taxonomy
+- classify.seqs; (remove.lineage)       --> classification, optional taxa filtering
+- sub.sample
+- cluster (at 95,97,99 and 100% identity)
+- classify.otu
+*******************
 
-Not implemented yet:
-- subsampling      --> depth normalization across samples
+- cleanTables (postprocessing before LULU)
+- preLulu (create matchlists for LULU)
+- LULU
+- FilterFasta (remove sequences from FASTA and taxonomy file that Lulu removed)
 
 */
-
-
-
-/*
- *
- * Step 0: FastQC 
- *
- */
 
 process runFastQC {
     tag { "FastQC.${pairId}" }
@@ -98,12 +101,6 @@ process runFastQC {
 /*
  *
  * Step 0: Demultiplexing
- *
- */
-
-/*
- *
- * Step 1: Filter and Trim
  *
  */
 
@@ -130,12 +127,6 @@ process FilterAndTrim {
     """
 }
 
-/*
- *
- * Step 2: Error model
- *
- */
-
 process LearnErrors {
     // Build error model using dada2. 
     tag { "LearnErrors.${pairId}" }
@@ -160,12 +151,6 @@ process LearnErrors {
     """
 }
 
-/*
- *
- * Step 3: Denoising
- *
- */
-
 process Denoise {
     tag { "Denoising.${pairId}" }
     publishDir "${params.outdir}/3-denoising", mode: "copy", overwrite: false
@@ -189,12 +174,6 @@ process Denoise {
     }
     """
 }
-
-/*
- *
- * Step 4: DeUnique reads
- *
- */
 
 process Deunique {
     tag { "Deunique.${pairId}" }
@@ -221,12 +200,6 @@ process Deunique {
     }
     """
 }
-
-/*
- *
- * Step 5: Merge reads
- *
- */
 
 process ReadsMerging {
 
@@ -296,6 +269,10 @@ process Dereplication {
     script:
     """
     ${params.scripts}/mothur.sh --step=dereplication
+
+    # different .groups name depending on the number of samples
+    mv *.groups all.dereplication.groups
+
     """
 }
 
@@ -325,12 +302,6 @@ process MultipleSequenceAlignment {
     ${params.scripts}/mothur.sh --step=summary --rad=all.screening.start_end
     """
 }
-
-/*
- *
- * Step 9: Chimera removal
- *
- */
 
 process ChimeraRemoval {
     tag { "chimeraRemoval" }

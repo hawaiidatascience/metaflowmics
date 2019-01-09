@@ -75,9 +75,9 @@ elif [ $step == "dereplication" ]; then
     cat *.fasta > all.fasta
     cmd=("make.group(fasta=${fastas}, groups=${ids}) ; "
           "unique.seqs(fasta=all.fasta)")
-   
-    outputs_mothur=("all.unique.fasta" "all.names" "groups")
-    outputs_renamed=("${out}.fasta" "${out}.names" "${out}.groups")
+
+    outputs_mothur=("all.unique.fasta" "all.names")
+    outputs_renamed=("${out}.fasta" "${out}.names")
    
 elif [ $step == "MSA" ]; then
     cmd=("align.seqs(fasta=${rad}.fasta,reference=${refAln}) ; "
@@ -141,7 +141,8 @@ do
     if [ -e ${outputs_mothur[$i]} ]; then
 	mv ${outputs_mothur[$i]} ${outputs_renamed[$i]}
     else
-	echo "${outputs_mothur[$i]} does not exist. Setting input file as output."
-	cp ${inputs_mothur[$i]} ${outputs_renamed[$i]}
+	echo "${outputs_mothur[$i]} does not exist. Aborting."
+	exit 1
+	# cp ${inputs_mothur[$i]} ${outputs_renamed[$i]}
     fi
 done
