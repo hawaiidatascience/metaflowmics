@@ -124,7 +124,7 @@ elif [ $step == "clustering" ]; then
     
 elif [ $step == "classification" ]; then
     cmd=("classify.seqs(fasta=${rad}.fasta, name=${rad}.names, template=${refAln}, taxonomy=${refTax}, method=wang) ; "
-	 "classify.otu(taxonomy=${rad}.seed_v128.wang.taxonomy, list=${rad}.list)")
+	 "classify.otu(taxonomy=${rad}.seed_v128.3wang.taxonomy, list=${rad}.list)")
 fi;
 
 res=$( IFS=$' '; echo "${cmd[*]}" )
