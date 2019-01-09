@@ -66,11 +66,6 @@ elif [ $step == "screening" ]; then
 elif [ $step == "summary" ]; then
     cmd=("summary.seqs(fasta=${rad}.fasta)")
 
-elif [ $step == "subsampling" ]; then
-    cmd=("sub.sample(persample=true,fasta=${rad}.fasta, name=${rad}.names, group=${rad}.groups)")
-    outputs_mothur=("${rad}.subsample.fasta" "${rad}.subsample.names" "${rad}.subsample.groups")
-    outputs_renamed=("${out}.fasta" "${out}.names" "${out}.groups")
-    
 elif [ $step == "dereplication" ]; then
     # Merge all fastas
     fasta_files=`ls *.fasta`
@@ -96,13 +91,19 @@ elif [ $step == "chimera" ]; then
     outputs_mothur=("${rad}.pick.fasta" "${rad}.pick.names" "${rad}.pick.groups")
     outputs_renamed=("${out}.fasta" "${out}.names" "${out}.groups")
 
-elif [ $step == "taxaFilter" ]; then
-    
+elif [ $step == "taxaFilter" ]; then    
     suffixTax=`echo $taxRad | cut -d. -f2`.wang.taxonomy
-    cmd=("classify.seqs(fasta=${rad}.fasta, name=${rad}.names, template=${refAln}, taxonomy=${refTax}) ; "
-	 "remove.lineage(taxonomy=${rad}.${suffixTax}, name=${rad}.names, fasta=${rad}.fasta, group=${rad}.groups, taxon=-unknown)")
-    outputs_mothur=("${rad}.pick.names" "${rad}.pick.fasta" "${rad}.pick.groups")
-    outputs_renamed=("${out}.names" "${out}.fasta" "${out}.groups")
+    cmd=("classify.seqs(fasta=${rad}.fasta, name=${rad}.names, group=${rad}.groups, template=${refAln}, taxonomy=${refTax})")
+    # "remove.lineage(taxonomy=${rad}.${suffixTax}, name=${rad}.names, fasta=${rad}.fasta, group=${rad}.groups, taxon=-unknown)")
+    outputs_mothur=("${rad}.${suffixTax}")
+    outputs_renamed=("${out}.taxonomy")
+    # outputs_mothur=("${rad}.pick.names" "${rad}.pick.fasta" "${rad}.pick.groups")
+    # outputs_renamed=("${out}.names" "${out}.fasta" "${out}.groups")
+
+elif [ $step == "subsampling" ]; then
+    cmd=("sub.sample(persample=true,fasta=${rad}.fasta, name=${rad}.names, group=${rad}.groups, taxonomy=${rad}.taxonomy)")
+    outputs_mothur=("${rad}.subsample.fasta" "${rad}.subsample.names" "${rad}.subsample.groups" "${rad}.subsample.taxonomy")
+    outputs_renamed=("${out}.fasta" "${out}.names" "${out}.groups" "${out}.taxonomy")
 
 elif [ $step == "clustering" ]; then
     if [ ${idThreshold} = 0 ]; then
@@ -123,8 +124,9 @@ elif [ $step == "clustering" ]; then
     outputs_renamed=("${out}.${idThreshold}.list" "${out}.${idThreshold}.fasta" "${out}.${idThreshold}.names" "${out}.${idThreshold}.shared")
     
 elif [ $step == "classification" ]; then
-    cmd=("classify.seqs(fasta=${rad}.fasta, name=${rad}.names, template=${refAln}, taxonomy=${refTax}, method=wang) ; "
-	 "classify.otu(taxonomy=${rad}.seed_v128.3wang.taxonomy, list=${rad}.list)")
+    cmd=("classify.otu(taxonomy=all.subsampling.taxonomy, list=${rad}.list)")
+    outputs_mothur=("all.clustering.${idThreshold}.${idThreshold}.cons.taxonomy" "all.clustering.${idThreshold}.${idThreshold}.cons.tax.summary")
+    outputs_renamed=("all.classification.${idThreshold}.cons.taxonomy" "all.classification.${idThreshold}.cons.summary")
 fi;
 
 res=$( IFS=$' '; echo "${cmd[*]}" )

@@ -253,7 +253,7 @@ process ReadsMerging {
 
 /*
  *
- * Step 6: Outlier removal:
+ * Outlier removal:
  *   1) Overlap and mismatches optimization at 95%
  *   2) Maxlength optimization at 95%, minLength, maxAmbig, maxHomop
  *
@@ -356,21 +356,20 @@ process TaxaFiltering {
 	set file(names), file(fasta), file(groups) from NO_CHIMERA_FASTA
 
     output:
-	set file("all.taxaFilter.fasta"), file("all.taxaFilter.names"), file("all.taxaFilter.groups") into TAXA_FILTERED_CONTIGS
+	set file("all.taxaFilter.fasta"), file("all.taxaFilter.names"), file("all.taxaFilter.groups"), file("all.taxaFilter.taxonomy") into TAXA_FILTERED_CONTIGS
 
     script:
     """
+    ${params.scripts}/mothur.sh \
+	--step=taxaFilter \
+	--rad=all.chimera \
+	--refAln=${params.referenceAln} \
+	--refTax=${params.referenceTax}
 
-    if [ ${params.taxaFilter} -eq 1 ]; then
-	${params.scripts}/mothur.sh \
-	    --step=taxaFilter \
-	    --rad=all.chimera \
-	    --refAln=${params.referenceAln} \
-	    --refTax=${params.referenceTax}    
-    else
-        cp ${fasta} all.taxaFilter.fasta
-        cp ${names} all.taxaFilter.names
-        cp ${groups} all.taxaFilter.groups        
+    if [ ${params.taxaFilter} -eq 0 ]; then
+        mv ${names} all.taxaFilter.names
+        mv ${fasta} all.taxaFilter.fasta
+        mv ${groups} all.taxaFilter.groups
     fi
 
     """
@@ -381,9 +380,9 @@ process Subsampling {
     publishDir "${params.outdir}/subsampling", mode: "copy", overwrite: false
     
     input:
-	set file(fasta), file(names), file(groups) from TAXA_FILTERED_CONTIGS
+	set file(fasta), file(names), file(groups), file(tax) from TAXA_FILTERED_CONTIGS
     output:
-	set file("all.subsampling.fasta"), file("all.subsampling.names"), file("all.subsampling.groups") into SUBSAMPLED_CONTIGS
+	set file("all.subsampling.fasta"), file("all.subsampling.names"), file("all.subsampling.groups"), file("all.subsampling.taxonomy") into SUBSAMPLED_CONTIGS
 
     script:
     """
@@ -396,10 +395,12 @@ process Clustering {
     publishDir "${params.outdir}/clustering", mode: "copy", overwrite: false
     
     input:
-	set file(fasta), file(names), file(groups) from SUBSAMPLED_CONTIGS
+	set file(fasta), file(names), file(groups), file(tax) from SUBSAMPLED_CONTIGS
         each idThreshold from (0,0.01,0.03,0.05)
     output:
-	set file("all.clustering.*.list"), file("all.clustering.*.fasta"), file("all.clustering.*.names"), file("all.clustering.*.shared"), file(groups) into CLUSTERED_CONTIGS
+	set val(idThreshold),file("all.clustering.*.list"), file(tax) into CONTIGS_FOR_CLASSIFICATION
+        set val(idThreshold), file("all.clustering.*.shared") into ABUNDANCE_TABLES
+        set val(idThreshold), file("all.clustering.*.fasta") into PRELULU_FASTA
 
     script:
     """
@@ -412,142 +413,69 @@ process Classification {
     publishDir "${params.outdir}/classification", mode: "copy", overwrite: false
     
     input:
-	set file(list), file(fasta), file(names), file(shared), file(groups) from CLUSTERED_CONTIGS
+	set val(idThreshold), file(list), file(tax) from CONTIGS_FOR_CLASSIFICATION
+
     output:
 	set file("all.classification.*") into CLASSIFIED_CONTIGS
     script:
     """
-    rad=`basename all.clustering.*.fasta .fasta`
-    ${params.scripts}/mothur.sh --step=classification --rad=\${rad} --refTax=${params.referenceTax} --refAln=${params.referenceAln}
+    rad=`basename all.clustering.*.list .list`
+    ${params.scripts}/mothur.sh --step=classification --rad=\${rad} --idThreshold=${idThreshold} --refTax=${params.referenceTax} --refAln=${params.referenceAln}
     """
 }
 
-// /*
-//  *
-//  * Step 15: Pre-lulu step
-//  *    - Blast each contig against each other
-//  *
-//  */
+/*
+ *
+ * Pre-lulu step
+ *    - Blast each contig against each other
+ *
+ */
 
-// process PreLulu {
-//     tag { "preLulus" }
-//     label "medium_computation"    
-//     publishDir "${params.outdir}/lulu", mode: "copy", overwrite: false
-//     // errorStrategy "${params.errorsHandling}"
+process PreLulu {
+    tag { "preLulus" }
+    publishDir "${params.outdir}/lulu", mode: "copy", overwrite: false
 
-//     input:
-// 	set val(idThreshold),file(fasta) from LULU_ALL_SAMPLES
-//     output:
-// 	set val(idThreshold),file("match_list_${idThreshold}.txt") into MATCH_LISTS
-//     script:
+    input:
+	set val(idThreshold),file(fasta) from PRELULU_FASTA
+    output:
+	set val(idThreshold),file("match_list_${idThreshold}.txt") into MATCH_LISTS
+    script:
 	
-//     """
-//     vsearch --usearch_global ${fasta} \
-//             --db ${fasta} --self \
-//             --id .84 \
-//             --iddef 1 \
-//             --userout match_list_${idThreshold}.txt \
-//             -userfields query+target+id \
-//             --maxaccepts 0 \
-//             --query_cov .9 \
-//             --maxhits 10
-//     """
-// }
+    """
+    vsearch --usearch_global ${fasta} \
+            --db ${fasta} --self \
+            --id .84 \
+            --iddef 1 \
+            --userout match_list_${idThreshold}.txt \
+            -userfields query+target+id \
+            --maxaccepts 0 \
+            --query_cov .9 \
+            --maxhits 10
+    """
+}
 
-// /*
-//  *
-//  * Step 16: Lulu
-//  *
-//  */
+process Lulu {
+    tag { "Lulu" }
+    publishDir "${params.outdir}/lulu", mode: "copy", overwrite: false
+    errorStrategy "${params.errorsHandling}"
 
-// process Lulu {
-//     tag { "Lulu" }
-//     label "high_computation"    
-//     publishDir "${params.outdir}/lulu", mode: "copy", overwrite: false
-//     errorStrategy "${params.errorsHandling}"
-
-//     input:
-// 	set val(idThreshold),file(matchlist),file(table) from MATCH_LISTS.join(ABUNDANCE_TABLES)
-//     output:
-// 	set val(idThreshold),file("curated_table_${idThreshold}.csv") into ABUNDANCE_LULU
-// 	set val(idThreshold),file("curated_ids_${idThreshold}.csv") into IDS_LULU
-//     script:
+    input:
+	set val(idThreshold),file(matchlist),file(table) from MATCH_LISTS.join(ABUNDANCE_TABLES)
+    output:
+	set val(idThreshold),file("curated_table_${idThreshold}.csv") into ABUNDANCE_LULU
+	set val(idThreshold),file("curated_ids_${idThreshold}.csv") into IDS_LULU
+    script:
 	
-//     """
-//     #!/usr/bin/env Rscript
-//     source("${workflow.projectDir}/scripts/util.R")
+    """
+    #!/usr/bin/env Rscript
+    source("${workflow.projectDir}/scripts/util.R")
 
-//     luluCurate("${table}","${matchlist}","${idThreshold}")
-//     """
-// }
-
-// /*
-//  *
-//  * Step 17: Retrieve contigs from lulu table for annotation
-//  *
-//  */
-
-// process ExtractFastaLulu {
-//     label "medium_computation"
-//     tag { "extractFastaLulu" }
-//     publishDir "${params.outdir}/taxonomy", mode: "copy", overwrite: false
-//     errorStrategy "${params.errorsHandling}"
-    
-//     input:
-// 	set idThreshold,file(ids),file(fasta) from IDS_LULU.join(ALL_SAMPLES)
-//     output:
-// 	set idThreshold,file("lulu_fasta${idThreshold}.fasta") into FASTAS_LULU
-//     script:
-	
-//     """
-//     #!/usr/bin/env python3
-
-//     import sys
-//     sys.path.append("${workflow.projectDir}/scripts")
-//     from util import extractFastaLulu
-
-//     extractFastaLulu("${fasta}","${ids}","${idThreshold}")
-//     """
-// }    
-
-// /*
-//  *
-//  * Step 18: Annotation
-//  *
-//  */
-
-// process ClassificationVsearch  {
-//     tag { "classification" }
-//     label "medium_computation"
-//     publishDir "${params.outdir}/taxonomy", mode: "copy", overwrite: false
-//     errorStrategy "${params.errorsHandling}"
-
-//     input:
-// 	set idThreshold,file(fasta) from FASTAS_LULU
-//     output:
-//         set idThreshold,file("taxonomy_${idThreshold}.tsv") into TAXONOMY
-//     script:
-	
-//     """
-//     vsearch --threads ${task.cpus} \
-// 	    --db ${params.referenceVSEARCH} \
-// 	    --userfields query+target+id+alnlen+qcov+qstrand \
-// 	    --userout taxonomy_${idThreshold}.tsv \
-// 	    --alnout aln${idThreshold}.tsv \
-// 	    --usearch_global ${fasta} \
-// 	    --id ${params.taxaMinId}
-//     """
-// }
-
-// /*
-//  *
-//  * Step 19: Annotate abunance tables from LULU
-//  *
-//  */
+    luluCurate("${table}","${matchlist}","${idThreshold}")
+    """
+}
 
 // process FillAbundanceTable {
 //     tag { "fillAbundanceTable" }
-//     label "medium_computation"    
 //     publishDir "${params.outdir}/taxonomy", mode: "copy", overwrite: false
 //     errorStrategy "${params.errorsHandling}"
     
