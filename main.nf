@@ -66,7 +66,7 @@ log.info "========================================="
 - screen.seqs (optimization of minoverlap-mismatches-minlength-maxlength)
 - unique.seqs
 - align.seqs; filter.seqs; screen.seqs  --> alignment against reference for further filtering
-- chimera.seqs; remove.seqs             --> chimera removal
+- chimera.vsearch; remove.seqs             --> chimera removal
 - classify.seqs; (remove.lineage)       --> classification, optional taxa filtering
 - sub.sample
 - cluster (at 95,97,99 and 100% identity)
@@ -143,10 +143,10 @@ process LearnErrors {
     source("${workflow.projectDir}/scripts/util.R") 
 
     fastqs <- c("${fastq.join('","')}")
-    learnErrorRates(fastqs[1],"${pairId}1")
+    learnErrorRates(fastqs[1],"${pairId}.1")
 
     if (${params.revRead} == 1) {
-        learnErrorRates(fastqs[2],"${pairId}2")
+        learnErrorRates(fastqs[2],"${pairId}.2")
     }
     """
 }
@@ -167,10 +167,10 @@ process Denoise {
     errors <- c("${err.join('","')}")
     fastqs <- c("${fastq.join('","')}")
 
-    dadaDenoise(errors[1], fastqs[1], "${pairId}1")
+    dadaDenoise(errors[1], fastqs[1], "${pairId}.1")
 
     if (${params.revRead} == 1) {
-        dadaDenoise(errors[2], fastqs[2], "${pairId}2")
+        dadaDenoise(errors[2], fastqs[2], "${pairId}.2")
     }
     """
 }
@@ -369,7 +369,7 @@ process Clustering {
 	set file(fasta), file(names), file(groups), file(tax) from SUBSAMPLED_CONTIGS
         each idThreshold from (0,0.01,0.03,0.05)
     output:
-	set val(idThreshold),file("all.clustering.*.list"), file(tax) into CONTIGS_FOR_CLASSIFICATION
+	set val(idThreshold),file("all.clustering.*.list"), file("all.clustering.*.names"), file(tax) into CONTIGS_FOR_CLASSIFICATION
         set val(idThreshold), file("all.clustering.*.shared"), file("all.clustering.*.fasta") into ABUNDANCE_TABLES
         set val(idThreshold), file("all.clustering.*.fasta") into PRELULU_FASTA, FASTA_TO_FILTER
 
@@ -379,18 +379,18 @@ process Clustering {
     """
 }
 
-process PreClassification {
-    tag { "pre-classification" }
-    publishDir "${params.outdir}/13-preclassification", mode: "copy", overwrite: false
+process ConsensusClassification {
+    tag { "consensusClassification" }
+    publishDir "${params.outdir}/13-consensusClassification", mode: "copy", overwrite: false
     
     input:
-	set val(idThreshold), file(list), file(tax) from CONTIGS_FOR_CLASSIFICATION
+	set val(idThreshold), file(list), file(names), file(tax) from CONTIGS_FOR_CLASSIFICATION
     output:
 	set val(idThreshold), file("all.classification.*.taxonomy"), file("all.classification.*.summary") into CLASSIFIED_CONTIGS
     script:
     """
     rad=`basename all.clustering.*.list .list`
-    ${params.scripts}/mothur.sh --step=classification --rad=\${rad} --idThreshold=${idThreshold} --refTax=${params.referenceTax} --refAln=${params.referenceAln}
+    ${params.scripts}/mothur.sh --step=consensusClassification --rad=\${rad} --idThreshold=${idThreshold} --refTax=${params.referenceTax} --refAln=${params.referenceAln}
     """
 }
 

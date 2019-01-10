@@ -50,28 +50,31 @@ if [ $step == "merging" ]; then
     outputs_renamed=("${out}.fasta")
     
 elif [ $step == "screening" ]; then
-    optimize_mod=`echo ${optimize} | sed s/-/_/g`
+    output_suffix=`echo ${optimize} | sed s/-/_/g`
+    out="${out}.${output_suffix}"
  
     echo ${rad}.names
     if [ ! -f ${rad}.names ]; then
 	cmd=("screen.seqs(fasta=${rad}.fasta, optimize=${optimize}, criteria=${criteria})")
 	outputs_mothur=("${rad}.good.fasta")	
-	outputs_renamed=("${out}.${optimize_mod}.fasta")
+	outputs_renamed=("${out}.fasta")
     else
 	cmd=("screen.seqs(fasta=${rad}.fasta, name=${rad}.names, group=${rad}.groups, optimize=${optimize}, criteria=${criteria})")
 	outputs_mothur=("${rad}.good.names" "${rad}.good.fasta" "${rad}.good.groups")
-	outputs_renamed=("${out}.${optimize_mod}.names" "${out}.${optimize_mod}.fasta" "${out}.${optimize_mod}.groups")
+	outputs_renamed=("${out}.names" "${out}.fasta" "${out}.groups")
     fi
 	 
 elif [ $step == "summary" ]; then
     cmd=("summary.seqs(fasta=${rad}.fasta)")
 
 elif [ $step == "dereplication" ]; then
-    # Merge all fastas
+
+    # Group file data (fasta and sample id)
     fasta_files=`ls *.fasta`
     fastas=`tr " " "\n" <<< "$fasta_files" | paste -sd - -`
     ids=`ls -l *.fasta| cut -d\  -f10 | awk -F'.' '{print $1}' | paste -sd - -`
     
+    # Merge all fastas
     cat *.fasta > all.fasta
     cmd=("make.group(fasta=${fastas}, groups=${ids}) ; "
           "unique.seqs(fasta=all.fasta)")
@@ -91,7 +94,7 @@ elif [ $step == "chimera" ]; then
     outputs_mothur=("${rad}.pick.fasta" "${rad}.pick.names" "${rad}.pick.groups")
     outputs_renamed=("${out}.fasta" "${out}.names" "${out}.groups")
 
-elif [ $step == "taxaFilter" ]; then    
+elif [ $step == "taxaFilter" ]; then 
     suffixTax=`echo $taxRad | cut -d. -f2`.wang.taxonomy
     cmd=("classify.seqs(fasta=${rad}.fasta, name=${rad}.names, group=${rad}.groups, template=${refAln}, taxonomy=${refTax})")
     # "remove.lineage(taxonomy=${rad}.${suffixTax}, name=${rad}.names, fasta=${rad}.fasta, group=${rad}.groups, taxon=-unknown)")
@@ -123,16 +126,21 @@ elif [ $step == "clustering" ]; then
     
     outputs_renamed=("${out}.${idThreshold}.list" "${out}.${idThreshold}.fasta" "${out}.${idThreshold}.names" "${out}.${idThreshold}.shared")
     
-elif [ $step == "classification" ]; then
-    cmd=("classify.otu(taxonomy=all.subsampling.taxonomy, list=${rad}.list)")
+elif [ $step == "consensusClassification" ]; then
+    cmd=("classify.otu(taxonomy=all.subsampling.taxonomy, name=${rad}.names, list=${rad}.list)")
     outputs_mothur=("all.clustering.${idThreshold}.${idThreshold}.cons.taxonomy" "all.clustering.${idThreshold}.${idThreshold}.cons.tax.summary")
     outputs_renamed=("all.classification.${idThreshold}.cons.taxonomy" "all.classification.${idThreshold}.cons.summary")
 fi;
 
+# Process mothur cmd
+
+# Join the instruction array
 res=$( IFS=$' '; echo "${cmd[*]}" )
 
+# Execute
 mothur "#${res}"
 
+# Rename output files
 set -o xtrace
 
 n=$((${#outputs_mothur[@]}-1))
