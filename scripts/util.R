@@ -6,7 +6,13 @@ library(seqinr)
 library(ShortRead)
 library(stringr)
 
-filterReads <- function(pairId,fwd,rev=NULL,minLen=30,maxEE=Inf)
+filterReads <- function(pairId,fwd,rev=NULL,
+                        minLen=c(30,30),
+                        maxEE=c(Inf,Inf),
+                        truncLen=c(0,0),
+                        rm.phix=TRUE,
+                        truncQ=c(2,2)
+                        )
 {
     fwd.out <- paste(paste0(pairId,"1"),"trimmed.fastq",
                      sep="_")
@@ -15,12 +21,11 @@ filterReads <- function(pairId,fwd,rev=NULL,minLen=30,maxEE=Inf)
 
     if ( !is.null(rev) )
     {
-        filterAndTrim(fwd, fwd.out, rev=rev, filt.rev=rev.out, compress=FALSE, truncQ=0, minLen=minLen, maxEE=maxEE)
+        filterAndTrim(fwd, fwd.out, rev=rev, filt.rev=rev.out, compress=FALSE, truncQ=truncQ, minLen=minLen, maxEE=maxEE)
         saveRDS(readFastq(fwd.out)@id, paste0( pairId, "1.ids") )
         saveRDS(readFastq(rev.out)@id, paste0( pairId, "2.ids") )
-        
     } else {
-        filterAndTrim(fwd, fwd.out, compress=FALSE, truncQ=0, minLen=minLen, maxEE=maxEE)
+        filterAndTrim(fwd, fwd.out, compress=FALSE, truncQ=truncQ[1], minLen=minLen[1], maxEE=maxEE[1])
         saveRDS(readFastq(fwd.out)@id, paste0( pairId, "1.ids") )        
     }
             
@@ -42,11 +47,11 @@ dadaDenoise <- function(errorFile,derepFile,pairId)
 {
     errors <- readRDS(errorFile)
     derep <- derepFastq(derepFile)
-    derep.denoised <- dada(derep, err=errors, multithread=TRUE, OMEGA_C=0)
+    derep.denoised <- dada(derep, err=errors, multithread=TRUE)
     # Extract abundance values from derep.denoised to name the fastas. Sample name also used
     seqIds <- paste0(pairId,";size=",as.numeric(getUniques(derep.denoised)))
     # Write to fasta
-    uniquesToFasta(derep.denoised,paste0(pairId,".dada.fasta"),seqIds)
+    # uniquesToFasta(derep.denoised,paste0(pairId,".dada.fasta"),seqIds)
     # Save RDS object
     saveRDS(derep,paste0(pairId,".derep.RDS"))
     saveRDS(derep.denoised,paste0(pairId,".dada.RDS"))
