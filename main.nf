@@ -80,23 +80,23 @@ log.info "========================================="
 
 */
 
-process runFastQC {
-    tag { "FastQC.${pairId}" }
-    publishDir "${params.outdir}/0-qualityControl", mode: "copy", overwrite: false
+// process runFastQC {
+//     tag { "FastQC.${pairId}" }
+//     publishDir "${params.outdir}/0-qualityControl", mode: "copy", overwrite: false
     
-    input:
-        set val(pairId), file(in_fastq) from INPUT_FASTQ_TO_QC
-    output:
-        file("${pairId}_fastqc/*.zip") into FASTQC_FILES
+//     input:
+//         set val(pairId), file(in_fastq) from INPUT_FASTQ_TO_QC
+//     output:
+//         file("${pairId}_fastqc/*.zip") into FASTQC_FILES
 
-    script:
-    """
-    mkdir ${pairId}_fastqc
+//     script:
+//     """
+//     mkdir ${pairId}_fastqc
 
-    fastqc --outdir ${pairId}_fastqc ${in_fastq.join(' ')}
+//     fastqc --outdir ${pairId}_fastqc ${in_fastq.join(' ')}
 
-    """
-}
+//     """
+// }
 
 /*
  *

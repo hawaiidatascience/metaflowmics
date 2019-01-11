@@ -47,11 +47,9 @@ dadaDenoise <- function(errorFile,derepFile,pairId)
 {
     errors <- readRDS(errorFile)
     derep <- derepFastq(derepFile)
-    derep.denoised <- dada(derep, err=errors, multithread=TRUE)
-    # Extract abundance values from derep.denoised to name the fastas. Sample name also used
-    seqIds <- paste0(pairId,";size=",as.numeric(getUniques(derep.denoised)))
-    # Write to fasta
-    # uniquesToFasta(derep.denoised,paste0(pairId,".dada.fasta"),seqIds)
+    derep.denoised <- dada(derep, err=errors, multithread=TRUE, OMEGA_A=1e-80)
+    # # Extract abundance values from derep.denoised to name the fastas. Sample name also used
+    # seqIds <- paste0(pairId,";size=",as.numeric(getUniques(derep.denoised)))
     # Save RDS object
     saveRDS(derep,paste0(pairId,".derep.RDS"))
     saveRDS(derep.denoised,paste0(pairId,".dada.RDS"))
@@ -64,7 +62,7 @@ readsFromDenoised <- function(dadaOut, derep, pairId, readIds)
     copies <- as.numeric(denoised$denoised)
     
     derepMap <- as.numeric(readRDS(derep)$map)
-    denoisedMap <- as.numeric(denoised$map) # Some NAs are present here. Why?
+    denoisedMap <- as.numeric(denoised$map)
     
     reads <- do.call(function(i) { sequences[denoisedMap[i]] },
                      list(derepMap))
@@ -105,7 +103,7 @@ luluCurate <- function(abundanceFile,matchListFile,threshold)
                             as.is=TRUE,
                             stringsAsFactors=FALSE
                             )
-    curated <- lulu(otutab, matchList)
+    curated <- lulu(otutab, matchList, minimum_ratio_type="min", minimum_ratio=1, minimum_match=90, minimum_relative_cooccurence=0.95)
     
     write.csv(curated$curated_table,
               paste0("curated_table_",threshold,".csv"),
