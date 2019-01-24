@@ -14,13 +14,6 @@ do
     --rad=*)
 	rad="${arg#*=}" ;;
 
-    --fwdFasta=*)
-	fwdFasta="${arg#*=}"
-	faRad=`basename $fwdFasta .fasta`;;
-
-    --revFasta=*)
-	revFasta="${arg#*=}" ;;
-		       		       
     --optimize=*)
 	optimize="${arg#*=}" ;;
 
@@ -45,49 +38,24 @@ do
     esac
 done
 
-out="${pairId}.${step}"
-
-if [ $step == "merging" ]; then
-    cmd=("make.contigs(ffasta=${fwdFasta}, rfasta=${revFasta})")
-    outputs_mothur=("${faRad}.trim.contigs.fasta")
-    outputs_renamed=("${out}.fasta")
+# General prefix for output names
+out="${pairId}.${step}" 
     
-elif [ $step == "screening" ]; then
+if [ $step == "screening" ]; then
     output_suffix=`echo ${optimize} | sed s/-/_/g`
     out="${out}.${output_suffix}"
- 
-    if [ ! -f ${rad}.count_table ]; then
-	cmd=("screen.seqs(fasta=${rad}.fasta, optimize=${optimize}, criteria=${criteria})")
-	outputs_mothur=("${rad}.good.fasta")	
-	outputs_renamed=("${out}.fasta")
-    else
-	inputs_mothur=("${rad}.count_table" "${rad}.fasta") # needs to keep track in case mothur does not create an output
-	cmd=("screen.seqs(fasta=${rad}.fasta, count=${rad}.count_table, optimize=${optimize}, criteria=${criteria})")
-	outputs_mothur=("${rad}.good.count_table" "${rad}.good.fasta")
-	outputs_renamed=("${out}.count_table" "${out}.fasta")
-    fi
+
+    # We need to keep track of the input in case mothur does not create an output in case mothur does not create one.
+    inputs_mothur=("all.esv.count_table" "${rad}.fasta") 
+    cmd=("screen.seqs(fasta=${rad}.fasta, count=all.esv.count_table, optimize=${optimize}, criteria=${criteria})")
+    outputs_mothur=("${rad}.good.count_table" "${rad}.good.fasta")
+    outputs_renamed=("${out}.count_table" "${out}.fasta")
 	 
 elif [ $step == "summary" ]; then
     cmd=("summary.seqs(fasta=${rad}.fasta)")
-
-elif [ $step == "dereplication" ]; then
-
-    # Group file data (fasta and sample id)
-    fasta_files=`ls *.fasta`
-    fastas=`tr " " "\n" <<< "$fasta_files" | paste -sd - -`
-    ids=`ls -l *.fasta| cut -d\  -f10 | awk -F'.' '{print $1}' | paste -sd - -`
-    
-    # Merge all fastas
-    cat *.fasta > all.fasta
-    cmd=("make.group(fasta=${fastas}, groups=${ids}) ; "
-         "unique.seqs(fasta=all.fasta) ; "
-	 "count.seqs(name=all.names, group=current)")
-
-    outputs_mothur=("all.unique.fasta" "all.names" "all.count_table")
-    outputs_renamed=("${out}.fasta" "${out}.names" "${out}.count_table")
    
 elif [ $step == "MSA" ]; then
-    cmd=("align.seqs(fasta=${rad}.fasta,reference=${refAln}) ; "
+    cmd=("align.seqs(fasta=${rad}.fasta, reference=${refAln}) ; "
 	 "filter.seqs(fasta=${rad}.align)")
     outputs_mothur=("${rad}.filter.fasta")
     outputs_renamed=("${out}.fasta")
@@ -111,7 +79,6 @@ elif [ $step == "taxaFilter" ]; then
 	outputs_renamed+=("${out}.count_table" "${out}.fasta")
     fi
 
-
 elif [ $step == "subsampling" ]; then
     cmd=("sub.sample(persample=true,fasta=${rad}.fasta, count=${rad}.count_table, taxonomy=${rad}.taxonomy)")
     outputs_mothur=("${rad}.subsample.fasta" "${rad}.subsample.count_table" "${rad}.subsample.taxonomy")
@@ -127,7 +94,7 @@ elif [ $step == "clustering" ]; then
     
     cmd=("cluster(count=${rad}.count_table, fasta=${rad}.fasta, method=${method}, cutoff=${idThreshold}) ; "
 	 "make.shared(list=${rad}.${method}.list, count=${rad}.count_table) ; "
-	 "get.oturep(count=${rad}.count_table, fasta=${rad}.fasta, list=${rad}.${method}.list, method=abundance, label=${idThreshold})")
+	 "get.oturep(count=${rad}.count_table, fasta=${rad}.fasta, list=${rad}.${method}.list, method=abundance, rename=T, label=${idThreshold})")
 	
     outputs_mothur=("${rad}.${method}.list" "${rad}.${method}.shared" "${rad}.${method}.${idThreshold}.rep.fasta" "${rad}.${method}.${idThreshold}.rep.count_table")
 

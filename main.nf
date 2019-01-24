@@ -247,7 +247,7 @@ process MultipleSequenceAlignment {
 
     ${params.scripts}/mothur.sh \
        --step=screening \
-       --rad=all.esv \
+       --rad=all.MSA \
        --criteria=${params.criteria} \
        --optimize=start-end
 
@@ -322,7 +322,7 @@ process Clustering {
         each idThreshold from (0,0.01,0.03,0.05)
     output:
         set val(idThreshold), file("all.clustering.*.fasta") into PRELULU_FASTA, FASTA_TO_FILTER
-        set val(idThreshold), file("all.clustering.*.shared"), file("all.clustering.*.fasta") into ABUNDANCE_TABLES
+        set val(idThreshold), file("all.clustering.*.shared") into ABUNDANCE_TABLES
 	set val(idThreshold), file("all.clustering.*.list"), file(count), file(tax) into CONTIGS_FOR_CLASSIFICATION
     script:
     """
@@ -337,44 +337,12 @@ process ConsensusClassification {
     input:
 	set val(idThreshold), file(list), file(count), file(tax) from CONTIGS_FOR_CLASSIFICATION
     output:
-	set val(idThreshold), file("all.classification.*.taxonomy"), file("all.classification.*.summary") into CLASSIFIED_CONTIGS
+	file("all.classification.*.summary") into CLASSIFICATION_SUMMARY
+	set val(idThreshold), file("all.classification.*.taxonomy") into CONSENSUS_TAXONOMY
     script:
     """
     rad=`basename all.clustering.*.list .list`
     ${params.scripts}/mothur.sh --step=consensusClassification --rad=\${rad} --idThreshold=${idThreshold} --refTax=${params.referenceTax} --refAln=${params.referenceAln}
-    """
-}
-
-process CleanTables {
-    tag "cleanTable"
-    publishDir "${params.outdir}/14-cleanTables", mode: "copy", overwrite: false
-
-    input:
-	set val(idThreshold), file(table), file(fasta), file(taxonomy), file(taxSummary) from ABUNDANCE_TABLES.join(CLASSIFIED_CONTIGS)
-    output:
-	set val(idThreshold), file("all.abundanceTable.*.csv"), file("all.taxonomyTable.*.csv") into ABUNDANCE_TABLES_CLEAN
-        set val(idThreshold), file("all.taxonomyTable.*.csv") into TAXONOMY_TO_FILTER
-    script:
-    """
-    #!/usr/bin/env python
- 
-    from Bio import SeqIO
-    import pandas as pd
-    import re
-
-    taxonomyTable = pd.read_table("${taxonomy}", index_col=0)
-    abundanceTable = pd.read_table("${table}", index_col=1).drop(["label","numOtus"],axis=1)
-    mapping = pd.Series({ 
-                      re.split('[\\t|\\|]',seq.description)[1]: seq.id
-                      for seq in SeqIO.parse("${fasta}","fasta") 
-                  })
-
-    abundanceTable.columns = mapping[abundanceTable.columns]
-    taxonomyTable.index = mapping[taxonomyTable.index]
-
-    abundanceTable.T.to_csv("all.abundanceTable.${idThreshold}.csv")
-    taxonomyTable.to_csv("all.taxonomyTable.${idThreshold}.csv")
-    
     """
 }
 
@@ -387,7 +355,7 @@ process CleanTables {
 
 process PreLulu {
     tag { "preLulus" }
-    publishDir "${params.outdir}/15-lulu", mode: "copy", overwrite: false
+    publishDir "${params.outdir}/14-lulu", mode: "copy", overwrite: false
 
     input:
 	set val(idThreshold),file(fasta) from PRELULU_FASTA
@@ -396,8 +364,11 @@ process PreLulu {
     script:
 	
     """
-    vsearch --usearch_global ${fasta} \
-            --db ${fasta} --self \
+    fasta_clean="contigs_${idThreshold}_no_gap.fasta"
+    sed s/-//g ${fasta} > \$fasta_clean
+
+    vsearch --usearch_global \$fasta_clean \
+            --db \$fasta_clean --self \
             --id .84 \
             --iddef 1 \
             --userout match_list_${idThreshold}.txt \
@@ -410,13 +381,13 @@ process PreLulu {
 
 process Lulu {
     tag { "Lulu" }
-    publishDir "${params.outdir}/15-lulu", mode: "copy", overwrite: false
+    publishDir "${params.outdir}/14-lulu", mode: "copy", overwrite: false
     errorStrategy "${params.errorsHandling}"
 
     input:
-	set val(idThreshold),file(matchlist),file(table),file(taxTable) from MATCH_LISTS.join(ABUNDANCE_TABLES_CLEAN)
+	set val(idThreshold),file(matchlist),file(table) from MATCH_LISTS.join(ABUNDANCE_TABLES)
     output:
-	set val(idThreshold),file("curated_table_${idThreshold}.csv") into ABUNDANCE_LULU
+	set val(idThreshold),file("curated_table_${idThreshold}.csv") into ABUNDANCE_LULU,ABUNDANCE_MOTHUR
 	set val(idThreshold),file("curated_ids_${idThreshold}.csv") into IDS_LULU
     script:
 	
@@ -430,16 +401,17 @@ process Lulu {
 
 process FilterFasta {
     tag { "filterFasta" }
-    publishDir "${params.outdir}/15-lulu", mode: "copy", overwrite: false
+    publishDir "${params.outdir}/14-lulu", mode: "copy", overwrite: false
     errorStrategy "${params.errorsHandling}"
     
     input:
-	set idThreshold,file(ids),file(tax),file(fasta) from IDS_LULU.join(TAXONOMY_TO_FILTER).join(FASTA_TO_FILTER)
+	set idThreshold,file(ids),file(tax),file(fasta) from IDS_LULU.join(CONSENSUS_TAXONOMY).join(FASTA_TO_FILTER)
     output:
-	set file("OTU_${idThreshold}.fasta"), file("taxonomy_${idThreshold}.csv")
+	set idThreshold,file("OTU_${idThreshold}.fasta") into FASTA_FOR_MOTHUR
+        set file("OTU_${idThreshold}.fasta"), file("taxonomy_${idThreshold}.csv") into OUTPUT_FILES
     script:
     """
-    #!/usr/bin/env python3
+    #!/usr/bin/env python
 
     import pandas as pd
     from Bio import SeqIO
@@ -448,8 +420,47 @@ process FilterFasta {
     fasta = [ seq for seq in SeqIO.parse("${fasta}","fasta") if seq.id in ids ]
     SeqIO.write(fasta,"OTU_${idThreshold}.fasta","fasta")
 
-    taxonomyTable = pd.read_csv("${tax}",index_col=0)
-    taxonomyTable.loc[ids].to_csv("taxonomy_${idThreshold}.csv")    
+    taxonomyTable = pd.read_table("${tax}",index_col=0)
+    taxonomyTable.loc[ids].to_csv("taxonomy_${idThreshold}.csv")
     """
 }
 
+process ConvertToMothur {
+    tag { "convertToMothur" }
+    publishDir "${params.outdir}/15-mothurFmtOutputs", mode: "copy", overwrite: false
+    errorStrategy "${params.errorsHandling}"
+    
+    input:
+	set val(idThreshold),file(fasta),file(abundanceTable) from FASTA_FOR_MOTHUR.join(ABUNDANCE_MOTHUR)
+    output:
+	set val(idThreshold),file(fasta),file("abundance_${idThreshold}.shared") into MOTHUR_INPUTS
+    script:
+    """
+    #!/usr/bin/env python
+
+    import pandas as pd
+
+    shared = pd.read_csv("${abundanceTable}", index_col=0).T
+    shared.index.name = "Group"
+    shared.insert(loc=0, column="numOtus", value=[shared.shape[1]]*shared.shape[0])
+    shared.reset_index(inplace=True)
+    shared.insert(loc=0, column="label", value=[${idThreshold}]*shared.shape[0])
+    shared.to_csv("abundance_${idThreshold}.shared", sep="\t", index=False)
+    """
+}
+
+process Results {
+    tag { "mothurResults" }
+    publishDir "${params.outdir}/16-mothurResults", mode: "copy", overwrite: false
+    errorStrategy "${params.errorsHandling}"
+    
+    input:
+	set val(idThreshold), file(fasta), file(shared) from MOTHUR_INPUTS
+    output:
+	set file("*.relabund"), file("*.wsummary"), file("*.tre") into RESULTS
+    script:
+    """
+    mothur "#get.relabund(shared=${shared})"
+    mothur "#clearcut(fasta=${fasta}, DNA=T) ; count.seqs(shared=${shared}) ; unifrac.weighted(tree=current,count=current)"
+    """    
+}

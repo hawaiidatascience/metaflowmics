@@ -93,16 +93,20 @@ esvTable <- function(pattern="*.dada.RDS")
 
 luluCurate <- function(abundanceFile,matchListFile,threshold)
 {
-    otutab <- read.csv(abundanceFile,
-                       header=TRUE,
-                       as.is=TRUE,
-                       row.names=1
-                )
+    otutab <- read.table(abundanceFile,
+                         header=TRUE,
+                         as.is=TRUE,
+                         check.names=T,
+                         row.names=2
+                         )[-c(1,2)]
+    otutab <- as.data.frame(t(otutab))
+    
     matchList <- read.table(matchListFile,
                             header=FALSE,
                             as.is=TRUE,
                             stringsAsFactors=FALSE
                             )
+    
     curated <- lulu(otutab, matchList, minimum_ratio_type="min", minimum_ratio=1, minimum_match=90, minimum_relative_cooccurence=0.95)
     
     write.csv(curated$curated_table,
