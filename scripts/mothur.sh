@@ -51,7 +51,7 @@ if [ $step == "screening" ]; then
     # We need to keep track of the input in case mothur does not create an output in case mothur does not create one.
     inputs_mothur=("all.esv.count_table" "${rad}.fasta") 
     cmd=("screen.seqs(fasta=${rad}.fasta, count=all.esv.count_table, optimize=${optimize}, criteria=${criteria})")
-    outputs_mothur=("${rad}.good.count_table" "${rad}.good.fasta")
+    outputs_mothur=("all.esv.good.count_table" "${rad}.good.fasta")
     outputs_renamed=("${out}.count_table" "${out}.fasta")
 	 
 elif [ $step == "summary" ]; then
