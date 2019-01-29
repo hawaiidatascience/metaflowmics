@@ -122,7 +122,7 @@ process FilterAndTrim {
 
     fastqs <- c("${fastq.join('","')}")
 
-    filterReads("${pairId}", "${fastq.join('","')}", 
+    filterReads("${pairId}", fastqs[1], rev=fastqs[2],
                 minLen=${params.minLength}, 
 		maxEE=${params.maxEE}, 
 		truncLen=${params.truncLen}, 
@@ -163,7 +163,7 @@ process Denoise {
         set val(pairId), file(err), file(fastq) from ERROR_MODEL.join(FASTQ_TRIMMED)
     output:
         file("*.RDS") into DADA_RDS
-    // file("${pairId}*.derep.RDS"), file("${pairId}*.dada.RDS") into DADA_RDS
+
     script:
     """
     #!/usr/bin/env Rscript
@@ -191,46 +191,15 @@ process Esv {
     script:
     """
     #!/usr/bin/env Rscript
-    library(dada2)
-    library(seqinr)
+    source("${workflow.projectDir}/scripts/util.R")
 
-    sample.names <- as.character(sapply( list.files(path=".",pattern="*.1.derep.RDS"), 
-                                         function(x) unlist(strsplit(x,".1",fixed=T))[1] )
-    )
-
-    derepF <- lapply(list.files(path=".",pattern="*.1.derep.RDS"),readRDS)
-    dadaF <- lapply(list.files(path=".",pattern="*.1.dada.RDS"),readRDS)
-
-    if (${params.revRead} == 1) {
-        
-        derepR <- lapply(list.files(path=".",pattern="*.2.derep.RDS"),readRDS)
-        dadaR <- lapply(list.files(path=".",pattern="*.2.dada.RDS"),readRDS)
-
-        merged <- mergePairs( dadaF, derepF, dadaR, derepR, minOverlap=${params.minOverlap}, maxMismatch=${params.maxMismatch})
-
-        esvTable <- makeSequenceTable(merged)
-        esv.names <- paste0("sq",1:dim(esvTable)[2])
-
-        uniquesToFasta(esvTable,"all.esv.fasta", ids=esv.names)
-
-        esvTable <- cbind(esv.names, colSums(esvTable), t(esvTable) )
-
-        colnames(esvTable) <- c("Representative_Sequence","total",sample.names)
-
-        write.table(esvTable, file="all.esv.count_table", row.names=F, col.names=T, quote=F) 
-                
-        # merged fields: sequence, abundance, mismatches,...
-    } else {
-        print("Not implemented yet")
-        # merged <- 
-    }
-       
+    esvTable("${params.minOverlap}","${params.maxMismatch}","${params.revRead}")       
     """
 }
 
 process MultipleSequenceAlignment {
     tag { "MSA" }
-    publishDir "${params.outdir}/8-multipleSequenceALignment", mode: "copy", overwrite: false
+    publishDir "${params.outdir}/5-multipleSequenceALignment", mode: "copy", overwrite: false
     
     input:
         set file(count), file(fasta) from DEREP_CONTIGS
@@ -257,7 +226,7 @@ process MultipleSequenceAlignment {
 
 process ChimeraRemoval {
     tag { "chimeraRemoval" }
-    publishDir "${params.outdir}/9-chimeraRemoval", mode: "copy", overwrite: false
+    publishDir "${params.outdir}/6-chimeraRemoval", mode: "copy", overwrite: false
     
     input:
 	set file(count), file(fasta) from DEREP_CONTIGS_ALN
@@ -273,7 +242,7 @@ process ChimeraRemoval {
 
 process TaxaFiltering {
     tag { "taxaFilter" }
-    publishDir "${params.outdir}/10-taxaFiltering", mode: "copy", overwrite: false
+    publishDir "${params.outdir}/7-taxaFiltering", mode: "copy", overwrite: false
     
     input:
 	set file(count), file(fasta) from NO_CHIMERA_FASTA
@@ -300,7 +269,7 @@ process TaxaFiltering {
 
 process Subsampling {
     tag { "subsampling" }
-    publishDir "${params.outdir}/11-subsampling", mode: "copy", overwrite: false
+    publishDir "${params.outdir}/8-subsampling", mode: "copy", overwrite: false
     
     input:
 	set file(fasta), file(count), file(tax) from TAXA_FILTERED_CONTIGS
@@ -309,13 +278,17 @@ process Subsampling {
 
     script:
     """
-    ${params.scripts}/mothur.sh --step=subsampling --rad=all.taxaFilter
+    awk '{c=0;for(i=1;i<=NF;++i){c+=\$i};print c}' ${count} | tail -n +2 |sort -n > sample_size.txt
+
+    percentile_value=`awk '{all[NR] = \$1} END{print all[int(NR*${params.subsamplingQuantile})]}' sample_size.txt`
+
+    ${params.scripts}/mothur.sh --step=subsampling --rad=all.taxaFilter --subsamplingNb=\$percentile_value
     """
 }
 
 process Clustering {
     tag { "clustering" }
-    publishDir "${params.outdir}/12-clustering", mode: "copy", overwrite: false
+    publishDir "${params.outdir}/9-clustering", mode: "copy", overwrite: false
     
     input:
 	set file(fasta), file(count), file(tax) from SUBSAMPLED_CONTIGS
@@ -332,7 +305,7 @@ process Clustering {
 
 process ConsensusClassification {
     tag { "consensusClassification" }
-    publishDir "${params.outdir}/13-consensusClassification", mode: "copy", overwrite: false
+    publishDir "${params.outdir}/10-consensusClassification", mode: "copy", overwrite: false
     
     input:
 	set val(idThreshold), file(list), file(count), file(tax) from CONTIGS_FOR_CLASSIFICATION
@@ -355,7 +328,7 @@ process ConsensusClassification {
 
 process PreLulu {
     tag { "preLulus" }
-    publishDir "${params.outdir}/14-lulu", mode: "copy", overwrite: false
+    publishDir "${params.outdir}/11-lulu", mode: "copy", overwrite: false
 
     input:
 	set val(idThreshold),file(fasta) from PRELULU_FASTA
@@ -381,7 +354,7 @@ process PreLulu {
 
 process Lulu {
     tag { "Lulu" }
-    publishDir "${params.outdir}/14-lulu", mode: "copy", overwrite: false
+    publishDir "${params.outdir}/12-lulu", mode: "copy", overwrite: false
     errorStrategy "${params.errorsHandling}"
 
     input:
@@ -401,7 +374,7 @@ process Lulu {
 
 process FilterFasta {
     tag { "filterFasta" }
-    publishDir "${params.outdir}/14-lulu", mode: "copy", overwrite: false
+    publishDir "${params.outdir}/13-lulu", mode: "copy", overwrite: false
     errorStrategy "${params.errorsHandling}"
     
     input:
@@ -427,7 +400,7 @@ process FilterFasta {
 
 process ConvertToMothur {
     tag { "convertToMothur" }
-    publishDir "${params.outdir}/15-mothurFmtOutputs", mode: "copy", overwrite: false
+    publishDir "${params.outdir}/14-mothurFmtOutputs", mode: "copy", overwrite: false
     errorStrategy "${params.errorsHandling}"
     
     input:
@@ -451,7 +424,7 @@ process ConvertToMothur {
 
 process Results {
     tag { "mothurResults" }
-    publishDir "${params.outdir}/16-mothurResults", mode: "copy", overwrite: false
+    publishDir "${params.outdir}/15-mothurResults", mode: "copy", overwrite: false
     errorStrategy "${params.errorsHandling}"
     
     input:

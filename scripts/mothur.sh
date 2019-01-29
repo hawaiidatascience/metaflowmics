@@ -32,6 +32,9 @@ do
 
     --idThreshold=*)
 	idThreshold="${arg#*=}" ;;
+    
+    --subsamplingNb=*)
+	subsamplingNb="${arg#*=}" ;;
 
     *)
 	echo "$arg: Unknown option";;    
@@ -80,7 +83,7 @@ elif [ $step == "taxaFilter" ]; then
     fi
 
 elif [ $step == "subsampling" ]; then
-    cmd=("sub.sample(persample=true,fasta=${rad}.fasta, count=${rad}.count_table, taxonomy=${rad}.taxonomy)")
+    cmd=("sub.sample(persample=true, fasta=${rad}.fasta, count=${rad}.count_table, taxonomy=${rad}.taxonomy, size=${subsamplingNb})")
     outputs_mothur=("${rad}.subsample.fasta" "${rad}.subsample.count_table" "${rad}.subsample.taxonomy")
     outputs_renamed=("${out}.fasta" "${out}.count_table" "${out}.taxonomy")
 
