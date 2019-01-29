@@ -278,7 +278,8 @@ process Subsampling {
 
     script:
     """
-    awk '{c=0;for(i=1;i<=NF;++i){c+=\$i};print c}' ${count} | tail -n +2 |sort -n > sample_size.txt
+    # awk '{c=0;for(i=1;i<=NF;++i){c+=\$i};print c}' ${count} | tail -n +2 |sort -n > sample_size.txt
+    awk '{for (i=3;i<=NF;i++) sum[i]+=$i;}; END{for (i in sum) print sum[i]}' ${count} | tail -n +2 |sort -n > sample_size.txt
 
     percentile_value=`awk '{all[NR] = \$1} END{print all[int(NR*${params.subsamplingQuantile})]}' sample_size.txt`
 
