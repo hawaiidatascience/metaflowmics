@@ -114,6 +114,7 @@ process FilterAndTrim {
     output:
         set val(pairId), file("${pairId}*_trimmed.fastq") into FASTQ_TRIMMED, FASTQ_TRIMMED_FOR_MODEL
         set val(pairId), file("${pairId}*.ids") into FILTERED_READS_IDS
+        file "*.pdf" into QUALITY_PROFILE
 
     script:
     """
@@ -140,6 +141,7 @@ process LearnErrors {
 	set val(pairId), file(fastq) from FASTQ_TRIMMED_FOR_MODEL
     output:
 	set val(pairId), file("${pairId}*.RDS") into ERROR_MODEL
+        file("*.pdf") into ERROR_PROFILE
 
     script:
     """
@@ -147,11 +149,7 @@ process LearnErrors {
     source("${workflow.projectDir}/scripts/util.R") 
 
     fastqs <- c("${fastq.join('","')}")
-    learnErrorRates(fastqs[1],"${pairId}.1")
-
-    if (${params.revRead} == 1) {
-        learnErrorRates(fastqs[2],"${pairId}.2")
-    }
+    learnErrorRates(fastqs,"${pairId}")
     """
 }
 
@@ -172,10 +170,10 @@ process Denoise {
     errors <- c("${err.join('","')}")
     fastqs <- c("${fastq.join('","')}")
 
-    dadaDenoise(errors[1], fastqs[1], "${pairId}.1")
+    dadaDenoise(errors[1], fastqs[1], "${pairId}_R1")
 
     if (${params.revRead} == 1) {
-        dadaDenoise(errors[2], fastqs[2], "${pairId}.2")
+        dadaDenoise(errors[2], fastqs[2], "${pairId}_R2")
     }
     """
 }

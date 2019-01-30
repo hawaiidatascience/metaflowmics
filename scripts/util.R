@@ -29,25 +29,45 @@ filterReads <- function(pairId,fwd,rev=NULL,
                       )
         saveRDS(readFastq(fwd.out)@id, paste0( pairId, "_R1.ids") )
         saveRDS(readFastq(rev.out)@id, paste0( pairId, "_R2.ids") )
+
+        pdf(paste0("qualityProfile_",pairId,".pdf"))
+        plotQualityProfile(c(fwd,rev,fwd.out,rev.out))
+        dev.off()
+        
     } else {
         filterAndTrim(fwd, fwd.out,
                       compress=FALSE,
                       truncQ=truncQ[1], minLen=minLen[1], maxEE=maxEE[1], truncLen=truncLen
                       )
-        saveRDS(readFastq(fwd.out)@id, paste0( pairId, "_R1.ids") )        
+        saveRDS(readFastq(fwd.out)@id, paste0( pairId, "_R1.ids") )
+        pdf(paste0("qualityProfile_",pairId,".pdf"))
+        plotQualityProfile(c(fwd,fwd.out))
+        dev.off()
     }
             
 }
 
 learnErrorRates <- function(fastq,pairId)
 {
-    errors <- learnErrors(fastq,
-                          multithread=TRUE,
-                          randomize=TRUE)
-    pdf(paste0(pairId,".err.pdf"))
-    plotErrors(errors, nominalQ=TRUE)
-    dev.off()
-    saveRDS(errors, paste0(pairId,"_errors.RDS"))
+    errorsF <- learnErrors(fastq[0],
+                           multithread=TRUE,
+                           randomize=TRUE)
+    saveRDS(errorsF, paste0(pairId,"_R1_errors.RDS"))
+    
+    if (length(fastq) > 1) {
+        errorsR <- learnErrors(fastq[1],
+                               multithread=TRUE,
+                               randomize=TRUE)
+        saveRDS(errorsR, paste0(pairId,"_R2_errors.RDS"))
+    
+        pdf(paste0("errorProfile_",pairId,".pdf"))
+        plotErrors(c(errorsF,errorsR), nominalQ=TRUE)
+        dev.off()
+    } else {
+        pdf(paste0("errorProfile_",pairId,".pdf"))
+        plotErrors(errors, nominalQ=TRUE)
+        dev.off()
+    }
 }
 
 dadaDenoise <- function(errorFile,derepFile,pairId)
@@ -64,17 +84,17 @@ dadaDenoise <- function(errorFile,derepFile,pairId)
     
 esvTable <- function(minOverlap, maxMismatch, revRead)
 {
-    sample.names <- as.character(sapply( list.files(path=".",pattern="*.1.derep.RDS"), 
-                                         function(x) unlist(strsplit(x,".1",fixed=T))[1] )
+    sample.names <- as.character(sapply( list.files(path=".",pattern="*_R1.derep.RDS"), 
+                                         function(x) unlist(strsplit(x,"_R1",fixed=T))[1] )
     )
 
-    derepF <- lapply(list.files(path=".",pattern="*.1.derep.RDS"),readRDS)
-    dadaF <- lapply(list.files(path=".",pattern="*.1.dada.RDS"),readRDS)
+    derepF <- lapply(list.files(path=".",pattern="*_R1.derep.RDS"),readRDS)
+    dadaF <- lapply(list.files(path=".",pattern="*_R1.dada.RDS"),readRDS)
 
     if (revRead == 1) {
         
-        derepR <- lapply(list.files(path=".",pattern="*.2.derep.RDS"),readRDS)
-        dadaR <- lapply(list.files(path=".",pattern="*.2.dada.RDS"),readRDS)
+        derepR <- lapply(list.files(path=".",pattern="*_R2.derep.RDS"),readRDS)
+        dadaR <- lapply(list.files(path=".",pattern="*_R2.dada.RDS"),readRDS)
 
         merged <- mergePairs( dadaF, derepF,
                              dadaR, derepR,
