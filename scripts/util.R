@@ -49,13 +49,13 @@ filterReads <- function(pairId,fwd,rev=NULL,
 
 learnErrorRates <- function(fastq,pairId)
 {
-    errorsF <- learnErrors(fastq[0],
+    errorsF <- learnErrors(fastq[1],
                            multithread=TRUE,
                            randomize=TRUE)
     saveRDS(errorsF, paste0(pairId,"_R1_errors.RDS"))
     
     if (length(fastq) > 1) {
-        errorsR <- learnErrors(fastq[1],
+        errorsR <- learnErrors(fastq[2],
                                multithread=TRUE,
                                randomize=TRUE)
         saveRDS(errorsR, paste0(pairId,"_R2_errors.RDS"))
