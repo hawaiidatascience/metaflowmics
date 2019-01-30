@@ -70,13 +70,13 @@ elif [ $step == "chimera" ]; then
     outputs_renamed=("${out}.fasta" "${out}.count_table")
 
 elif [ $step == "taxaFilter" ]; then 
-    suffixTax=`echo $taxRad | cut -d. -f2`.wang.taxonomy
+    suffixTax=`echo $taxRad | cut -d. -f2`.wang.pick.taxonomy
     
     cmd=("classify.seqs(fasta=${rad}.fasta, count=${rad}.count_table, template=${refAln}, taxonomy=${refTax})")
     outputs_mothur=("${rad}.${suffixTax}")
     outputs_renamed=("${out}.taxonomy")
 
-    if [ ! -z ${taxaToFilter} ]; then 
+    if [ ! -z $taxaToFilter ]; then 
         cmd+=("; remove.lineage(taxonomy=${rad}.${suffixTax}, count=${rad}.count_table, fasta=${rad}.fasta, taxon=-${taxaToFilter})")
 	outputs_mothur+=("${rad}.pick.count_table" "${rad}.pick.fasta")
 	outputs_renamed+=("${out}.count_table" "${out}.fasta")
