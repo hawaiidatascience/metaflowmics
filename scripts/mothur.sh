@@ -77,7 +77,7 @@ elif [ $step == "taxaFilter" ]; then
     outputs_renamed=("${out}.taxonomy")
 
     if [ ! -z $taxaToFilter ]; then 
-        cmd+=("; remove.lineage(taxonomy=${rad}.${suffixTax}, count=${rad}.count_table, fasta=${rad}.fasta, taxon=-${taxaToFilter})")
+        cmd+=("; remove.lineage(taxonomy=${rad}.${suffixTax}.taxonomy, count=${rad}.count_table, fasta=${rad}.fasta, taxon=-${taxaToFilter})")
 	outputs_mothur=("${rad}.${suffixTax}.pick.taxonomy" "${rad}.pick.count_table" "${rad}.pick.fasta")
 	outputs_renamed=("${out}.taxonomy" "${out}.count_table" "${out}.fasta")
     fi
