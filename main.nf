@@ -158,6 +158,7 @@ process LearnErrors {
 process Denoise {
     tag { "Denoising.${pairId}" }
     publishDir "${params.outdir}/3-denoising", mode: "copy", overwrite: false
+    label "medium_computation"
     
     input:
         set val(pairId), file(err), file(fastq) from ERROR_MODEL.join(FASTQ_TRIMMED)
@@ -183,7 +184,8 @@ process Denoise {
 process Esv {
     tag { "Esv" }
     publishDir "${params.outdir}/4-esv", mode: "copy", overwrite: false
-
+    label "high_computation"
+    
     input:
 	file dadas from DADA_RDS.collect()
     output:
@@ -200,6 +202,7 @@ process Esv {
 process MultipleSequenceAlignment {
     tag { "MSA" }
     publishDir "${params.outdir}/5-multipleSequenceALignment", mode: "copy", overwrite: false
+    label "high_computation"
     
     input:
         set file(count), file(fasta) from DEREP_CONTIGS
@@ -227,6 +230,7 @@ process MultipleSequenceAlignment {
 process ChimeraRemoval {
     tag { "chimeraRemoval" }
     publishDir "${params.outdir}/6-chimeraRemoval", mode: "copy", overwrite: false
+    label "high_computation"
     
     input:
 	set file(count), file(fasta) from DEREP_CONTIGS_ALN
@@ -282,7 +286,10 @@ process Subsampling {
     awk '{for (i=3;i<=NF;i++) sum[i]+=\$i;}; END{for (i in sum) print sum[i]}' ${count} | tail -n +2 |sort -n > sample_size.txt
 
     percentile_value=`awk '{all[NR] = \$1} END{print all[int(NR*${params.subsamplingQuantile})]}' sample_size.txt`
-    percentile_value=\$(( \$percentile_value < ${params.minSubsampling}} ? \$percentile_value : ${params.minSubsampling} ))
+
+    if [ \$percentile_value < ${params.minSubsampling} ]
+        then percentile_value=${params.minSubsampling}
+    fi
 
     ${params.scripts}/mothur.sh --step=subsampling --rad=all.taxaFilter --subsamplingNb=\$percentile_value
     """
@@ -291,6 +298,7 @@ process Subsampling {
 process Clustering {
     tag { "clustering" }
     publishDir "${params.outdir}/9-clustering", mode: "copy", overwrite: false
+    label "high_computation"
     
     input:
 	set file(fasta), file(count), file(tax) from SUBSAMPLED_CONTIGS
@@ -340,7 +348,7 @@ process PreLulu {
 	
     """
     fasta_clean="contigs_${idThreshold}_no_gap.fasta"
-    sed s/-//g ${fasta} > \$fasta_clean
+    sed 's/[\\.]//g' ${fasta} > \$fasta_clean
 
     vsearch --usearch_global \$fasta_clean \
             --db \$fasta_clean --self \

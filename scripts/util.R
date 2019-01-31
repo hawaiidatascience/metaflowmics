@@ -102,7 +102,8 @@ esvTable <- function(minOverlap, maxMismatch, revRead)
         saveRDS(merged,"dada_merged.RDS")
 
         esvTable <- makeSequenceTable(merged)
-        esv.names <- paste0("sq",1:dim(esvTable)[2])
+
+        esv.names <- sprintf("contig%02d", 1:dim(esvTable)[2])
 
         uniquesToFasta(esvTable,"all.esv.fasta", ids=esv.names)
 
@@ -110,14 +111,14 @@ esvTable <- function(minOverlap, maxMismatch, revRead)
 
         colnames(esvTable) <- c("Representative_Sequence","total",sample.names)
 
-        write.table(esvTable, file="all.esv.count_table", row.names=F, col.names=T, quote=F) 
+        write.table(esvTable, file="all.esv.count_table", row.names=F, col.names=T, quote=F, sep="\t") 
                 
 
     } else {
         print("Functionality not tested yet.")
         fasta_seq <- lapply( dadaF, function(x) names(x$denoised) )
         fasta_seq_uniq <- unique(cbind(unlist(fasta_seq)))
-        esv.names <- paste0("sq",1:length(fasta_seq_uniq))
+        esv.names <- sprintf("contig%02d", 1:length(fasta_seq_uniq)) 
 
         write.fasta(fasta_seq_uniq,esv.names,"all.esv.fasta")
         
@@ -130,7 +131,7 @@ esvTable <- function(minOverlap, maxMismatch, revRead)
         esvTable <- cbind(esv.names, rowSums(esvTable), esvTable )
         colnames(esvTable) <- c("Representative_Sequence", "total", sample.names)
         
-        write.table(esvTable, file="all.esv.count_table", row.names=F, col.names=T, quote=F)
+        write.table(esvTable, file="all.esv.count_table", row.names=F, col.names=T, quote=F, sep="\t")
     }
 }
 
