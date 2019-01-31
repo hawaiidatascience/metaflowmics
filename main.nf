@@ -136,12 +136,14 @@ process LearnErrors {
     // Build error model using dada2. 
     tag { "LearnErrors.${pairId}" }
     publishDir "${params.outdir}/2-errorModel", mode: "copy", overwrite: false
+    label "medium_computation"
 
     input:
 	set val(pairId), file(fastq) from FASTQ_TRIMMED_FOR_MODEL
     output:
 	set val(pairId), file("${pairId}*.RDS") into ERROR_MODEL
         file("*.pdf") into ERROR_PROFILE
+    
 
     script:
     """
@@ -191,7 +193,7 @@ process Esv {
     #!/usr/bin/env Rscript
     source("${workflow.projectDir}/scripts/util.R")
 
-    esvTable("${params.minOverlap}","${params.maxMismatch}","${params.revRead}")       
+    esvTable(${params.minOverlap},${params.maxMismatch},${params.revRead})       
     """
 }
 

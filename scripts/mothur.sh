@@ -70,16 +70,16 @@ elif [ $step == "chimera" ]; then
     outputs_renamed=("${out}.fasta" "${out}.count_table")
 
 elif [ $step == "taxaFilter" ]; then 
-    suffixTax=`echo $taxRad | cut -d. -f2`.wang.pick.taxonomy
+    suffixTax=`echo $taxRad | cut -d. -f2`.wang
     
     cmd=("classify.seqs(fasta=${rad}.fasta, count=${rad}.count_table, template=${refAln}, taxonomy=${refTax})")
-    outputs_mothur=("${rad}.${suffixTax}")
+    outputs_mothur=("${rad}.${suffixTax}.taxonomy")
     outputs_renamed=("${out}.taxonomy")
 
     if [ ! -z $taxaToFilter ]; then 
         cmd+=("; remove.lineage(taxonomy=${rad}.${suffixTax}, count=${rad}.count_table, fasta=${rad}.fasta, taxon=-${taxaToFilter})")
-	outputs_mothur+=("${rad}.pick.count_table" "${rad}.pick.fasta")
-	outputs_renamed+=("${out}.count_table" "${out}.fasta")
+	outputs_mothur=("${rad}.${suffixTax}.pick.taxonomy" "${rad}.pick.count_table" "${rad}.pick.fasta")
+	outputs_renamed=("${out}.taxonomy" "${out}.count_table" "${out}.fasta")
     fi
 
 elif [ $step == "subsampling" ]; then
