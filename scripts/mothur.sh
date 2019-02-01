@@ -64,8 +64,9 @@ elif [ $step == "MSA" ]; then
     outputs_renamed=("${out}.fasta")
 
 elif [ $step == "chimera" ]; then
-    cmd=("chimera.vsearch(fasta=${rad}.fasta, count=${rad}.count_table, dereplicate=t) ; "
-	 "remove.seqs(fasta=${rad}.fasta, count=${rad}.count_table, accnos=${rad}.denovo.vsearch.accnos, dups=f)")
+    method="uchime"
+    cmd=("chimera.${method}(fasta=${rad}.fasta, count=${rad}.count_table, dereplicate=t) ; "
+	 "remove.seqs(fasta=${rad}.fasta, count=${rad}.count_table, accnos=${rad}.denovo.${method}.accnos, dups=f)")
     outputs_mothur=("${rad}.pick.fasta" "${rad}.pick.count_table")
     outputs_renamed=("${out}.fasta" "${out}.count_table")
 
