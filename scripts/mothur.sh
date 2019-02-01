@@ -99,7 +99,7 @@ elif [ $step == "clustering" ]; then
     cmd=("cluster(count=${rad}.count_table, fasta=${rad}.fasta, method=${method}, cutoff=${idThreshold}) ; "
 	 "make.shared(list=${rad}.${method}.list, count=${rad}.count_table) ; "
 	 "get.oturep(count=${rad}.count_table, fasta=${rad}.fasta, list=${rad}.${method}.list, method=abundance, rename=T, label=${idThreshold}) ; "
-	 "filter.seqs(fasta=${rad}.${method}.${idThreshold}.rep.fasta, vertical=F)")
+	 "filter.seqs(fasta=${rad}.${method}.${idThreshold}.rep.fasta, trump=-)")
 	
     outputs_mothur=("${rad}.${method}.list" "${rad}.${method}.shared" "${rad}.${method}.${idThreshold}.rep.filter.fasta" "${rad}.${method}.${idThreshold}.rep.count_table")
 

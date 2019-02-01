@@ -287,7 +287,7 @@ process Subsampling {
 
     percentile_value=`awk '{all[NR] = \$1} END{print all[int(NR*${params.subsamplingQuantile})]}' sample_size.txt`
 
-    if [ \$percentile_value < ${params.minSubsampling} ]
+    if [ \$percentile_value < ${params.minSubsampling} ] || [ -z \$percentile_value ]
         then percentile_value=${params.minSubsampling}
     fi
 
@@ -364,7 +364,7 @@ process PreLulu {
 
 process Lulu {
     tag { "Lulu" }
-    publishDir "${params.outdir}/12-lulu", mode: "copy", overwrite: false
+    publishDir "${params.outdir}/11-lulu", mode: "copy", overwrite: false
     errorStrategy "${params.errorsHandling}"
 
     input:
@@ -384,7 +384,7 @@ process Lulu {
 
 process FilterFasta {
     tag { "filterFasta" }
-    publishDir "${params.outdir}/13-lulu", mode: "copy", overwrite: false
+    publishDir "${params.outdir}/11-lulu", mode: "copy", overwrite: false
     errorStrategy "${params.errorsHandling}"
     
     input:
@@ -410,7 +410,7 @@ process FilterFasta {
 
 process ConvertToMothur {
     tag { "convertToMothur" }
-    publishDir "${params.outdir}/14-mothurFmtOutputs", mode: "copy", overwrite: false
+    publishDir "${params.outdir}/12-mothurFmtOutputs", mode: "copy", overwrite: false
     errorStrategy "${params.errorsHandling}"
     
     input:
@@ -434,7 +434,7 @@ process ConvertToMothur {
 
 process Results {
     tag { "mothurResults" }
-    publishDir "${params.outdir}/15-mothurResults", mode: "copy", overwrite: false
+    publishDir "${params.outdir}/13-mothurResults", mode: "copy", overwrite: false
     errorStrategy "${params.errorsHandling}"
     
     input:
