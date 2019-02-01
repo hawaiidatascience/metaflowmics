@@ -190,6 +190,7 @@ process Esv {
 	file dadas from DADA_RDS.collect()
     output:
         set file("all.esv.count_table"), file("all.esv.fasta")  into DEREP_CONTIGS
+        file("count_summary.tsv") into COUNT_SUMMARIES
     script:
     """
     #!/usr/bin/env Rscript

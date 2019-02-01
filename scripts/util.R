@@ -74,12 +74,12 @@ dadaDenoise <- function(errorFile,derepFile,pairId)
 {
     errors <- readRDS(errorFile)
     derep <- derepFastq(derepFile)
-    derep.denoised <- dada(derep, err=errors, multithread=TRUE)
+    denoised <- dada(derep, err=errors, multithread=TRUE)
     # # Extract abundance values from derep.denoised to name the fastas. Sample name also used
     # seqIds <- paste0(pairId,";size=",as.numeric(getUniques(derep.denoised)))
     # Save RDS object
     saveRDS(derep,paste0(pairId,".derep.RDS"))
-    saveRDS(derep.denoised,paste0(pairId,".dada.RDS"))
+    saveRDS(denoised,paste0(pairId,".dada.RDS"))
 }
     
 esvTable <- function(minOverlap, maxMismatch, revRead)
@@ -89,16 +89,21 @@ esvTable <- function(minOverlap, maxMismatch, revRead)
     )
 
     derepF <- lapply(list.files(path=".",pattern="*_R1.derep.RDS"),readRDS)
-    dadaF <- lapply(list.files(path=".",pattern="*_R1.dada.RDS"),readRDS)
+    denoisedF <- lapply(list.files(path=".",pattern="*_R1.dada.RDS"),readRDS)
+    
+    summary.derepF <- sapply(derepF, function(x) paste0(sum(x$uniques)," (",length(x$uniques)," uniques)"))
+    summary.denoisedF <- sapply(denoisedF, function(x) paste0(sum(x$denoised)," (",length(x$denoised)," uniques)"))
 
     if (revRead == 1) {
         
         derepR <- lapply(list.files(path=".",pattern="*_R2.derep.RDS"),readRDS)
-        dadaR <- lapply(list.files(path=".",pattern="*_R2.dada.RDS"),readRDS)
+        denoisedR <- lapply(list.files(path=".",pattern="*_R2.dada.RDS"),readRDS)
 
-        merged <- mergePairs( dadaF, derepF,
-                             dadaR, derepR,
+        merged <- mergePairs( denoisedF, derepF,
+                             denoisedR, derepR,
                              minOverlap=minOverlap, maxMismatch=maxMismatch)
+        summary.merged <- sapply(merged, function(x) paste0(sum(x$abundance)," (",length(x$abundance)," uniques)"))
+        
         saveRDS(merged,"dada_merged.RDS")
 
         esvTable <- makeSequenceTable(merged)
@@ -111,18 +116,17 @@ esvTable <- function(minOverlap, maxMismatch, revRead)
 
         colnames(esvTable) <- c("Representative_Sequence","total",sample.names)
 
-        write.table(esvTable, file="all.esv.count_table", row.names=F, col.names=T, quote=F, sep="\t") 
-                
+        write.table(esvTable, file="all.esv.count_table", row.names=F, col.names=T, quote=F, sep="\t")
 
     } else {
         print("Functionality not tested yet.")
-        fasta_seq <- lapply( dadaF, function(x) names(x$denoised) )
+        fasta_seq <- lapply( denoisedF, function(x) names(x$denoised) )
         fasta_seq_uniq <- unique(cbind(unlist(fasta_seq)))
         esv.names <- sprintf("contig%02d", 1:length(fasta_seq_uniq)) 
 
         write.fasta(fasta_seq_uniq,esv.names,"all.esv.fasta")
         
-        esvTable <- as.data.frame(lapply(dadaF, function(x) x$denoised[fasta_seq_uniq]))
+        esvTable <- as.data.frame(lapply(denoisedF, function(x) x$denoised[fasta_seq_uniq]))
 
         esvTable[is.na(esvTable)] <- 0
 
@@ -130,9 +134,19 @@ esvTable <- function(minOverlap, maxMismatch, revRead)
 
         esvTable <- cbind(esv.names, rowSums(esvTable), esvTable )
         colnames(esvTable) <- c("Representative_Sequence", "total", sample.names)
+
+        summary.merged = summary.denoisedF
         
-        write.table(esvTable, file="all.esv.count_table", row.names=F, col.names=T, quote=F, sep="\t")
+        write.table(esvTable, file="all.esv.count_table", row.names=F, col.names=T, quote=F, sep="\t")        
     }
+
+    summary <- data.frame("Sample" = sample.names,
+                          "Derep" = summary.derepF,
+                          "Denoised" = summary.denoisedF,
+                          "Merged" = summary.merged)
+        
+    write.table(summary, "count_summary.tsv", row.names=F)                    
+    
 }
 
 luluCurate <- function(abundanceFile,matchListFile,threshold)
