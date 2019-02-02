@@ -146,7 +146,6 @@ esvTable <- function(minOverlap, maxMismatch, revRead)
                           "Merged" = summary.merged)
         
     write.table(summary, "count_summary.tsv", row.names=F)                    
-    
 }
 
 luluCurate <- function(abundanceFile,matchListFile,threshold)

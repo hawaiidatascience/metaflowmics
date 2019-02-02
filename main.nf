@@ -107,7 +107,7 @@ log.info "========================================="
 process FilterAndTrim {
     // Quality filter and trimming using dada2. 
     tag { "FilterAndTrim.${pairId}" }
-    publishDir "${params.outdir}/1-filterAndTrim", mode: "copy", overwrite: false
+    publishDir "${params.outdir}/1-filterAndTrim", mode: "copy"
     
     input:
         set val(pairId), file(fastq) from INPUT_FASTQ
@@ -135,7 +135,7 @@ process FilterAndTrim {
 process LearnErrors {
     // Build error model using dada2. 
     tag { "LearnErrors.${pairId}" }
-    publishDir "${params.outdir}/2-errorModel", mode: "copy", overwrite: false
+    publishDir "${params.outdir}/2-errorModel", mode: "copy"
     label "medium_computation"
 
     input:
@@ -157,7 +157,7 @@ process LearnErrors {
 
 process Denoise {
     tag { "Denoising.${pairId}" }
-    publishDir "${params.outdir}/3-denoising", mode: "copy", overwrite: false
+    publishDir "${params.outdir}/3-denoising", mode: "copy"
     label "medium_computation"
     
     input:
@@ -183,7 +183,7 @@ process Denoise {
 
 process Esv {
     tag { "Esv" }
-    publishDir "${params.outdir}/4-esv", mode: "copy", overwrite: false
+    publishDir "${params.outdir}/4-esv", mode: "copy"
     label "high_computation"
     
     input:
@@ -191,6 +191,7 @@ process Esv {
     output:
         set file("all.esv.count_table"), file("all.esv.fasta")  into DEREP_CONTIGS
         file("count_summary.tsv") into COUNT_SUMMARIES
+    
     script:
     """
     #!/usr/bin/env Rscript
@@ -202,7 +203,7 @@ process Esv {
 
 process MultipleSequenceAlignment {
     tag { "MSA" }
-    publishDir "${params.outdir}/5-multipleSequenceALignment", mode: "copy", overwrite: false
+    publishDir "${params.outdir}/5-multipleSequenceAlignment", mode: "copy"
     label "high_computation"
     
     input:
@@ -230,7 +231,7 @@ process MultipleSequenceAlignment {
 
 process ChimeraRemoval {
     tag { "chimeraRemoval" }
-    publishDir "${params.outdir}/6-chimeraRemoval", mode: "copy", overwrite: false
+    publishDir "${params.outdir}/6-chimeraRemoval", mode: "copy"
     label "high_computation"
     
     input:
@@ -247,7 +248,7 @@ process ChimeraRemoval {
 
 process TaxaFiltering {
     tag { "taxaFilter" }
-    publishDir "${params.outdir}/7-taxaFiltering", mode: "copy", overwrite: false
+    publishDir "${params.outdir}/7-taxaFiltering", mode: "copy"
     
     input:
 	set file(count), file(fasta) from NO_CHIMERA_FASTA
@@ -274,7 +275,7 @@ process TaxaFiltering {
 
 process Subsampling {
     tag { "subsampling" }
-    publishDir "${params.outdir}/8-subsampling", mode: "copy", overwrite: false
+    publishDir "${params.outdir}/8-subsampling", mode: "copy"
     
     input:
 	set file(fasta), file(count), file(tax) from TAXA_FILTERED_CONTIGS
@@ -298,7 +299,7 @@ process Subsampling {
 
 process Clustering {
     tag { "clustering" }
-    publishDir "${params.outdir}/9-clustering", mode: "copy", overwrite: false
+    publishDir "${params.outdir}/9-clustering", mode: "copy", pattern: "*.{fasta,shared,list}"
     label "high_computation"
     
     input:
@@ -316,7 +317,7 @@ process Clustering {
 
 process ConsensusClassification {
     tag { "consensusClassification" }
-    publishDir "${params.outdir}/10-consensusClassification", mode: "copy", overwrite: false
+    publishDir "${params.outdir}/10-consensusClassification", mode: "copy"
     
     input:
 	set val(idThreshold), file(list), file(count), file(tax) from CONTIGS_FOR_CLASSIFICATION
@@ -339,7 +340,7 @@ process ConsensusClassification {
 
 process PreLulu {
     tag { "preLulus" }
-    publishDir "${params.outdir}/11-lulu", mode: "copy", overwrite: false
+    publishDir "${params.outdir}/11-lulu", mode: "copy"
 
     input:
 	set val(idThreshold),file(fasta) from PRELULU_FASTA
@@ -365,7 +366,7 @@ process PreLulu {
 
 process Lulu {
     tag { "Lulu" }
-    publishDir "${params.outdir}/11-lulu", mode: "copy", overwrite: false
+    publishDir "${params.outdir}/11-lulu", mode: "copy"
     errorStrategy "${params.errorsHandling}"
 
     input:
@@ -385,7 +386,7 @@ process Lulu {
 
 process FilterFasta {
     tag { "filterFasta" }
-    publishDir "${params.outdir}/11-lulu", mode: "copy", overwrite: false
+    publishDir "${params.outdir}/11-lulu", mode: "copy"
     errorStrategy "${params.errorsHandling}"
     
     input:
@@ -411,7 +412,7 @@ process FilterFasta {
 
 process ConvertToMothur {
     tag { "convertToMothur" }
-    publishDir "${params.outdir}/12-mothurFmtOutputs", mode: "copy", overwrite: false
+    publishDir "${params.outdir}/12-mothurFmtOutputs", mode: "copy"
     errorStrategy "${params.errorsHandling}"
     
     input:
@@ -435,7 +436,7 @@ process ConvertToMothur {
 
 process Results {
     tag { "mothurResults" }
-    publishDir "${params.outdir}/13-mothurResults", mode: "copy", overwrite: false
+    publishDir "${params.outdir}/13-mothurResults", mode: "copy"
     errorStrategy "${params.errorsHandling}"
     
     input:
