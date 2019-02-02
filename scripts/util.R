@@ -141,11 +141,12 @@ esvTable <- function(minOverlap, maxMismatch, revRead)
     }
 
     summary <- data.frame("Sample" = sample.names,
-                          "Derep" = summary.derepF,
-                          "Denoised" = summary.denoisedF,
-                          "Merged" = summary.merged)
+                          "3a-dereplication" = summary.derepF,
+                          "3b-denoising" = summary.denoisedF,
+                          "4-esv" = summary.merged,
+                          check.names=F)
         
-    write.table(summary, "count_summary.tsv", row.names=F)                    
+    write.table(summary, "count_summary.tsv", row.names=F, sep="\t")                    
 }
 
 luluCurate <- function(abundanceFile,matchListFile,threshold)

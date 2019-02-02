@@ -436,7 +436,7 @@ process ConvertToMothur {
 
 process Results {
     tag { "mothurResults" }
-    publishDir "${params.outdir}/13-mothurResults", mode: "copy"
+    publishDir "${params.outdir}/13-Postprocessing", mode: "copy"
     errorStrategy "${params.errorsHandling}"
     
     input:
@@ -448,4 +448,27 @@ process Results {
     mothur "#get.relabund(shared=${shared})"
     mothur "#clearcut(fasta=${fasta}, DNA=T) ; count.seqs(shared=${shared}) ; unifrac.weighted(tree=current,count=current)"
     """    
+}
+
+process SummaryFile {
+    tag { "mothurResults" }
+    publishDir "${params.outdir}/13-Postprocessing", mode: "copy"
+    errorStrategy "${params.errorsHandling}"
+    
+    input:
+	file f1 from COUNT_SUMMARIES
+	file f2 from RESULTS.collect()
+        file f3 from OUTPUT_FILES.collect()    
+    output:
+        file("sequences_per_sample_per_step.tsv") into STEPS_SUMMARY
+    script:
+    """
+    #!/usr/bin/env python
+    import sys
+    sys.path.append("${workflow.projectDir}/scripts")
+    from generate_step_summary import write_summary
+
+    write_summary("${params.outdir}")
+    """
+
 }
