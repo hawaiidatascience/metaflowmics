@@ -59,7 +59,10 @@ def process_lulu(filepath):
 def count_samples(info,root_dir=".",samples=None):
     folder,pattern = info
     
-    files = glob("{}/{}/{}".format(root_dir,folder,pattern))
+    if folder.startswith("0"):
+        files = glob("{}/*R1*".format(os.path.dirname(pattern)))
+    else:
+        files = glob("{}/{}/{}".format(root_dir,folder,pattern))
     print(folder,"{} files".format(len(files)))
 
     ext = pattern.split('.')[-1].lower()
@@ -79,9 +82,10 @@ def count_samples(info,root_dir=".",samples=None):
     else:
         return pd.Series(["NA"]*len(samples), index=samples, name=folder)
 
-def write_summary(root_dir):
+def write_summary(root_dir,data_dir):
     
-    steps = [("1-filterAndTrim","*R1*.fastq*"),
+    steps = [("0-rawData",data_dir),
+             ("1-filterAndTrim","*R1*.fastq*"),
              ("2-errorModel","*R1*.RDS"),
              ("5-multipleSequenceAlignment","all.screening.start_end.count_table"),
              ("6-chimeraRemoval","all.chimera.count_table"),
@@ -97,7 +101,7 @@ def write_summary(root_dir):
     res_all_samples = [count_samples(step,root_dir=root_dir,samples=denoising_step.index)
                        for step in steps] 
 
-    res_all_samples.insert(2,denoising_step)
+    res_all_samples.insert(3,denoising_step)
     summary = pd.concat(res_all_samples,axis=1,sort=True)
     
     summary.index.name = "SampleID"

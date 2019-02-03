@@ -190,6 +190,7 @@ process Esv {
 	file dadas from DADA_RDS.collect()
     output:
         set file("all.esv.count_table"), file("all.esv.fasta")  into DEREP_CONTIGS
+        file("dada_merged.RDS")
         file("count_summary.tsv") into COUNT_SUMMARIES
     
     script:
@@ -468,7 +469,7 @@ process SummaryFile {
     sys.path.append("${workflow.projectDir}/scripts")
     from generate_step_summary import write_summary
 
-    write_summary("${params.outdir}")
+    write_summary("${params.outdir}","${params.reads}")
     """
 
 }
