@@ -114,7 +114,7 @@ process FilterAndTrim {
     output:
         set val(pairId), file("${pairId}*_trimmed.fastq") into FASTQ_TRIMMED, FASTQ_TRIMMED_FOR_MODEL
         set val(pairId), file("${pairId}*.ids") into FILTERED_READS_IDS
-        file "*.pdf" into QUALITY_PROFILE
+        file "*.png"
 
     script:
     """
@@ -122,13 +122,13 @@ process FilterAndTrim {
     source("${workflow.projectDir}/scripts/util.R")  
 
     fastqs <- c("${fastq.join('","')}")
+    rev <- NULL
 
-    filterReads("${pairId}", fastqs[1], rev=fastqs[2],
-                minLen=${params.minLength}, 
-		maxEE=${params.maxEE}, 
-		truncLen=${params.truncLen}, 
-		rm.phix=${params.rmphix}, 
-		truncQ=${params.truncQ})
+    if ( ${params.revRead} == 1 ) {
+        rev <- fastqs[2]
+    }
+
+    filterReads("${pairId}", fastqs[1], rev=rev, minLen=${params.minLength},maxEE=${params.maxEE},truncLen=${params.truncLen},rm.phix=${params.rmphix}, truncQ=${params.truncQ})
     """
 }
 
@@ -142,9 +142,8 @@ process LearnErrors {
 	set val(pairId), file(fastq) from FASTQ_TRIMMED_FOR_MODEL
     output:
 	set val(pairId), file("${pairId}*.RDS") into ERROR_MODEL
-        file("*.pdf") into ERROR_PROFILE
+        file "*.png"
     
-
     script:
     """
     #!/usr/bin/env Rscript
@@ -183,14 +182,16 @@ process Denoise {
 
 process Esv {
     tag { "Esv" }
+
     publishDir "${params.outdir}/4-esv", mode: "copy"
+    
     label "high_computation"
     
     input:
 	file dadas from DADA_RDS.collect()
     output:
         set file("all.esv.count_table"), file("all.esv.fasta")  into DEREP_CONTIGS
-        file("dada_merged.RDS")
+        file("reads_merged.RDS")
         file("count_summary.tsv") into COUNT_SUMMARIES
     
     script:

@@ -5,6 +5,7 @@ library(dada2)
 library(seqinr)
 library(ShortRead)
 library(stringr)
+library(ggplot2)
 
 filterReads <- function(pairId,fwd,rev=NULL,
                         minLen=c(30,30),
@@ -16,35 +17,40 @@ filterReads <- function(pairId,fwd,rev=NULL,
 {
     fwd.out <- paste(paste0(pairId,"_R1"),"trimmed.fastq",
                      sep="_")
-    rev.out <- paste(paste0(pairId,"_R2"),"trimmed.fastq",
-                     sep="_")
+    if ( !is.null(rev) ) {
+        rev.out <- paste(paste0(pairId,"_R2"),"trimmed.fastq",sep="_")
+    }
+
+    # Apply dada2's filterAndTrim
+    filterAndTrim(fwd, fwd.out,rev=rev, filt.rev=rev.out,
+                  compress=FALSE,
+                  truncLen=truncLen,
+                  truncQ=truncQ,
+                  minLen=minLen,
+                  maxEE=maxEE)
+    ## fastqPairedFilter(c(fwd,rev), c(fwd.out,rev.out),
+    ##                   compress=FALSE,
+    ##                   truncLen=truncLen,
+    ##                   truncQ=truncQ,
+    ##                   minLen=minLen,
+    ##                   maxEE=maxEE)
+    
+    # Plot error profiles
+    if ( !is.null(rev) )
+    {
+        fig <- plotQualityProfile(c(fwd,rev,fwd.out,rev.out))
+    } else {
+        fig <- plotQualityProfile(c(fwd,rev))
+    }
+    ggsave(paste0("qualityProfile_",pairId,".png"), plot=fig)
+
+    # Save result
+    saveRDS(readFastq(fwd.out)@id, paste0( pairId, "_R1.ids") )
 
     if ( !is.null(rev) )
     {
-        print(paste("Filtering paired-end reads with parameters",minLen,maxEE,truncLen,rm.phix,truncQ))
-        filterAndTrim(fwd, fwd.out,
-                      rev=rev, filt.rev=rev.out,
-                      compress=FALSE,
-                      truncLen=truncLen, truncQ=truncQ, minLen=minLen, maxEE=maxEE
-                      )
-        saveRDS(readFastq(fwd.out)@id, paste0( pairId, "_R1.ids") )
         saveRDS(readFastq(rev.out)@id, paste0( pairId, "_R2.ids") )
-
-        pdf(paste0("qualityProfile_",pairId,".pdf"))
-        plotQualityProfile(c(fwd,rev,fwd.out,rev.out))
-        dev.off()
-        
-    } else {
-        filterAndTrim(fwd, fwd.out,
-                      compress=FALSE,
-                      truncQ=truncQ[1], minLen=minLen[1], maxEE=maxEE[1], truncLen=truncLen
-                      )
-        saveRDS(readFastq(fwd.out)@id, paste0( pairId, "_R1.ids") )
-        pdf(paste0("qualityProfile_",pairId,".pdf"))
-        plotQualityProfile(c(fwd,fwd.out))
-        dev.off()
-    }
-            
+    }            
 }
 
 learnErrorRates <- function(fastq,pairId)
@@ -60,14 +66,11 @@ learnErrorRates <- function(fastq,pairId)
                                randomize=TRUE)
         saveRDS(errorsR, paste0(pairId,"_R2_errors.RDS"))
     
-        pdf(paste0("errorProfile_",pairId,".pdf"))
-        plotErrors(c(errorsF,errorsR), nominalQ=TRUE)
-        dev.off()
+        fig <- plotErrors(c(errorsF,errorsR), nominalQ=TRUE)
     } else {
-        pdf(paste0("errorProfile_",pairId,".pdf"))
-        plotErrors(errors, nominalQ=TRUE)
-        dev.off()
+        fig <- plotErrors(errors, nominalQ=TRUE)
     }
+    ggsave(paste0("errorProfile_",pairId,".png"), plot=fig)
 }
 
 dadaDenoise <- function(errorFile,derepFile,pairId)
@@ -99,21 +102,17 @@ esvTable <- function(minOverlap, maxMismatch, revRead)
         derepR <- lapply(list.files(path=".",pattern="*_R2.derep.RDS"),readRDS)
         denoisedR <- lapply(list.files(path=".",pattern="*_R2.dada.RDS"),readRDS)
 
-        merged <- mergePairs( denoisedF, derepF,
-                             denoisedR, derepR,
+        merged <- mergePairs( denoisedF, derepF, denoisedR, derepR,
                              minOverlap=minOverlap, maxMismatch=maxMismatch)
+        saveRDS(merged,"reads_merged.RDS")
         summary.merged <- sapply(merged, function(x) paste0(sum(x$abundance)," (",length(x$abundance)," uniques)"))
         
-        saveRDS(merged,"dada_merged.RDS")
-
         esvTable <- makeSequenceTable(merged)
-
         esv.names <- sprintf("contig%02d", 1:dim(esvTable)[2])
 
         uniquesToFasta(esvTable,"all.esv.fasta", ids=esv.names)
 
         esvTable <- cbind(esv.names, colSums(esvTable), t(esvTable) )
-
         colnames(esvTable) <- c("Representative_Sequence","total",sample.names)
 
         write.table(esvTable, file="all.esv.count_table", row.names=F, col.names=T, quote=F, sep="\t")

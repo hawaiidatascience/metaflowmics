@@ -24,7 +24,7 @@ def get_thresh(filename):
 
 def count_reads(filepath):
     path,fileRad,ext = split_path(filepath)
-    name = fileRad.split("_R")[0]
+    name = re.split("_R\d",fileRad)[0] 
     filetype = "fast{}".format(ext.split(".")[1][-1]) # To handle the fasta/fa or fastq/fq
 
     cmd = "zgrep" * (ext.endswith(".gz")) + "grep" * (not ext.endswith(".gz"))
