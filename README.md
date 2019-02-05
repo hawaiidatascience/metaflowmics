@@ -27,9 +27,9 @@ Then, you can run the pipeline by running:
 ## Pipeline summary
 
 **dada2**
-- filterAndTrim
+- filterAndTrim (minimum read length, maximum expected errors, read length truncation, quality filter)
 - learnErrors
-- mergePairs
+- mergePairs (minimum overlap and maximum mismatches)
 
 **Mothur**
 - align.seqs; filter.seqs; screen.seqs  --> alignment against reference for further filtering
