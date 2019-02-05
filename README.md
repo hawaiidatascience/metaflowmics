@@ -11,7 +11,7 @@ To run the pipeline, you will need to satisfy the following dependencies:
 - [Nextflow](https://www.nextflow.io/docs/latest/getstarted.html)
 - python3 + libraries: Biopython, pandas
 - R + libraries: ggplot2, lulu, dada2, seqinr, stringr
-- Mothur (tested with v1.41.2) 
+- [Mothur](https://github.com/mothur/mothur) (tested with v1.41.2) 
 
 ### Usage
 
