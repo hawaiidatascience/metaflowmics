@@ -1,4 +1,4 @@
-# ITS-pipeline
+# 16S-pipeline
 
 ## Getting started
 
