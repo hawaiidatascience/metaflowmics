@@ -26,12 +26,12 @@ Then, you can run the pipeline by running:
 
 ## Pipeline summary
 
-** dada2 **
+**dada2**
 - filterAndTrim
 - learnErrors
 - mergePairs
 
-** Mothur **
+**Mothur**
 - align.seqs; filter.seqs; screen.seqs  --> alignment against reference for further filtering
 - chimera.vsearch; remove.seqs          --> chimera removal
 - classify.seqs; (remove.lineage)       --> classification, optional taxa filtering
@@ -39,12 +39,12 @@ Then, you can run the pipeline by running:
 - cluster (at 95,97,99 and 100% identity)
 - classify.otu
 
-** Lulu **
+**Lulu**
 - preLulu (create matchlists for LULU)
 - LULU
 - FilterFasta (remove sequences from FASTA and taxonomy file that Lulu removed)
 
-** Postprocessing **
+**Postprocessing**
 - ConvertToMothur: Convert output file to .shared file
 - Results: Mothur postprocessing with get.relabund, clearcut and unifrac.weighted
 - SummaryFile: Generates summary of reads per sample per step
