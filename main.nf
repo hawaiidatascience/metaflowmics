@@ -49,32 +49,6 @@ summary['Config Profile'] = workflow.profile
 log.info summary.collect { k,v -> "${k.padRight(15)}: $v" }.join("\n")
 log.info "========================================="
 
-/* Pipeline summary
-
-- fastqc
-
-****** dada2 ****** 
-- filterAndTrim
-- learnErrors
-- mergePairs
-
-****** Mothur ******
-- align.seqs; filter.seqs; screen.seqs  --> alignment against reference for further filtering
-- chimera.vsearch; remove.seqs          --> chimera removal
-- classify.seqs; (remove.lineage)       --> classification, optional taxa filtering
-- sub.sample
-- cluster (at 95,97,99 and 100% identity)
-- classify.otu
-
-****** Lulu ******
-- preLulu (create matchlists for LULU)
-- LULU
-- FilterFasta (remove sequences from FASTA and taxonomy file that Lulu removed)
-
-****** Postprocessing ******
-- ConvertToMothur: Convert output file to .shared file
-- Results: Mothur postprocessing with get.relabund, clearcut and unifrac.weighted
-- SummaryFile: Generates summary of reads per sample per step
 
 /*
  *

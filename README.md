@@ -24,3 +24,27 @@ Pipeline parameters can be set in the file `nextflow.config`
 Then, you can run the pipeline by running:
 `nextflow run 16S-pipeline -profile manoa_hpc --revRead 1 --reads PATH_TO_READS/PATTERN`
 
+## Pipeline summary
+
+** dada2 **
+- filterAndTrim
+- learnErrors
+- mergePairs
+
+** Mothur **
+- align.seqs; filter.seqs; screen.seqs  --> alignment against reference for further filtering
+- chimera.vsearch; remove.seqs          --> chimera removal
+- classify.seqs; (remove.lineage)       --> classification, optional taxa filtering
+- sub.sample
+- cluster (at 95,97,99 and 100% identity)
+- classify.otu
+
+** Lulu **
+- preLulu (create matchlists for LULU)
+- LULU
+- FilterFasta (remove sequences from FASTA and taxonomy file that Lulu removed)
+
+** Postprocessing **
+- ConvertToMothur: Convert output file to .shared file
+- Results: Mothur postprocessing with get.relabund, clearcut and unifrac.weighted
+- SummaryFile: Generates summary of reads per sample per step
