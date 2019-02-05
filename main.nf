@@ -56,51 +56,30 @@ log.info "========================================="
 ****** dada2 ****** 
 - filterAndTrim
 - learnErrors
-- dada (denoising)
-******************
-
-- Deunique (convert unique reads to redundant)
+- mergePairs
 
 ****** Mothur ******
-- make.contigs (if paired-end)
-- screen.seqs (optimization of minoverlap-mismatches-minlength-maxlength)
-- unique.seqs
 - align.seqs; filter.seqs; screen.seqs  --> alignment against reference for further filtering
-- chimera.vsearch; remove.seqs             --> chimera removal
+- chimera.vsearch; remove.seqs          --> chimera removal
 - classify.seqs; (remove.lineage)       --> classification, optional taxa filtering
 - sub.sample
 - cluster (at 95,97,99 and 100% identity)
 - classify.otu
-*******************
 
-- cleanTables (postprocessing before LULU)
+****** Lulu ******
 - preLulu (create matchlists for LULU)
 - LULU
 - FilterFasta (remove sequences from FASTA and taxonomy file that Lulu removed)
 
-*/
-
-// process runFastQC {
-//     tag { "FastQC.${pairId}" }
-//     publishDir "${params.outdir}/0-qualityControl", mode: "copy", overwrite: false
-    
-//     input:
-//         set val(pairId), file(in_fastq) from INPUT_FASTQ_TO_QC
-//     output:
-//         file("${pairId}_fastqc/*.zip") into FASTQC_FILES
-
-//     script:
-//     """
-//     mkdir ${pairId}_fastqc
-
-//     fastqc --outdir ${pairId}_fastqc ${in_fastq.join(' ')}
-
-//     """
-// }
+****** Postprocessing ******
+- ConvertToMothur: Convert output file to .shared file
+- Results: Mothur postprocessing with get.relabund, clearcut and unifrac.weighted
+- SummaryFile: Generates summary of reads per sample per step
 
 /*
  *
- * Step 0: Demultiplexing
+ * Dada2's filterAndTrim function (in scripts/util.R)
+ * Parameters: {params.maxEE} (expected errors), {params.truncLen}, {params.truncQ}
  *
  */
 
@@ -132,8 +111,13 @@ process FilterAndTrim {
     """
 }
 
+/*
+ *
+ * Dada2 Error model (in scripts/util.R)
+ *
+ */
+
 process LearnErrors {
-    // Build error model using dada2. 
     tag { "LearnErrors.${pairId}" }
     publishDir "${params.outdir}/2-errorModel", mode: "copy"
     label "medium_computation"
@@ -153,6 +137,12 @@ process LearnErrors {
     learnErrorRates(fastqs,"${pairId}")
     """
 }
+
+/*
+ *
+ * Dada2 main denoising algorithm (in scripts/util.R)
+ *
+ */
 
 process Denoise {
     tag { "Denoising.${pairId}" }
@@ -180,6 +170,12 @@ process Denoise {
     """
 }
 
+/*
+ *
+ * Dada2 main reads merging algorithm (in scripts/util.R)
+ *
+ */
+
 process Esv {
     tag { "Esv" }
 
@@ -202,6 +198,13 @@ process Esv {
     esvTable(${params.minOverlap},${params.maxMismatch},${params.revRead})       
     """
 }
+
+/*
+ *
+ * Mothur MSA and filtering (in scripts/mothur.sh)
+ * Parameters: {params.criteria}
+ *
+ */
 
 process MultipleSequenceAlignment {
     tag { "MSA" }
@@ -231,6 +234,12 @@ process MultipleSequenceAlignment {
     """
 }
 
+/*
+ *
+ * Chimera removal using mothur's unoise algorithm (in scripts/mothur.sh)
+ *
+ */
+
 process ChimeraRemoval {
     tag { "chimeraRemoval" }
     publishDir "${params.outdir}/6-chimeraRemoval", mode: "copy"
@@ -247,6 +256,13 @@ process ChimeraRemoval {
     ${params.scripts}/mothur.sh --step=chimera --rad=all.screening.start_end
     """
 }
+
+/*
+ *
+ * Removing contigs that match the ${params.taxaToFilter} list (in scripts/mothur.sh)
+ * Default: unknown
+ *
+ */
 
 process TaxaFiltering {
     tag { "taxaFilter" }
@@ -275,6 +291,12 @@ process TaxaFiltering {
     """
 }
 
+/*
+ *
+ * Subsampling the samples to the 10th percentile or 1k/sample if the 10th pct is below 1k (in scripts/mothur.sh)
+ *
+ */
+
 process Subsampling {
     tag { "subsampling" }
     publishDir "${params.outdir}/8-subsampling", mode: "copy"
@@ -299,6 +321,12 @@ process Subsampling {
     """
 }
 
+/*
+ *
+ * Clustering with VSEARCH, dgc method (in scripts/mothur.sh)
+ *
+ */
+
 process Clustering {
     tag { "clustering" }
     publishDir "${params.outdir}/9-clustering", mode: "copy", pattern: "*.{fasta,shared,list}"
@@ -316,6 +344,12 @@ process Clustering {
     ${params.scripts}/mothur.sh --step=clustering --rad=all.subsampling --idThreshold=${idThreshold}
     """
 }
+
+/*
+ *
+ * Consensus classification (in scripts/mothur.sh)
+ *
+ */
 
 process ConsensusClassification {
     tag { "consensusClassification" }
@@ -337,6 +371,7 @@ process ConsensusClassification {
  *
  * Pre-lulu step
  *    - Blast each contig against each other
+ *    - Keep top 10 hits with at least 84% similarity and 90% query coverage
  *
  */
 
@@ -366,6 +401,12 @@ process PreLulu {
     """
 }
 
+/*
+ *
+ * Lulu (in scripts/util.R)
+ *
+ */
+
 process Lulu {
     tag { "Lulu" }
     publishDir "${params.outdir}/11-lulu", mode: "copy"
@@ -385,6 +426,12 @@ process Lulu {
     luluCurate("${table}","${matchlist}","${idThreshold}")
     """
 }
+
+/*
+ *
+ * Filter out fasta sequences that LULU merged with the most abundant sequence
+ *
+ */
 
 process FilterFasta {
     tag { "filterFasta" }
@@ -412,6 +459,12 @@ process FilterFasta {
     """
 }
 
+/*
+ *
+ * Conversion of LULU's outputs to mothur compatible format
+ *
+ */
+
 process ConvertToMothur {
     tag { "convertToMothur" }
     publishDir "${params.outdir}/12-mothurFmtOutputs", mode: "copy"
@@ -436,6 +489,12 @@ process ConvertToMothur {
     """
 }
 
+/*
+ *
+ * Generates some results with mothur 
+ *
+ */
+
 process Results {
     tag { "mothurResults" }
     publishDir "${params.outdir}/13-Postprocessing", mode: "copy"
@@ -451,6 +510,12 @@ process Results {
     mothur "#clearcut(fasta=${fasta}, DNA=T) ; count.seqs(shared=${shared}) ; unifrac.weighted(tree=current,count=current)"
     """    
 }
+
+/*
+ *
+ * File summary (in scripts/generate_step_summary.py)
+ *
+ */
 
 process SummaryFile {
     tag { "mothurResults" }
