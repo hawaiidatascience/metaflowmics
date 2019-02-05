@@ -291,7 +291,7 @@ process Subsampling {
 
     percentile_value=`awk '{all[NR] = \$1} END{print all[int(NR*${params.subsamplingQuantile})]}' sample_size.txt`
 
-    if [ \$percentile_value < ${params.minSubsampling} ] || [ -z \$percentile_value ]
+    if [ \$percentile_value -lt ${params.minSubsampling} ] || [ -z \$percentile_value ]
         then percentile_value=${params.minSubsampling}
     fi
 
