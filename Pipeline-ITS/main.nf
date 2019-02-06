@@ -79,7 +79,7 @@ log.info "========================================="
  */
 
 process PreFiltering {
-    tag { "pre_filter" }
+    tag { "pre_filter.${pairId}" }
     label "low_computation"
     publishDir "${params.outdir}/1-preQC", mode: "copy"
     errorStrategy "${params.errorsHandling}"
@@ -120,7 +120,7 @@ INPUT_FASTQ_LEN
  */
 
 process runFastQC {
-    tag { "rFQC.${pairId}" }
+    tag { "fastQC.${pairId}" }
     label "low_computation"
     publishDir "${params.outdir}/0-fastQC", mode: "copy"
     errorStrategy 'ignore'
@@ -150,7 +150,7 @@ process runFastQC {
  */
 
 process ExtractITS {
-    tag { "ITSextraction" }
+    tag { "ITSextraction.${pairId}" }
     label "low_computation"    
     publishDir "${params.outdir}/2-ITSxpress", mode: "copy"
     errorStrategy "${params.errorsHandling}"
@@ -194,7 +194,7 @@ process ExtractITS {
 
 
 process RemoveSmallAndNseqs {
-    tag { "removeN" }
+    tag { "removeN.${pairId}" }
     label "low_computation"        
     publishDir "${params.outdir}/3-NandSmallSeqsFiltering", mode: "copy"
     errorStrategy "${params.errorsHandling}"
@@ -226,7 +226,7 @@ process RemoveSmallAndNseqs {
 
 
 process QcFilter {
-    tag { "filteredITS" }
+    tag { "filteredITS.${pairId}" }
     label "low_computation"
     publishDir "${params.outdir}/4-qualityFiltering", mode: "copy"
     errorStrategy "${params.errorsHandling}"
@@ -273,7 +273,7 @@ FILTERED_FASTQ_ALL
  */
 
 process Dereplication {
-    tag { "dereplication" }
+    tag { "dereplication.${pairId}" }
     label "low_computation"        
     publishDir "${params.outdir}/5-Dereplication", mode: "copy"
 
@@ -304,7 +304,7 @@ process Dereplication {
  */
 
 process ChimeraRemoval {
-    tag { "ChimeraRemoval" }
+    tag { "ChimeraRemoval.${pairId}" }
     label "low_computation"        
     publishDir "${params.outdir}/6-ChimeraRemoval", mode: "copy"
     errorStrategy "${params.errorsHandling}"
@@ -348,7 +348,7 @@ DEREP_FASTA_NO_CHIMERA
  */
 
 process LearnErrors {
-    tag { "LearnErrors" }
+    tag { "LearnErrors.${pairId}" }
     label "low_computation"
     publishDir "${params.outdir}/7-Denoising", mode: "copy", pattern: "*{_errors.RDS,.png}"
     errorStrategy "${params.errorsHandling}"
@@ -381,7 +381,7 @@ process LearnErrors {
  */
 
 process Denoise {
-    tag { "Denoising" }
+    tag { "Denoising.${pairId}" }
     label "low_computation"        
     publishDir "${params.outdir}/7-Denoising", mode: "copy"
     errorStrategy "${params.errorsHandling}"
@@ -408,7 +408,7 @@ process Denoise {
  */
 
 process MakeEsvTable {
-    tag { "esvTable" }
+    tag { "esvTable.${pairId}" }
     label "medium_computation"        
     publishDir "${params.outdir}/8-Clustering", mode: "copy"
     errorStrategy "${params.errorsHandling}"
@@ -464,7 +464,7 @@ process MergeFastas {
  */
 
 process Clustering {
-    tag { "clustering" }
+    tag { "clustering.${idThreshold}" }
     label "medium_computation"    
     publishDir "${params.outdir}/8-Clustering", mode: "copy"
     errorStrategy "${params.errorsHandling}"
@@ -506,7 +506,7 @@ ALL_SAMPLES = OTU_ALL_SAMPLES.mix(ESV_ALL_SAMPLES)
  */
 
 process PreLulu {
-    tag { "preLulus" }
+    tag { "preLulus.${idThreshold}" }
     label "medium_computation"    
     publishDir "${params.outdir}/9-LULU_correction", mode: "copy"
     errorStrategy "${params.errorsHandling}"
@@ -537,7 +537,7 @@ process PreLulu {
  */
 
 process Lulu {
-    tag { "Lulu" }
+    tag { "Lulu.${idThreshold}" }
     label "high_computation"    
     publishDir "${params.outdir}/9-LULU_correction", mode: "copy"
     errorStrategy "${params.errorsHandling}"
@@ -565,7 +565,7 @@ process Lulu {
 
 process ExtractFastaLulu {
     label "medium_computation"
-    tag { "extractFastaLulu" }
+    tag { "extractFastaLulu.${idThreshold}" }
     publishDir "${params.outdir}/10-taxonomy", mode: "copy"
     errorStrategy "${params.errorsHandling}"
     
@@ -593,7 +593,7 @@ process ExtractFastaLulu {
  */
 
 process ClassificationCONSTAX  {
-    tag { "classification" }
+    tag { "classification.${idThreshold}" }
     label "medium_computation"
     publishDir "${params.outdir}/10-taxonomy", mode: "copy"
     errorStrategy "${params.errorsHandling}"
