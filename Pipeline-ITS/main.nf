@@ -62,7 +62,6 @@ def summary = [:]
 summary['Reads'] = params.reads
 summary['its'] = params.its
 summary['revRead'] = params.revRead
-summary['Reference'] = params.reference
 summary['Output dir'] = params.outdir
 summary['Working dir'] = workflow.workDir
 summary['Current home'] = "$HOME"
