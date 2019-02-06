@@ -6,7 +6,7 @@ echo "#See https://github.com/natalie-vandepol/compare_taxonomy for the original
 echo "________________Parameters________________"
 set -o xtrace
 
-RDPTools_path=$HOME/.local/bin/RDPTools
+RDPTools_path=$2
 
 SCRIPT_DIR=`dirname $0` # $PWD/friendly_CONSTAX
 ROOT_DIR=`dirname $1`
