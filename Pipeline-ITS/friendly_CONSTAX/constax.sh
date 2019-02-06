@@ -7,7 +7,8 @@ echo "________________Parameters________________"
 set -o xtrace
 
 RDPTools_path=$HOME/.local/bin/RDPTools
-SCRIPT_DIR=$PWD/friendly_CONSTAX
+
+SCRIPT_DIR="./" # $PWD/friendly_CONSTAX
 ROOT_DIR=`dirname $1`
 
 otuPath=$PWD/$1
