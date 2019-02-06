@@ -607,7 +607,7 @@ process ClassificationCONSTAX  {
 	
     """
 
-    ${params.constax_path}/constax.sh ${fasta}
+    ${workflow.projectDir}/friendly_CONSTAX/constax.sh ${fasta}
 
     mv CONSTAX_outputs/outputs annotations_${idThreshold}
 
