@@ -631,7 +631,7 @@ process SummaryFile {
         file("sequences_per_sample_per_step.tsv")
     script:
     """
-    #!/usr/bin/env python
+    #!/usr/bin/env python3
     import sys
     sys.path.append("${workflow.projectDir}/scripts")
     from generate_step_summary import write_summary
