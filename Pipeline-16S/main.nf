@@ -14,12 +14,30 @@ def helpMessage() {
  * SET UP CONFIGURATION VARIABLES
  */
 
+
+
 // Show help message
 params.help = false
 if (params.help){
     helpMessage()
     exit 0
 }
+
+params.script_dir = workflow.projectDir+"/scripts"
+
+// Header log info
+def summary = [:]
+summary['Run Name'] = workflow.runName
+summary['Reads'] = params.reads
+summary['Output dir'] = params.outdir
+summary['Script dir'] = params.script_dir
+summary['Working dir'] = workflow.workDir
+summary['Current home'] = "$HOME"
+summary['Current user'] = "$USER"
+summary['Current path'] = "$PWD"
+summary['Config Profile'] = workflow.profile
+log.info summary.collect { k,v -> "${k.padRight(15)}: $v" }.join("\n")
+log.info "========================================="
 
 if( params.revRead == 0 ){
     Channel
@@ -35,20 +53,6 @@ if( params.revRead == 0 ){
 	.ifEmpty { error "Cannot find any reads matching: ${params.reads}" }
 	.into { INPUT_FASTQ ; INPUT_FASTQ_TO_QC }
 }
-
-// Header log info
-def summary = [:]
-summary['Run Name'] = workflow.runName
-summary['Reads'] = params.reads
-summary['Output dir'] = params.outdir
-summary['Working dir'] = workflow.workDir
-summary['Current home'] = "$HOME"
-summary['Current user'] = "$USER"
-summary['Current path'] = "$PWD"
-summary['Config Profile'] = workflow.profile
-log.info summary.collect { k,v -> "${k.padRight(15)}: $v" }.join("\n")
-log.info "========================================="
-
 
 /*
  *
@@ -193,18 +197,18 @@ process MultipleSequenceAlignment {
     
     script:
     """
-    ${params.scripts}/mothur.sh \
+    ${params.script_dir}/mothur.sh \
        --step=MSA \
        --rad=all.esv \
        --refAln=${params.referenceAln}
 
-    ${params.scripts}/mothur.sh \
+    ${params.script_dir}/mothur.sh \
        --step=screening \
        --rad=all.MSA \
        --criteria=${params.criteria} \
        --optimize=start-end
 
-    ${params.scripts}/mothur.sh --step=summary --rad=all.screening.start_end
+    ${params.script_dir}/mothur.sh --step=summary --rad=all.screening.start_end
     """
 }
 
@@ -227,7 +231,7 @@ process ChimeraRemoval {
     
     script:
     """
-    ${params.scripts}/mothur.sh --step=chimera --rad=all.screening.start_end
+    ${params.script_dir}/mothur.sh --step=chimera --rad=all.screening.start_end
     """
 }
 
@@ -250,7 +254,7 @@ process TaxaFiltering {
 
     script:
     """
-    ${params.scripts}/mothur.sh \
+    ${params.script_dir}/mothur.sh \
 	--step=taxaFilter \
 	--rad=all.chimera \
         --taxaToFilter=${params.taxaToFilter} \
@@ -291,7 +295,7 @@ process Subsampling {
         then percentile_value=${params.minSubsampling}
     fi
 
-    ${params.scripts}/mothur.sh --step=subsampling --rad=all.taxaFilter --subsamplingNb=\$percentile_value
+    ${params.script_dir}/mothur.sh --step=subsampling --rad=all.taxaFilter --subsamplingNb=\$percentile_value
     """
 }
 
@@ -315,7 +319,7 @@ process Clustering {
 	set val(idThreshold), file("all.clustering.*.list"), file(count), file(tax) into CONTIGS_FOR_CLASSIFICATION
     script:
     """
-    ${params.scripts}/mothur.sh --step=clustering --rad=all.subsampling --idThreshold=${idThreshold}
+    ${params.script_dir}/mothur.sh --step=clustering --rad=all.subsampling --idThreshold=${idThreshold}
     """
 }
 
@@ -337,7 +341,7 @@ process ConsensusClassification {
     script:
     """
     rad=`basename all.clustering.*.list .list`
-    ${params.scripts}/mothur.sh --step=consensusClassification --rad=\${rad} --idThreshold=${idThreshold} --refTax=${params.referenceTax} --refAln=${params.referenceAln}
+    ${params.script_dir}/mothur.sh --step=consensusClassification --rad=\${rad} --idThreshold=${idThreshold} --refTax=${params.referenceTax} --refAln=${params.referenceAln}
     """
 }
 
