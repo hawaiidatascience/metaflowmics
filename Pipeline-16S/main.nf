@@ -39,20 +39,12 @@ summary['Config Profile'] = workflow.profile
 log.info summary.collect { k,v -> "${k.padRight(15)}: $v" }.join("\n")
 log.info "========================================="
 
-if( params.revRead == 0 ){
-    Channel
-	.fromPath( params.reads )
-	.ifEmpty { error "Cannot find any reads matching: ${params.reads}" }
-    	.map { filename -> tuple(filename.baseName.substring(0, filename.baseName.length()-1),
-				 file(filename))}
-	.into { INPUT_FASTQ ; INPUT_FASTQ_TO_QC }
 
-} else {
-    Channel
-	.fromFilePairs( params.reads )
-	.ifEmpty { error "Cannot find any reads matching: ${params.reads}" }
-	.into { INPUT_FASTQ ; INPUT_FASTQ_TO_QC }
-}
+Channel
+    .fromFilePairs( params.reads, size: params.revRead ? 2 : 1 )
+    .ifEmpty { error "Cannot find any reads matching: ${params.reads}" }
+    .into { INPUT_FASTQ ; INPUT_FASTQ_TO_QC }
+
 
 /*
  *
@@ -165,7 +157,7 @@ process Esv {
 	file dadas from DADA_RDS.collect()
     output:
         set file("all.esv.count_table"), file("all.esv.fasta")  into DEREP_CONTIGS
-        file("reads_merged.RDS")
+        file("*.RDS")
         file("count_summary.tsv") into COUNT_SUMMARIES
     
     script:

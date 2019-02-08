@@ -19,6 +19,12 @@ filterReads <- function(pairId,fwd,rev=NULL,
                      sep="_")
     if ( !is.null(rev) ) {
         rev.out <- paste(paste0(pairId,"_R2"),"trimmed.fastq",sep="_")
+    } else {
+        truncLen <- truncLen[1]
+        rev.out <- NULL
+        truncQ <- truncQ[1]
+        minLen <- minLen[1]
+        maxEE <- maxEE[1]
     }
 
     # Apply dada2's filterAndTrim
@@ -68,7 +74,7 @@ learnErrorRates <- function(fastq,pairId)
     
         fig <- plotErrors(c(errorsF,errorsR), nominalQ=TRUE)
     } else {
-        fig <- plotErrors(errors, nominalQ=TRUE)
+        fig <- plotErrors(errorsF, nominalQ=TRUE)
     }
     ggsave(paste0("errorProfile_",pairId,".png"), plot=fig)
 }
@@ -118,12 +124,14 @@ esvTable <- function(minOverlap, maxMismatch, revRead)
         write.table(esvTable, file="all.esv.count_table", row.names=F, col.names=T, quote=F, sep="\t")
 
     } else {
+        
         print("Functionality not tested yet.")
         fasta_seq <- lapply( denoisedF, function(x) names(x$denoised) )
         fasta_seq_uniq <- unique(cbind(unlist(fasta_seq)))
         esv.names <- sprintf("contig%02d", 1:length(fasta_seq_uniq)) 
 
-        write.fasta(fasta_seq_uniq,esv.names,"all.esv.fasta")
+        write.fasta(as.list(fasta_seq_uniq),esv.names,"all.esv.fasta")
+        saveRDS(denoisedF,"reads_fwd_denoised.RDS")
         
         esvTable <- as.data.frame(lapply(denoisedF, function(x) x$denoised[fasta_seq_uniq]))
 
