@@ -34,15 +34,16 @@ Then, you can run the pipeline by running:
 **Mothur**
 - align.seqs; filter.seqs; screen.seqs  --> alignment against reference for further filtering
 - chimera.vsearch; remove.seqs          --> chimera removal
-- classify.seqs; (remove.lineage)       --> classification, optional taxa filtering
 - sub.sample
 - cluster (at 95,97,99 and 100% identity)
-- classify.otu
+- classify.seqs ; classify.otu 
 
 **Lulu**
 - preLulu (create matchlists for LULU)
 - LULU
-- FilterFasta (remove sequences from FASTA and taxonomy file that Lulu removed)
+
+**Python**
+- OutputFilter (remove LULU flagged sequences from FASTA and taxonomy file; remove low abundant OTUs (<=1))
 
 **Postprocessing**
 - ConvertToMothur: Convert output file to .shared file

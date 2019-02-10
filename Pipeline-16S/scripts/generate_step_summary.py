@@ -89,11 +89,11 @@ def write_summary(root_dir,data_dir):
              ("2-errorModel","*R1*.RDS"),
              ("5-multipleSequenceAlignment","all.screening.start_end.count_table"),
              ("6-chimeraRemoval","all.chimera.count_table"),
-             ("7-taxaFiltering","all.taxaFilter.count_table"),
-             ("8-subsampling","all.subsampling.count_table"),
-             ("9-clustering","all.clustering.*.shared"),
-             ("10-consensusClassification","*.taxonomy"),             
-             ("11-lulu","curated_table*.csv")
+             ("7-subsampling","all.subsampling.count_table"),
+             ("8-clustering","all.clustering.*.shared"),
+             ("9-consensusClassification","*.taxonomy"),             
+             ("10-lulu","curated_table*.csv"),
+             ("11-taxaFiltering","all.taxaFilter.count_table"),             
     ]
     
     denoising_step = pd.read_table("count_summary.tsv", index_col=0)

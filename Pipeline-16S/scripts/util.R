@@ -179,11 +179,11 @@ luluCurate <- function(abundanceFile,matchListFile,threshold)
                     minimum_relative_cooccurence=0.95)
     
     write.csv(curated$curated_table,
-              paste0("curated_table_",threshold,".csv"),
+              paste0("lulu_table_",threshold,".csv"),
               quote=F)
     
     write.table(curated$curated_otus,
-                paste0("curated_ids_",threshold,".csv"),
+                paste0("lulu_ids_",threshold,".csv"),
                 quote=F,
                 row.names=F,
                 col.names=F)

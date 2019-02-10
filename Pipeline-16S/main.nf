@@ -39,12 +39,10 @@ summary['Config Profile'] = workflow.profile
 log.info summary.collect { k,v -> "${k.padRight(15)}: $v" }.join("\n")
 log.info "========================================="
 
-
 Channel
     .fromFilePairs( params.reads, size: params.revRead ? 2 : 1 )
     .ifEmpty { error "Cannot find any reads matching: ${params.reads}" }
     .into { INPUT_FASTQ ; INPUT_FASTQ_TO_QC }
-
 
 /*
  *
@@ -184,23 +182,16 @@ process MultipleSequenceAlignment {
     input:
         set file(count), file(fasta) from DEREP_CONTIGS
     output:
-        set file("all.screening.start_end.count_table"), file("all.screening.start_end.fasta") into DEREP_CONTIGS_ALN
-        file("all.screening.start_end.summary") into ALN_SUMMARY
+        set file("all.MSA.start_end.count_table"), file("all.MSA.start_end.fasta") into DEREP_CONTIGS_ALN
+        file("*.summary")
     
     script:
     """
     ${params.script_dir}/mothur.sh \
        --step=MSA \
-       --rad=all.esv \
-       --refAln=${params.referenceAln}
-
-    ${params.script_dir}/mothur.sh \
-       --step=screening \
-       --rad=all.MSA \
+       --refAln=${params.referenceAln} \
        --criteria=${params.criteria} \
        --optimize=start-end
-
-    ${params.script_dir}/mothur.sh --step=summary --rad=all.screening.start_end
     """
 }
 
@@ -219,45 +210,11 @@ process ChimeraRemoval {
 	set file(count), file(fasta) from DEREP_CONTIGS_ALN
 
     output:
-        set file("all.chimera.count_table"), file("all.chimera.fasta") into NO_CHIMERA_FASTA
+        set file("all.chimera.fasta"), file("all.chimera.count_table") into NO_CHIMERA_FASTA
     
     script:
     """
-    ${params.script_dir}/mothur.sh --step=chimera --rad=all.screening.start_end
-    """
-}
-
-/*
- *
- * Removing contigs that match the ${params.taxaToFilter} list (in scripts/mothur.sh)
- * Default: unknown
- *
- */
-
-process TaxaFiltering {
-    tag { "taxaFilter" }
-    publishDir "${params.outdir}/7-taxaFiltering", mode: "copy"
-    
-    input:
-	set file(count), file(fasta) from NO_CHIMERA_FASTA
-
-    output:
-	set file("all.taxaFilter.fasta"), file("all.taxaFilter.count_table"), file("all.taxaFilter.taxonomy") into TAXA_FILTERED_CONTIGS
-
-    script:
-    """
-    ${params.script_dir}/mothur.sh \
-	--step=taxaFilter \
-	--rad=all.chimera \
-        --taxaToFilter=${params.taxaToFilter} \
-	--refAln=${params.referenceAln} \
-	--refTax=${params.referenceTax}
-
-    if [ -z ${params.taxaToFilter} ]; then
-        mv ${count} all.taxaFilter.count_table
-        mv ${fasta} all.taxaFilter.fasta
-    fi
-
+    ${params.script_dir}/mothur.sh --step=chimera
     """
 }
 
@@ -269,12 +226,12 @@ process TaxaFiltering {
 
 process Subsampling {
     tag { "subsampling" }
-    publishDir "${params.outdir}/8-subsampling", mode: "copy"
+    publishDir "${params.outdir}/7-subsampling", mode: "copy"
     
     input:
-	set file(fasta), file(count), file(tax) from TAXA_FILTERED_CONTIGS
+	set file(fasta), file(count) from NO_CHIMERA_FASTA
     output:
-	set file("all.subsampling.fasta"), file("all.subsampling.count_table"), file("all.subsampling.taxonomy") into SUBSAMPLED_CONTIGS
+	set file("all.subsampling.fasta"), file("all.subsampling.count_table") into SUBSAMPLED_CONTIGS
 
     script:
     """
@@ -287,7 +244,7 @@ process Subsampling {
         then percentile_value=${params.minSubsampling}
     fi
 
-    ${params.script_dir}/mothur.sh --step=subsampling --rad=all.taxaFilter --subsamplingNb=\$percentile_value
+    ${params.script_dir}/mothur.sh --step=subsampling --subsamplingNb=\$percentile_value
     """
 }
 
@@ -298,20 +255,20 @@ process Subsampling {
  */
 
 process Clustering {
-    tag { "clustering" }
-    publishDir "${params.outdir}/9-clustering", mode: "copy", pattern: "*.{fasta,shared,list}"
+    tag { "clustering.${idThreshold}" }
+    publishDir "${params.outdir}/8-clustering", mode: "copy", pattern: "*.{fasta,shared,list}"
     label "high_computation"
     
     input:
-	set file(fasta), file(count), file(tax) from SUBSAMPLED_CONTIGS
+	set file(fasta), file(count) from SUBSAMPLED_CONTIGS
         each idThreshold from (0,0.01,0.03,0.05)
     output:
         set val(idThreshold), file("all.clustering.*.fasta") into PRELULU_FASTA, FASTA_TO_FILTER
         set val(idThreshold), file("all.clustering.*.shared") into ABUNDANCE_TABLES
-	set val(idThreshold), file("all.clustering.*.list"), file(count), file(tax) into CONTIGS_FOR_CLASSIFICATION
+        set val(idThreshold), file(fasta), file("all.clustering.*.list"), file(count) into CONTIGS_FOR_CLASSIFICATION
     script:
     """
-    ${params.script_dir}/mothur.sh --step=clustering --rad=all.subsampling --idThreshold=${idThreshold}
+    ${params.script_dir}/mothur.sh --step=clustering --idThreshold=${idThreshold}
     """
 }
 
@@ -322,18 +279,20 @@ process Clustering {
  */
 
 process ConsensusClassification {
-    tag { "consensusClassification" }
-    publishDir "${params.outdir}/10-consensusClassification", mode: "copy"
+    tag { "consensusClassification.${idThreshold}" }
+    publishDir "${params.outdir}/9-consensusClassification", mode: "copy"
     
     input:
-	set val(idThreshold), file(list), file(count), file(tax) from CONTIGS_FOR_CLASSIFICATION
+	set val(idThreshold), file(fasta), file(list), file(count) from CONTIGS_FOR_CLASSIFICATION
     output:
 	file("all.classification.*.summary") into CLASSIFICATION_SUMMARY
 	set val(idThreshold), file("all.classification.*.taxonomy") into CONSENSUS_TAXONOMY
     script:
     """
-    rad=`basename all.clustering.*.list .list`
-    ${params.script_dir}/mothur.sh --step=consensusClassification --rad=\${rad} --idThreshold=${idThreshold} --refTax=${params.referenceTax} --refAln=${params.referenceAln}
+    ${params.script_dir}/mothur.sh --step=consensusClassification \
+        --idThreshold=${idThreshold} \
+ 	--refAln=${params.referenceAln} \
+ 	--refTax=${params.referenceTax}
     """
 }
 
@@ -346,8 +305,8 @@ process ConsensusClassification {
  */
 
 process PreLulu {
-    tag { "preLulus" }
-    publishDir "${params.outdir}/11-lulu", mode: "copy"
+    tag { "preLulus.${idThreshold}" }
+    publishDir "${params.outdir}/10-lulu", mode: "copy"
 
     input:
 	set val(idThreshold),file(fasta) from PRELULU_FASTA
@@ -378,15 +337,14 @@ process PreLulu {
  */
 
 process Lulu {
-    tag { "Lulu" }
-    publishDir "${params.outdir}/11-lulu", mode: "copy"
+    tag { "Lulu.${idThreshold}" }
+    publishDir "${params.outdir}/10-lulu", mode: "copy"
     errorStrategy "${params.errorsHandling}"
 
     input:
 	set val(idThreshold),file(matchlist),file(table) from MATCH_LISTS.join(ABUNDANCE_TABLES)
     output:
-	set val(idThreshold),file("curated_table_${idThreshold}.csv") into ABUNDANCE_LULU,ABUNDANCE_MOTHUR
-	set val(idThreshold),file("curated_ids_${idThreshold}.csv") into IDS_LULU
+        set val(idThreshold),file("lulu_ids_${idThreshold}.csv"), file("lulu_table_${idThreshold}.csv") into LULU_TO_FILTER
     script:
 	
     """
@@ -400,62 +358,60 @@ process Lulu {
 /*
  *
  * Filter out fasta sequences that LULU merged with the most abundant sequence
+ * Remove OTUs with an abundance lower than {minAbundance}
+ * Convert the abundance table to .shared format
  *
  */
 
-process FilterFasta {
-    tag { "filterFasta" }
-    publishDir "${params.outdir}/11-lulu", mode: "copy"
+process OutputFilter {
+    tag { "OutputFilter.${idThreshold}" }
+    publishDir "${params.outdir}/11-outputFilter", mode: "copy"
     errorStrategy "${params.errorsHandling}"
     
     input:
-	set idThreshold,file(ids),file(tax),file(fasta) from IDS_LULU.join(CONSENSUS_TAXONOMY).join(FASTA_TO_FILTER)
+	set idThreshold,file(ids),file(abundance),file(tax),file(fasta) from LULU_TO_FILTER.join(CONSENSUS_TAXONOMY).join(FASTA_TO_FILTER)
     output:
-	set idThreshold,file("OTU_${idThreshold}.fasta") into FASTA_FOR_MOTHUR
-        set file("OTU_${idThreshold}.fasta"), file("taxonomy_${idThreshold}.csv") into OUTPUT_FILES
+	// set idThreshold, file("OTU_${idThreshold}.fasta"), file("abundance_${idThreshold}.shared") into MOTHUR_INPUTS
+        set idThreshold, file("OTU_${idThreshold}.fasta"), file("abundance_${idThreshold}.shared"), file("consensus_${idThreshold}.taxonomy") into FOR_TAXA_FILTER
     script:
     """
     #!/usr/bin/env python
 
-    import pandas as pd
-    from Bio import SeqIO
+    import sys
+    sys.path.append("${workflow.projectDir}/scripts")
 
-    ids = [ name.strip() for name in open("${ids}","r").readlines() ]
-    fasta = [ seq for seq in SeqIO.parse("${fasta}","fasta") if seq.id in ids ]
-    SeqIO.write(fasta,"OTU_${idThreshold}.fasta","fasta")
+    from util import filterIds, filterAbundance, csvToShared
 
-    taxonomyTable = pd.read_table("${tax}",index_col=0)
-    taxonomyTable.loc[ids].to_csv("taxonomy_${idThreshold}.csv")
+    filterIds("${ids}","${fasta}","${tax}","${idThreshold}")
+    filterAbundance("${abundance}",minAbundance=${params.minAbundance})
+    csvToShared("curated_${abundance}","${idThreshold}")
     """
 }
 
 /*
  *
- * Conversion of LULU's outputs to mothur compatible format
+ * Removing contigs that match the ${params.taxaToFilter} list (in scripts/mothur.sh)
+ * Default: unknown
  *
  */
 
-process ConvertToMothur {
-    tag { "convertToMothur" }
-    publishDir "${params.outdir}/12-mothurFmtOutputs", mode: "copy"
+process TaxaFilter {
+    tag { "convertToMothur.${idThreshold}" }
+    publishDir "${params.outdir}/11-taxaFilter", mode: "copy", pattern: "*.{shared,.taxonomy}"
     errorStrategy "${params.errorsHandling}"
     
     input:
-	set val(idThreshold),file(fasta),file(abundanceTable) from FASTA_FOR_MOTHUR.join(ABUNDANCE_MOTHUR)
+	set val(idThreshold), file(fasta), file(shared), file(tax) from FOR_TAXA_FILTER
     output:
-	set val(idThreshold),file(fasta),file("abundance_${idThreshold}.shared") into MOTHUR_INPUTS
+	set val(idThreshold), file("all.taxaFilter.fasta"), file("all.taxaFilter.shared"), file("all.taxaFilter.taxonomy") into MOTHUR_TO_PROCESS
     script:
     """
-    #!/usr/bin/env python
-
-    import pandas as pd
-
-    shared = pd.read_csv("${abundanceTable}", index_col=0).T
-    shared.index.name = "Group"
-    shared.insert(loc=0, column="numOtus", value=[shared.shape[1]]*shared.shape[0])
-    shared.reset_index(inplace=True)
-    shared.insert(loc=0, column="label", value=[${idThreshold}]*shared.shape[0])
-    shared.to_csv("abundance_${idThreshold}.shared", sep="\t", index=False)
+    ${params.script_dir}/mothur.sh \
+	--step=taxaFilter \
+        --idThreshold=${idThreshold} \
+        --taxaToFilter='${params.taxaToFilter}' \
+	--refAln=${params.referenceAln} \
+	--refTax=${params.referenceTax}
     """
 }
 
@@ -466,12 +422,12 @@ process ConvertToMothur {
  */
 
 process Results {
-    tag { "mothurResults" }
-    publishDir "${params.outdir}/13-Postprocessing", mode: "copy"
+    tag { "mothurResults.${idThreshold}" }
+    publishDir "${params.outdir}/12-Postprocessing", mode: "copy"
     errorStrategy "${params.errorsHandling}"
     
     input:
-	set val(idThreshold), file(fasta), file(shared) from MOTHUR_INPUTS
+	set val(idThreshold), file(fasta), file(shared), file(tax) from MOTHUR_TO_PROCESS
     output:
 	set file("*.relabund"), file("*.wsummary"), file("*.tre") into RESULTS
     script:
@@ -488,14 +444,13 @@ process Results {
  */
 
 process SummaryFile {
-    tag { "mothurResults" }
+    tag { "mothurResults.${idThreshold}" }
     publishDir "${params.outdir}/13-Postprocessing", mode: "copy"
     errorStrategy "${params.errorsHandling}"
     
     input:
 	file f1 from COUNT_SUMMARIES
 	file f2 from RESULTS.collect()
-        file f3 from OUTPUT_FILES.collect()    
     output:
         file("sequences_per_sample_per_step.tsv") into STEPS_SUMMARY
     script:

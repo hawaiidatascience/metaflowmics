@@ -2,46 +2,24 @@
 
 from Bio import SeqIO
 import pandas as pd
-from glob import glob
-
-def removeNseqs(fastq,minLen,pairId):
-    seqs = [ seq for seq in SeqIO.parse(fastq,"fastq")
-             if "N" not in seq.seq or len(seq)<minLen ]
-    SeqIO.write(seqs,pairId+"_noN.fastq","fastq")
-
-def mergeSamplesFa(pattern="*.fasta"):
-    '''
-    Merges and rename fastas for all samples before making OTU table
-    '''
-    sequences = []
-    for fasta_file in glob(pattern):
-        sequences += [ seq for seq in SeqIO.parse(fasta_file,'fasta') ]
-        
-    for seq in sequences:
-        seq.id = 'sample=' + seq.id
-        seq.name = 'sample=' + seq.name
-        
-    SeqIO.write(sequences,'all_samples_merged.fasta','fasta')
-
     
-def extractFastaLulu(fasta,idsToExtract,threshold):
-    ids = pd.read_csv(idsToExtract,
-                      header=None)[0].values
-    sequences = [ seq for seq in SeqIO.parse(fasta,"fasta")
-                  if seq.id.split(";")[0] in ids ]
-    SeqIO.write(sequences,"lulu_fasta{}.fasta".format(threshold),"fasta")
-    
-def fillAbundances(abundanceTable,taxonomy,threshold):
-    annotations = pd.read_table(taxonomy,
-                                header=None,
-                                index_col=0)
-    annotations.index = [ idx.split(';')[0]
-                          for idx in annotations.index]
+def filterIds(ids,fasta,taxonomy,threshold):
+    ids = [ name.strip() for name in open(ids,"r").readlines() ]
+    fasta = [ seq for seq in SeqIO.parse(fasta,"fasta") if seq.id in ids ]
+    SeqIO.write(fasta,"OTU_{}.fasta".format(threshold),"fasta")
 
-    table = pd.read_csv(abundanceTable,
-                        index_col=0)
-    taxonomy = annotations.loc[table.index]
-    table["taxonomy"] = annotations.loc[table.index][1]
+    taxonomyTable = pd.read_table(taxonomy,index_col=0)
+    taxonomyTable.loc[ids].to_csv("consensus_{}.taxonomy".format(threshold),sep="\t")
 
-    table.to_csv("abundance_table_annotated_ID={}.tsv".format(threshold),
-                 sep="\t")
+def filterAbundance(abundance,minAbundance=1):
+    abundanceTable = pd.read_csv(abundance,index_col=0)
+    abundanceTable = abundanceTable.loc[abundanceTable.sum(axis=1) > minAbundance]
+    abundanceTable.to_csv("curated_{}".format(abundance))
+
+def csvToShared(csvAbundance, threshold):
+    shared = pd.read_csv(csvAbundance, index_col=0).T
+    shared.index.name = "Group"
+    shared.insert(loc=0, column="numOtus", value=[shared.shape[1]]*shared.shape[0])
+    shared.reset_index(inplace=True)
+    shared.insert(loc=0, column="label", value=[threshold]*shared.shape[0])
+    shared.to_csv("abundance_{}.shared".format(threshold), sep="\t", index=False)
