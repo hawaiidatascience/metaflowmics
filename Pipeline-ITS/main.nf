@@ -358,7 +358,7 @@ process LearnErrors {
     from DEREP_RDS.join(DEREP_FASTA_NO_CHIMERA_FILT)
     
     output:
-        set val(pairId), file("${pairId}_{errors.RDS, nochimera.RDS}") into ERRORS_AND_DEREP
+        set val(pairId), file("${pairId}_errors.RDS"), file("${pairId}_nochimera.RDS") into ERRORS_AND_DEREP
 
     script:
     """
