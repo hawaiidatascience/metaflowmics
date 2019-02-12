@@ -154,7 +154,7 @@ process Esv {
     input:
 	file dadas from DADA_RDS.collect()
     output:
-        set file("all.esv.count_table"), file("all.esv.fasta")  into DEREP_CONTIGS
+        file("all.esv.{count_table,fasta}")  into DEREP_CONTIGS
         file("*.RDS")
         file("count_summary.tsv") into COUNT_SUMMARIES
     
@@ -182,7 +182,7 @@ process MultipleSequenceAlignment {
     input:
         set file(count), file(fasta) from DEREP_CONTIGS
     output:
-        set file("all.MSA.start_end.count_table"), file("all.MSA.start_end.fasta") into DEREP_CONTIGS_ALN
+        file("all_MSA.{fasta,count_table}") into DEREP_CONTIGS_ALN
         file("*.summary")
     
     script:
@@ -210,7 +210,7 @@ process ChimeraRemoval {
 	set file(count), file(fasta) from DEREP_CONTIGS_ALN
 
     output:
-        set file("all.chimera.fasta"), file("all.chimera.count_table") into NO_CHIMERA_FASTA
+        file("all_chimera.{fasta,count_table}") into NO_CHIMERA_FASTA
     
     script:
     """
@@ -231,7 +231,7 @@ process Subsampling {
     input:
 	set file(fasta), file(count) from NO_CHIMERA_FASTA
     output:
-	set file("all.subsampling.fasta"), file("all.subsampling.count_table") into SUBSAMPLED_CONTIGS
+	file("all_subsampling.{fasta,count_table}") into SUBSAMPLED_CONTIGS
 
     script:
     """
@@ -263,9 +263,9 @@ process Clustering {
 	set file(fasta), file(count) from SUBSAMPLED_CONTIGS
         each idThreshold from (0,0.01,0.03,0.05)
     output:
-        set val(idThreshold), file("all.clustering.*.fasta") into PRELULU_FASTA, FASTA_TO_FILTER
-        set val(idThreshold), file("all.clustering.*.shared") into ABUNDANCE_TABLES
-        set val(idThreshold), file(fasta), file("all.clustering.*.list"), file(count) into CONTIGS_FOR_CLASSIFICATION
+        set val(idThreshold), file("all_clustering_*.fasta") into PRELULU_FASTA, FASTA_TO_FILTER
+        set val(idThreshold), file("all_clustering_*.shared") into ABUNDANCE_TABLES
+        set val(idThreshold), file(fasta), file("all_clustering_*.list"), file(count) into CONTIGS_FOR_CLASSIFICATION
     script:
     """
     ${params.script_dir}/mothur.sh --step=clustering --idThreshold=${idThreshold}
@@ -285,8 +285,8 @@ process ConsensusClassification {
     input:
 	set val(idThreshold), file(fasta), file(list), file(count) from CONTIGS_FOR_CLASSIFICATION
     output:
-	file("all.classification.*.summary") into CLASSIFICATION_SUMMARY
-	set val(idThreshold), file("all.classification.*.taxonomy") into CONSENSUS_TAXONOMY
+	file("all_consensusClassification_*.summary") into CLASSIFICATION_SUMMARY
+	set val(idThreshold), file("all_consensusClassification_*.taxonomy") into CONSENSUS_TAXONOMY
     script:
     """
     ${params.script_dir}/mothur.sh --step=consensusClassification \
@@ -344,7 +344,7 @@ process Lulu {
     input:
 	set val(idThreshold),file(matchlist),file(table) from MATCH_LISTS.join(ABUNDANCE_TABLES)
     output:
-        set val(idThreshold),file("lulu_ids_${idThreshold}.csv"), file("lulu_table_${idThreshold}.csv") into LULU_TO_FILTER
+        set val(idThreshold), file("lulu_table_${idThreshold}.csv") into LULU_TO_FILTER
     script:
 	
     """
@@ -363,13 +363,13 @@ process Lulu {
  *
  */
 
-process OutputFilter {
-    tag { "OutputFilter.${idThreshold}" }
-    publishDir "${params.outdir}/11-outputFilter", mode: "copy"
+process SingletonFilter {
+    tag { "SingletonFilter.${idThreshold}" }
+    publishDir "${params.outdir}/11-singletonFilter", mode: "copy"
     errorStrategy "${params.errorsHandling}"
     
     input:
-	set idThreshold,file(ids),file(abundance),file(tax),file(fasta) from LULU_TO_FILTER.join(CONSENSUS_TAXONOMY).join(FASTA_TO_FILTER)
+	set idThreshold,file(abundance),file(tax),file(fasta) from LULU_TO_FILTER.join(CONSENSUS_TAXONOMY).join(FASTA_TO_FILTER)
     output:
 	// set idThreshold, file("OTU_${idThreshold}.fasta"), file("abundance_${idThreshold}.shared") into MOTHUR_INPUTS
         set idThreshold, file("OTU_${idThreshold}.fasta"), file("abundance_${idThreshold}.shared"), file("consensus_${idThreshold}.taxonomy") into FOR_TAXA_FILTER
@@ -382,8 +382,8 @@ process OutputFilter {
 
     from util import filterIds, filterAbundance, csvToShared
 
-    filterIds("${ids}","${fasta}","${tax}","${idThreshold}")
     filterAbundance("${abundance}",minAbundance=${params.minAbundance})
+    filterIds("curated_${abundance}","${fasta}","${tax}","${idThreshold}")
     csvToShared("curated_${abundance}","${idThreshold}")
     """
 }
@@ -397,13 +397,13 @@ process OutputFilter {
 
 process TaxaFilter {
     tag { "convertToMothur.${idThreshold}" }
-    publishDir "${params.outdir}/11-taxaFilter", mode: "copy", pattern: "*.{shared,.taxonomy}"
+    publishDir "${params.outdir}/12-taxaFilter", mode: "copy", pattern: "*.{fasta,shared,taxonomy}"
     errorStrategy "${params.errorsHandling}"
     
     input:
 	set val(idThreshold), file(fasta), file(shared), file(tax) from FOR_TAXA_FILTER
     output:
-	set val(idThreshold), file("all.taxaFilter.fasta"), file("all.taxaFilter.shared"), file("all.taxaFilter.taxonomy") into MOTHUR_TO_PROCESS
+	file("all_taxaFilter_${idThreshold}.{fasta,shared,taxonomy}") into MOTHUR_TO_PROCESS
     script:
     """
     ${params.script_dir}/mothur.sh \
@@ -412,6 +412,8 @@ process TaxaFilter {
         --taxaToFilter='${params.taxaToFilter}' \
 	--refAln=${params.referenceAln} \
 	--refTax=${params.referenceTax}
+
+    python ${params.script_dir}/filter_shared.py ${shared} ${idThreshold}
     """
 }
 
@@ -423,11 +425,11 @@ process TaxaFilter {
 
 process Results {
     tag { "mothurResults.${idThreshold}" }
-    publishDir "${params.outdir}/12-Postprocessing", mode: "copy"
+    publishDir "${params.outdir}/13-Postprocessing", mode: "copy"
     errorStrategy "${params.errorsHandling}"
     
     input:
-	set val(idThreshold), file(fasta), file(shared), file(tax) from MOTHUR_TO_PROCESS
+	set file(fasta), file(shared), file(tax) from MOTHUR_TO_PROCESS
     output:
 	set file("*.relabund"), file("*.wsummary"), file("*.tre") into RESULTS
     script:
@@ -444,7 +446,7 @@ process Results {
  */
 
 process SummaryFile {
-    tag { "mothurResults.${idThreshold}" }
+    tag { "mothurResults" }
     publishDir "${params.outdir}/13-Postprocessing", mode: "copy"
     errorStrategy "${params.errorsHandling}"
     

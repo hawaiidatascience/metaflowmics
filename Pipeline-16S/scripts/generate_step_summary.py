@@ -58,7 +58,7 @@ def process_lulu(filepath):
 
 def count_samples(info,root_dir=".",samples=None):
     folder,pattern = info
-    
+
     if folder.startswith("0"):
         files = glob("{}/*R1*".format(os.path.dirname(pattern)))
     else:
@@ -75,7 +75,7 @@ def count_samples(info,root_dir=".",samples=None):
     elif ext.startswith("count_table") or ext.startswith("shared"):
         return pd.concat([ process_mothur(folder,filepath) for filepath in files ],
                          axis=1)
-        
+
     elif 'lulu' in folder.lower():
         return pd.concat([ process_lulu(filepath) for filepath in files ],
                          axis=1)
@@ -87,13 +87,14 @@ def write_summary(root_dir,data_dir):
     steps = [("0-rawData",data_dir),
              ("1-filterAndTrim","*R1*.fastq*"),
              ("2-errorModel","*R1*.RDS"),
-             ("5-multipleSequenceAlignment","all.screening.start_end.count_table"),
-             ("6-chimeraRemoval","all.chimera.count_table"),
-             ("7-subsampling","all.subsampling.count_table"),
-             ("8-clustering","all.clustering.*.shared"),
+             ("5-multipleSequenceAlignment","all_MSA.count_table"),
+             ("6-chimeraRemoval","all_chimera.count_table"),
+             ("7-subsampling","all_subsampling.count_table"),
+             ("8-clustering","all_clustering_*.shared"),
              ("9-consensusClassification","*.taxonomy"),             
-             ("10-lulu","curated_table*.csv"),
-             ("11-taxaFiltering","all.taxaFilter.count_table"),             
+             ("10-lulu","lulu_table_*.csv"),
+             ("11-singletonFilter","abundance_*.shared"),                          
+             ("12-taxaFilter","all_taxaFilter_*.shared"),             
     ]
     
     denoising_step = pd.read_table("count_summary.tsv", index_col=0)
