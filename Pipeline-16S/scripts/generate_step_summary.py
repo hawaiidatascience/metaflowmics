@@ -14,9 +14,12 @@ def split_path(path):
 
     return path,fileRad,ext
 
-def get_thresh(filename):
+def get_thresh(filename,removePath=True):
     try:
-        _,fileRad,_ = split_path(filename)
+        if removePath:
+            _,fileRad,_ = split_path(filename)
+        else:
+            fileRad = filename
         name = re.findall(r"\d[.]*[\d]*", fileRad)[0]
         return name
     except:
@@ -42,7 +45,7 @@ def process_mothur(step,filepath):
     else:
         table = pd.read_table(filepath, index_col=0).drop("total",axis=1)
 
-    name = "{}{}".format(step, get_thresh(filepath))
+    name = "{}_{}".format(step, get_thresh(filepath))
     summary = table.agg(lambda x: "{} ({} uniques)".format(x.sum(),(x>0).sum())).rename(name)
     
     return summary
@@ -73,12 +76,16 @@ def count_samples(info,root_dir=".",samples=None):
         return pd.Series(dict(seqs_per_sample),name=folder)
         
     elif ext.startswith("count_table") or ext.startswith("shared"):
-        return pd.concat([ process_mothur(folder,filepath) for filepath in files ],
-                         axis=1)
+        res = [ process_mothur(folder,filepath) for filepath in files ]
+        if len(res) > 1:
+            res = sorted(res, key=lambda x: float(x.name.split("_")[-1]))
+        return pd.concat(res, axis=1)
 
     elif 'lulu' in folder.lower():
-        return pd.concat([ process_lulu(filepath) for filepath in files ],
-                         axis=1)
+        res = sorted([ process_lulu(filepath) for filepath in files ],
+                     key=lambda x: float(get_thresh(x.name,removePath=False)))
+        return pd.concat(res,axis=1)
+    
     else:
         return pd.Series(["NA"]*len(samples), index=samples, name=folder)
 
