@@ -59,9 +59,8 @@ process FilterAndTrim {
     input:
         set val(pairId), file(fastq) from INPUT_FASTQ
     output:
-        set val(pairId), file("${pairId}*_trimmed.fastq") into FASTQ_TRIMMED, FASTQ_TRIMMED_FOR_MODEL
-        set val(pairId), file("${pairId}*.ids") into FILTERED_READS_IDS
-        file "*.png"
+        set val(pairId), file("${pairId}*_trimmed.fastq") into FASTQ_TRIMMED_RAW
+        file("*.png") optional true
 
     script:
     """
@@ -75,9 +74,19 @@ process FilterAndTrim {
         rev <- fastqs[2]
     }
 
-    filterReads("${pairId}", fastqs[1], rev=rev, minLen=${params.minLength},maxEE=${params.maxEE},truncLen=${params.truncLen},rm.phix=${params.rmphix}, truncQ=${params.truncQ})
+    tryCatch(
+    {
+        filterReads("${pairId}", fastqs[1], rev=rev, minLen=${params.minLength},maxEE=${params.maxEE},truncLen=${params.truncLen},rm.phix=${params.rmphix}, truncQ=${params.truncQ})
+    },
+    error=function(cond) {
+        file.create("${pairId}_R1_trimmed.fastq")
+    })
     """
 }
+
+FASTQ_TRIMMED_RAW
+    .filter{ (it[1].size() > 0)  }
+    .into{ FASTQ_TRIMMED ; FASTQ_TRIMMED_FOR_MODEL }
 
 /*
  *
@@ -261,7 +270,7 @@ process Clustering {
     
     input:
 	set file(fasta), file(count) from SUBSAMPLED_CONTIGS
-        each idThreshold from (0,0.01,0.03,0.05)
+        each idThreshold from (0,0.03)
     output:
         set val(idThreshold), file("all_clustering_*.fasta") into PRELULU_FASTA, FASTA_TO_FILTER
         set val(idThreshold), file("all_clustering_*.shared") into ABUNDANCE_TABLES
