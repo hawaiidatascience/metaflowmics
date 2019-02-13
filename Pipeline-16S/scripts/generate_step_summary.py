@@ -58,7 +58,6 @@ def process_lulu(filepath):
     summary = data.agg(lambda x: "{} ({} uniques)".format(x.sum(),(x>0).sum())).rename(name)
     return summary
     
-
 def count_samples(info,root_dir=".",samples=None):
     folder,pattern = info
 
@@ -107,9 +106,14 @@ def write_summary(root_dir,data_dir):
     denoising_step = pd.read_table("count_summary.tsv", index_col=0)
 
     res_all_samples = [count_samples(step,root_dir=root_dir,samples=denoising_step.index)
-                       for step in steps] 
-
+                       for step in steps]
+    
     res_all_samples.insert(3,denoising_step)
+
+    for res in res_all_samples:    
+        res.index.name = "Sample"
+        res.index = res.index.astype(str)
+
     summary = pd.concat(res_all_samples,axis=1,sort=True)
     
     summary.index.name = "SampleID"

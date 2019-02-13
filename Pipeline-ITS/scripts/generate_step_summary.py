@@ -111,9 +111,13 @@ def write_summary(root_dir,data_dir):
              ("9-LULU_correction","curated_table*.csv")                                         
     ]
     
-
     res_all_samples = [count_samples(step,root_dir=root_dir)
-                       for step in steps] 
+                       for step in steps]
+
+    for res in res_all_samples:    
+        res.index.name = "Sample"
+        res.index = res.index.astype(str)    
+    
     summary = pd.concat(res_all_samples,axis=1,sort=True)
     
     summary.index.name = "SampleID"
