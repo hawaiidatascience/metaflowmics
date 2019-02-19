@@ -329,7 +329,7 @@ process PreLulu {
 
     vsearch --usearch_global \$fasta_clean \
             --db \$fasta_clean --self \
-            --id .84 \
+            --id .80 \
             --iddef 1 \
             --userout match_list_${idThreshold}.txt \
             -userfields query+target+id \
@@ -354,6 +354,7 @@ process Lulu {
 	set val(idThreshold),file(matchlist),file(table) from MATCH_LISTS.join(ABUNDANCE_TABLES)
     output:
         set val(idThreshold), file("lulu_table_${idThreshold}.csv") into LULU_TO_FILTER
+        file("lulu*.log")
     script:
 	
     """

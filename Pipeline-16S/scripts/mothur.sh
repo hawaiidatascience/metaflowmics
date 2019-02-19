@@ -61,7 +61,7 @@ if [ ! -z $idThreshold ]; then
 fi
     
 if [ $step == "MSA" ]; then
-    inputs_mothur=("{count}.count_table" "${fasta}.fasta")
+    inputs_mothur=("${fasta}.fasta" "${count}.count_table")
     
     # output_suffix=`echo ${optimize} | sed s/-/./g`
     # out="${out}_${output_suffix}"
