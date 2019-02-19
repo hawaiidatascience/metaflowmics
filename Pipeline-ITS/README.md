@@ -25,5 +25,5 @@ Once installed, modify the configuration file in friendly_CONSTAX/constax.sh wit
 - RDPTools_path: path to the RDPTools folder
 
 ### Usage
-`nextflow run ITS-pipeline -profile manoa_hpc --its ITS1 --revRead 0` (or 1 to include the reverse reads)
+`nextflow run ITS-pipeline -profile manoa_hpc --locus ITS1 --pairEnd 0` (or 1 to include the reverse reads)
 

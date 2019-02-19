@@ -100,7 +100,7 @@ def count_samples(info,root_dir=".",samples=None):
 def write_summary(root_dir,data_dir):
     
     steps = [("0-RawData", data_dir),
-             ("1-preQC","*R1*.fastq.gz"),
+             ("1-preFiltering","*R1*.fastq*"),
              ("2-ITSxpress","*R1*.fastq"),
              ("3-NandSmallSeqsFiltering","*R1*.fastq"),
              ("4-qualityFiltering","*R1*.fastq.gz"),

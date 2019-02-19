@@ -6,15 +6,16 @@ def helpMessage() {
      ITS-rDNA-pipeline
     ===================================
     Usage:
-    nextflow run ITS-pipeline --reads '*_R1.fastq.gz' --revRead 0 -profile manoa
+    nextflow run ITS-pipeline --reads '*_R1.fastq.gz' --locus ITS1 --pairEnd 0 -profile manoa
 
     Mandatory arguments:
       -profile                      Hardware config to use. local / manoa
       --reads                       Path to input data
 
     Other arguments:
+      --pairEnd                     To set if the data is paired-end. Default: single-end
       --reference                   Path to taxonomic database to be used for annotation (e.g. /path/unite.fa.gz)
-      --its                         Sequenced ITS region (ITS1,ITS2 or ALL)
+      --locus                       Sequenced ITS region (ITS1,ITS2 or ALL)
       --outdir                      The output directory where the results will be saved
 
     Trimming arguments (optional):
@@ -42,26 +43,25 @@ if (params.help){
 }
 
 // Defining input channels
-if( params.revRead == 0 ){
+if( params.pairEnd ){
     Channel
-	.fromPath( params.reads )
+        .fromFilePairs( "${params.reads}" )
+        .ifEmpty { error "Cannot find any reads matching: ${params.reads}" }
+        .into { INPUT_FASTQ ; INPUT_FASTQ_TO_QC }
+} else {
+    Channel
+	.fromPath( "${params.reads}" )
 	.ifEmpty { error "Cannot find any reads matching: ${params.reads}" }
     	.map { filename -> tuple(filename.baseName,
 				 tuple(file(filename),filename.baseName))}
 	.into { INPUT_FASTQ ; INPUT_FASTQ_TO_QC }
-
-} else {
-    Channel
-        .fromFilePairs( params.reads )
-        .ifEmpty { error "Cannot find any reads matching: ${params.reads}" }
-        .into { INPUT_FASTQ ; INPUT_FASTQ_TO_QC }
 }
 
 // Header log info
 def summary = [:]
 summary['Reads'] = params.reads
-summary['its'] = params.its
-summary['revRead'] = params.revRead
+summary['locus'] = params.locus
+summary['pairEnd'] = params.pairEnd
 summary['Output dir'] = params.outdir
 summary['Working dir'] = workflow.workDir
 summary['Current home'] = "$HOME"
@@ -81,7 +81,7 @@ log.info "========================================="
 process PreFiltering {
     tag { "pre_filter.${pairId}" }
     label "low_computation"
-    publishDir "${params.outdir}/1-preQC", mode: "copy"
+    publishDir "${params.outdir}/1-preFiltering", mode: "copy"
     errorStrategy "${params.errorsHandling}"
 
     input:
@@ -95,12 +95,19 @@ process PreFiltering {
     #!/usr/bin/env bash
 
     # Count the number of reads in the forward fastq
-    nreads=`zcat ${fastq.get(0)} | wc -l`
+    filename="${fastq.get(0)}"
+
+    if [ "\${filename##*.}" == "gz"]; then
+        nreads=`zcat \$filename | wc -l`
+    else
+        nreads=`cat \$filename | wc -l`
+    fi
+
     nreads=\$((\$nreads/4))
 
     # Write sample name if it does not pass the threshold
     if [ nreads -lt ${params.minReads} ]; then
-       echo ${fastq.get(0)} > ${pairId}.removed.txt;
+       echo \$filename > ${pairId}.removed.txt;
     fi
 
     echo \$nreads
@@ -134,7 +141,7 @@ process runFastQC {
     """
     mkdir ${pairId}_fastqc
 
-    if [ ${params.revRead} -eq 1 ]; then
+    if [ ${params.pairEnd} == true ]; then
         fastqc --outdir ${pairId}_fastqc ${in_fastq.get(0)} ${in_fastq.get(1)}
     else
         fastqc --outdir ${pairId}_fastqc ${in_fastq.get(0)}
@@ -159,30 +166,29 @@ process ExtractITS {
         set val(pairId), file(reads) from INPUT_FASTQ_OK
     
     output:
-        set val(pairId), file("${pairId}_${params.its}.fastq") \
+        set val(pairId), file("${pairId}_${params.locus}.fastq") \
           into ITS_FASTQ
     	
     script:
     """
-    if [ ${params.revRead} -eq 1 ]; then
+    if [ ${params.pairEnd} == true ]; then
         itsxpress --fastq ${reads[0]} \
                   --fastq2 ${reads[1]} \
-                  --region ${params.its} \
+                  --region ${params.locus} \
                   --taxa ${params.taxa} \
                   --log ITSxpress.log \
-                  --outfile ${pairId}_${params.its}.fastq.gz \
+                  --outfile ${pairId}_${params.locus}.fastq \
                   --threads ${task.cpus}    
     else 
         itsxpress --fastq ${reads[0]} \
                   --single_end \
-                  --region ${params.its} \
+                  --region ${params.locus} \
                   --taxa ${params.taxa} \
                   --log ITSxpress.log \
-                  --outfile ${pairId}_${params.its}.fastq.gz \
+                  --outfile ${pairId}_${params.locus}.fastq \
                   --threads ${task.cpus}    
     fi
 
-    gunzip ${pairId}_${params.its}.fastq.gz
     """
 }
 
@@ -469,7 +475,7 @@ process Clustering {
     errorStrategy "${params.errorsHandling}"
     
     input:
-	each idThreshold from (95,97,99)
+	each idThreshold from (97)
         set val(esvId),file(esvFasta) from ESV_ALL_SAMPLES_TO_CLUSTER
     output:
 	set val(idThreshold),file("otus${idThreshold}_seq.fasta") into OTU_ALL_SAMPLES,OTU_ALL_SAMPLES_LULU
@@ -571,7 +577,7 @@ process ExtractFastaLulu {
     input:
 	set idThreshold,file(ids),file(fasta) from IDS_LULU.join(ALL_SAMPLES)
     output:
-	set idThreshold,file("lulu_fasta${idThreshold}.fasta") into FASTA_LULU
+	set idThreshold,file("lulu_fasta${idThreshold}.fasta") into FASTA_LULU, FASTA_LULU_FOR_SUMMARY
     script:
 	
     """
@@ -625,7 +631,7 @@ process SummaryFile {
     label "medium_computation"
     
     input:
-	file f from TAXONOMY.collect()
+	file f from FASTA_LULU_FOR_SUMMARY.collect()
     output:
         file("sequences_per_sample_per_step.tsv")
     script:
