@@ -20,8 +20,8 @@ def helpMessage() {
 
     Trimming arguments (optional):
       --minLen                      Remove reads with length less than minLen. minLen is enforced after trimming and truncation; default=20
-      --minQuality                  Quality filtering. Keep contigs with more than {minQuality} bases in {minPercentLowQ} % bases. Default: 25
-      --minPercentLowQ              Quality filtering. Keep contigs with more than {minQuality} bases in {minPercentLowQ} % bases. Default: 90
+      --minQuality                  Quality filtering. Keep contigs with more than {minQuality} bases in {minPercentHighQ} % bases. Default: 25
+      --minPercentHighQ              Quality filtering. Keep contigs with more than {minQuality} bases in {minPercentHighQ} % bases. Default: 90
       --minReads                    Discard samples with less than {minReads} reads. Default: 50
       --minDerep                    Discard samples with less than {minDerep} unique contigs. Default: 5
 
@@ -175,7 +175,6 @@ process ExtractITS {
         itsxpress --fastq ${reads[0]} \
                   --fastq2 ${reads[1]} \
                   --region ${params.locus} \
-                  --taxa ${params.taxa} \
                   --log ITSxpress.log \
                   --outfile ${pairId}_${params.locus}.fastq \
                   --threads ${task.cpus}    
@@ -183,7 +182,6 @@ process ExtractITS {
         itsxpress --fastq ${reads[0]} \
                   --single_end \
                   --region ${params.locus} \
-                  --taxa ${params.taxa} \
                   --log ITSxpress.log \
                   --outfile ${pairId}_${params.locus}.fastq \
                   --threads ${task.cpus}    
@@ -251,7 +249,7 @@ process QcFilter {
 
     if [ \$nreads -gt 0 ]; then
         fastq_quality_filter -z -q ${params.minQuality} \
-                                -p ${params.minPercentLowQ} \
+                                -p ${params.minPercentHighQ} \
                                 -i ${itsFile} \
                                 -o ${pairId}_filtered.fastq.gz \
         > /dev/null
