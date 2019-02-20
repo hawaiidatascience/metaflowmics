@@ -81,7 +81,7 @@ log.info "========================================="
 process PreFiltering {
     tag { "pre_filter.${pairId}" }
     label "low_computation"
-    publishDir "${params.outdir}/1-preFiltering", mode: "copy"
+    publishDir "${params.outdir}/1-preFiltering", mode: "copy", pattern="{*.fastq*, *.txt}"
     errorStrategy "${params.errorsHandling}"
 
     input:
@@ -609,7 +609,7 @@ process ClassificationCONSTAX  {
 	
     """
 
-    ${workflow.projectDir}/friendly_CONSTAX/constax.sh ${fasta} ${params.RDP_path}
+    bash ${workflow.projectDir}/friendly_CONSTAX/constax.sh ${fasta} ${params.RDP_path}
 
     mv CONSTAX_outputs/outputs annotations_${idThreshold}
 
@@ -624,7 +624,7 @@ process ClassificationCONSTAX  {
 
 process SummaryFile {
     tag { "summary" }
-    publishDir "${params.outdir}/11-Postprocessing", mode: "copy"
+    publishDir "${params.outdir}/11-Postprocessing", mode: "copy", pattern: "sequences_per_sample_per_step.tsv"
     errorStrategy "${params.errorsHandling}"
     label "medium_computation"
     
