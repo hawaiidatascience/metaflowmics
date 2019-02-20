@@ -81,7 +81,7 @@ log.info "========================================="
 process PreFiltering {
     tag { "pre_filter.${pairId}" }
     label "low_computation"
-    publishDir "${params.outdir}/1-preFiltering", mode: "copy", pattern="{*.fastq*, *.txt}"
+    publishDir "${params.outdir}/1-preFiltering", mode: "copy", pattern: "{*.fastq*, *.txt}"
     errorStrategy "${params.errorsHandling}"
 
     input:
