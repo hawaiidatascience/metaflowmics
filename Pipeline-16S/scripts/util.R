@@ -91,7 +91,7 @@ dadaDenoise <- function(errorFile,derepFile,pairId)
     saveRDS(denoised,paste0(pairId,".dada.RDS"))
 }
     
-esvTable <- function(minOverlap, maxMismatch, revRead)
+esvTable <- function(minOverlap, maxMismatch, singleEnd)
 {
     sample.names <- as.character(sapply( list.files(path=".",pattern="*_R1.derep.RDS"), 
                                          function(x) unlist(strsplit(x,"_R1",fixed=T))[1] )
@@ -103,7 +103,7 @@ esvTable <- function(minOverlap, maxMismatch, revRead)
     summary.derepF <- sapply(derepF, function(x) paste0(sum(x$uniques)," (",length(x$uniques)," uniques)"))
     summary.denoisedF <- sapply(denoisedF, function(x) paste0(sum(x$denoised)," (",length(x$denoised)," uniques)"))
 
-    if (revRead == 1) {
+    if (singleEnd == "false") {
         
         derepR <- lapply(list.files(path=".",pattern="*_R2.derep.RDS"),readRDS)
         denoisedR <- lapply(list.files(path=".",pattern="*_R2.dada.RDS"),readRDS)

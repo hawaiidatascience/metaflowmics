@@ -14,8 +14,6 @@ def helpMessage() {
  * SET UP CONFIGURATION VARIABLES
  */
 
-
-
 // Show help message
 params.help = false
 if (params.help){
@@ -40,7 +38,7 @@ log.info summary.collect { k,v -> "${k.padRight(15)}: $v" }.join("\n")
 log.info "========================================="
 
 Channel
-    .fromFilePairs( params.reads, size: params.revRead ? 2 : 1 )
+    .fromFilePairs( params.reads, size: params.singleEnd ? 1 : 2 )
     .ifEmpty { error "Cannot find any reads matching: ${params.reads}" }
     .into { INPUT_FASTQ ; INPUT_FASTQ_TO_QC }
 
@@ -70,7 +68,7 @@ process FilterAndTrim {
     fastqs <- c("${fastq.join('","')}")
     rev <- NULL
 
-    if ( ${params.revRead} == 1 ) {
+    if ( "${params.singleEnd}" == "false" ) {
         rev <- fastqs[2]
     }
 
@@ -141,7 +139,7 @@ process Denoise {
 
     dadaDenoise(errors[1], fastqs[1], "${pairId}_R1")
 
-    if (${params.revRead} == 1) {
+    if ("${params.singleEnd}" == "false") {
         dadaDenoise(errors[2], fastqs[2], "${pairId}_R2")
     }
     """
@@ -172,7 +170,7 @@ process Esv {
     #!/usr/bin/env Rscript
     source("${workflow.projectDir}/scripts/util.R")
 
-    esvTable(${params.minOverlap},${params.maxMismatch},${params.revRead})       
+    esvTable(${params.minOverlap},${params.maxMismatch},"${params.singleEnd}")       
     """
 }
 
@@ -354,7 +352,7 @@ process Lulu {
 	set val(idThreshold),file(matchlist),file(table) from MATCH_LISTS.join(ABUNDANCE_TABLES)
     output:
         set val(idThreshold), file("lulu_table_${idThreshold}.csv") into LULU_TO_FILTER
-        file("lulu*.log")
+        file("lulu*.log_*")
     script:
 	
     """

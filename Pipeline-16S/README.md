@@ -22,7 +22,7 @@ To run the pipeline locally, you need to set up a configuration file. An example
 Pipeline parameters can be set in the file `nextflow.config`
 
 Then, you can run the pipeline by running:
-`nextflow run 16S-pipeline -profile manoa_hpc --revRead 1 --reads PATH_TO_READS/PATTERN`
+`nextflow run 16S-pipeline -profile manoa_hpc --reads PATH_TO_READS/PATTERN`
 
 ## Pipeline summary
 
