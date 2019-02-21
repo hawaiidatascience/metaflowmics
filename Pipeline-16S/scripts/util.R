@@ -191,7 +191,7 @@ luluCurate <- function(abundanceFile,matchListFile,threshold)
                     row.names=F,
                     col.names=F)
     } else {
-        file.copy(otutab, paste0("curated_table_",threshold,".csv"))
+        file.copy(abundanceFile, paste0("curated_table_",threshold,".csv"))
         write.table(rownames(otutab),
                     paste0("curated_ids_",threshold,".csv"),
                     quote=F,
