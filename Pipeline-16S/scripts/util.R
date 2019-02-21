@@ -173,7 +173,7 @@ luluCurate <- function(abundanceFile,matchListFile,threshold)
                             stringsAsFactors=FALSE
                             )
 
-    if (dim(matchList)[0] > 0) {
+    if (dim(matchList)[1] > 0) {
         ## Run Lulu
         curated <- lulu(otutab, matchList,
                         minimum_ratio_type="min",

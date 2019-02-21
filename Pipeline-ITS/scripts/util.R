@@ -91,7 +91,7 @@ luluCurate <- function(abundanceFile,matchListFile,threshold)
                             col.names=c("OTU1","OTU2","pctIdentity"),
                             stringsAsFactors=FALSE)
 
-    if (dim(matchList)[0] > 0) {
+    if (dim(matchList)[1] > 0) {
         ## Run Lulu
         curated <- lulu(otutab, matchList)
 
