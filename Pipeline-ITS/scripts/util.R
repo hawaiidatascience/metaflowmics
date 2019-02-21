@@ -88,20 +88,29 @@ luluCurate <- function(abundanceFile,matchListFile,threshold)
                             header=FALSE,
                             as.is=TRUE,
 			    check.names=F,
+                            col.names=c("OTU1","OTU2","pctIdentity"),
                             stringsAsFactors=FALSE)
 
-    # Run Lulu
-    curated <- lulu(otutab, matchList)
+    if (dim(matchList)[0] > 0) {
+        ## Run Lulu
+        curated <- lulu(otutab, matchList)
 
-    # Save result
-    write.csv(curated$curated_table,
-              paste0("curated_table_",threshold,".csv"),
-              quote=F)
+        ## Save result
+        write.csv(curated$curated_table,
+                  paste0("curated_table_",threshold,".csv"),
+                  quote=F)
     
-    write.table(curated$curated_otus,
-                paste0("curated_ids_",threshold,".csv"),
-                quote=F,
-                row.names=F,
-                col.names=F)
+        write.table(curated$curated_otus,
+                    paste0("curated_ids_",threshold,".csv"),
+                    quote=F,
+                    row.names=F,
+                    col.names=F)
+    } else {
+        file.copy(otutab, paste0("curated_table_",threshold,".csv"))
+        write.table(rownames(otutab),
+                    paste0("curated_ids_",threshold,".csv"),
+                    quote=F,
+                    row.names=F)
+    }
 
 }

@@ -169,23 +169,32 @@ luluCurate <- function(abundanceFile,matchListFile,threshold)
     matchList <- read.table(matchListFile,
                             header=FALSE,
                             as.is=TRUE,
+                            col.names=c("OTU1","OTU2","pctIdentity"),                            
                             stringsAsFactors=FALSE
                             )
-    
-    curated <- lulu(otutab, matchList,
-                    minimum_ratio_type="min",
-                    minimum_ratio=1,
-                    minimum_match=90,
-                    minimum_relative_cooccurence=0.95)
-    
-    write.csv(curated$curated_table,
-              paste0("lulu_table_",threshold,".csv"),
-              quote=F)
-    
-    write.table(curated$curated_otus,
-                paste0("lulu_ids_",threshold,".csv"),
-                quote=F,
-                row.names=F,
-                col.names=F)
 
+    if (dim(matchList)[0] > 0) {
+        ## Run Lulu
+        curated <- lulu(otutab, matchList,
+                        minimum_ratio_type="min",
+                        minimum_ratio=1,
+                        minimum_match=90,
+                        minimum_relative_cooccurence=0.95)
+    
+        write.csv(curated$curated_table,
+                  paste0("lulu_table_",threshold,".csv"),
+                  quote=F)
+    
+        write.table(curated$curated_otus,
+                    paste0("lulu_ids_",threshold,".csv"),
+                    quote=F,
+                    row.names=F,
+                    col.names=F)
+    } else {
+        file.copy(otutab, paste0("curated_table_",threshold,".csv"))
+        write.table(rownames(otutab),
+                    paste0("curated_ids_",threshold,".csv"),
+                    quote=F,
+                    row.names=F)
+    }        
 }
