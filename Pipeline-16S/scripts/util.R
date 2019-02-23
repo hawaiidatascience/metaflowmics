@@ -178,8 +178,8 @@ luluCurate <- function(abundanceFile,matchListFile,threshold)
         curated <- lulu(otutab, matchList,
                         minimum_ratio_type="min",
                         minimum_ratio=1,
-                        minimum_match=90,
-                        minimum_relative_cooccurence=0.95)
+                        minimum_match=97,
+                        minimum_relative_cooccurence=1)
     
         write.csv(curated$curated_table,
                   paste0("lulu_table_",threshold,".csv"),

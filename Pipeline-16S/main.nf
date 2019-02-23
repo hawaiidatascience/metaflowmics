@@ -189,7 +189,7 @@ process MultipleSequenceAlignment {
     input:
         set file(count), file(fasta) from DEREP_CONTIGS
     output:
-        file("all_MSA.{fasta,count_table}") into DEREP_CONTIGS_ALN
+        file("all_MSA.{count_table,fasta}") into DEREP_CONTIGS_ALN
         file("*.summary")
     
     script:
@@ -217,7 +217,7 @@ process ChimeraRemoval {
 	set file(count), file(fasta) from DEREP_CONTIGS_ALN
 
     output:
-        file("all_chimera.{fasta,count_table}") into NO_CHIMERA_FASTA
+        file("all_chimera.{count_table,fasta}") into NO_CHIMERA_FASTA
     
     script:
     """
@@ -236,9 +236,9 @@ process Subsampling {
     publishDir "${params.outdir}/7-subsampling", mode: "copy"
     
     input:
-	set file(fasta), file(count) from NO_CHIMERA_FASTA
+	set file(count), file(fasta) from NO_CHIMERA_FASTA
     output:
-	file("all_subsampling.{fasta,count_table}") into SUBSAMPLED_CONTIGS
+	file("all_subsampling.{count_table,fasta}") into SUBSAMPLED_CONTIGS
 
     script:
     """
@@ -250,6 +250,9 @@ process Subsampling {
     if [ \$percentile_value -lt ${params.minSubsampling} ] || [ -z \$percentile_value ]
         then percentile_value=${params.minSubsampling}
     fi
+
+    if [ \$percentile_value -lt ${params.minSubsampling} ] || [ -z \$percentile_value ]
+        then percentile_value=
 
     ${params.script_dir}/mothur.sh --step=subsampling --subsamplingNb=\$percentile_value
     """
@@ -267,7 +270,7 @@ process Clustering {
     label "high_computation"
     
     input:
-	set file(fasta), file(count) from SUBSAMPLED_CONTIGS
+	set file(count), file(fasta) from SUBSAMPLED_CONTIGS
         each idThreshold from (0,0.03)
     output:
         set val(idThreshold), file("all_clustering_*.fasta") into PRELULU_FASTA, FASTA_TO_FILTER
@@ -435,7 +438,7 @@ process TaxaFilter {
 process Results {
     tag { "mothurResults.${idThreshold}" }
     publishDir "${params.outdir}/13-Postprocessing", mode: "copy"
-    errorStrategy "${params.errorsHandling}"
+    errorStrategy "ignore"
     
     input:
 	set file(fasta), file(shared), file(tax) from MOTHUR_TO_PROCESS
