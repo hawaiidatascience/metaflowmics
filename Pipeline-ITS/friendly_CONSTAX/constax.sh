@@ -7,6 +7,8 @@ echo "________________Parameters________________"
 set -o xtrace
 
 RDPTools_path=$2
+usearch8=$3
+usearch10=$4
 
 SCRIPT_DIR=`dirname $0` # $PWD/friendly_CONSTAX
 ROOT_DIR=`dirname $1`
@@ -37,26 +39,26 @@ python2 $SCRIPT_DIR/scripts/FormatRefDB.py $SCRIPT_DIR/DB/$ref_database $dbOutpu
 echo "__________________________________________________________________________"
 echo "Training UTAX Classifier"
 
-usearch8 -utax_train $dbOutput/${base}__UTAX.fasta \
-	 -report $trainOutput/utax_db_report.txt \
-	 -taxconfsout $trainOutput/utax.tc \
-	 -utax_splitlevels NVpcofgs \
-	 -utax_trainlevels kpcofgs \
-	 -log $trainOutput/utax_train.log \
-	 -report $trainOutput/utax_report.txt
+$usearch8 -utax_train $dbOutput/${base}__UTAX.fasta \
+	  -report $trainOutput/utax_db_report.txt \
+	  -taxconfsout $trainOutput/utax.tc \
+	  -utax_splitlevels NVpcofgs \
+	  -utax_trainlevels kpcofgs \
+	  -log $trainOutput/utax_train.log \
+	  -report $trainOutput/utax_report.txt
 
-usearch8 -makeudb_utax $dbOutput/${base}__UTAX.fasta \
-	 -taxconfsin $trainOutput/utax.tc \
-	 -output $trainOutput/utax.db \
-	 -log $trainOutput/make_udb.log \
-	 -report $trainOutput/utax_report.txt
+$usearch8 -makeudb_utax $dbOutput/${base}__UTAX.fasta \
+	  -taxconfsin $trainOutput/utax.tc \
+	  -output $trainOutput/utax.db \
+	  -log $trainOutput/make_udb.log \
+	  -report $trainOutput/utax_report.txt
 
-usearch8 -utax $otuPath \
-	 -db $trainOutput/utax.db \
-	 -strand both \
-	 -utaxout $taxOutput/otu_taxonomy.utax \
-	 -utax_cutoff $conf_threshold \
-	 -threads $threads
+$usearch8 -utax $otuPath \
+	  -db $trainOutput/utax.db \
+	  -strand both \
+	  -utaxout $taxOutput/otu_taxonomy.utax \
+	  -utax_cutoff $conf_threshold \
+	  -threads $threads
 
 echo "__________________________________________________________________________"
 echo "Training RDP Classifier"
