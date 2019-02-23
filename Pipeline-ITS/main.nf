@@ -541,7 +541,7 @@ process PreLulu {
 
 process Lulu {
     tag { "Lulu.${idThreshold}" }
-    label "high_computation"    
+    label "medium_computation"    
     publishDir "${params.outdir}/9-LULU_correction", mode: "copy"
     errorStrategy "${params.errorsHandling}"
 
