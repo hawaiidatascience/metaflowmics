@@ -541,7 +541,7 @@ process PreLulu {
 
 process Lulu {
     tag { "Lulu.${idThreshold}" }
-    label "high_computation"    
+    label "medium_computation"    
     publishDir "${params.outdir}/9-LULU_correction", mode: "copy"
     errorStrategy "${params.errorsHandling}"
 
@@ -610,7 +610,7 @@ process ClassificationCONSTAX  {
 	
     """
 
-    bash ${workflow.projectDir}/friendly_CONSTAX/constax.sh ${fasta} ${params.RDP_path}
+    bash ${workflow.projectDir}/friendly_CONSTAX/constax.sh ${fasta} "${workflow.projectDir}/friendly_CONSTAX/RDPTools" ${params.usearch8} ${params.usearch10}
 
     mv CONSTAX_outputs/outputs annotations_${idThreshold}
 
