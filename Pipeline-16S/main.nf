@@ -357,7 +357,7 @@ process Lulu {
 	set val(idThreshold),file(matchlist),file(table) from MATCH_LISTS.join(ABUNDANCE_TABLES)
     output:
         set val(idThreshold), file("lulu_table_${idThreshold}.csv") into LULU_TO_FILTER
-        file("curated_ids_${idThreshold}.csv") into IDS_LULU
+        file("lulu_ids_${idThreshold}.csv") into IDS_LULU
         file("lulu*.log_*") optional true
     script:
 	
