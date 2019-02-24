@@ -616,6 +616,8 @@ process ClassificationCONSTAX  {
     bash ${workflow.projectDir}/friendly_CONSTAX/constax.sh ${fasta} "${workflow.projectDir}/friendly_CONSTAX/RDPTools" ${params.usearch8} ${params.usearch10}
 
     mv CONSTAX_outputs/outputs annotations_${idThreshold}
+    cd annotations_${idThreshold}
+    rm otu_taxonomy*final.txt combined_taxonomy.txt
 
     """
 }
