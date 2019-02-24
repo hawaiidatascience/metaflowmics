@@ -47,33 +47,49 @@ dadaDenoise <- function(errorFile,derepFile,pairId)
     errors <- readRDS(errorFile)
     derep <- readRDS(derepFile)
     derep.denoised <- dada(derep, err=errors, multithread=TRUE)
-    # Extract abundance values from derep.denoised to name the fastas. Sample name also used
+    ## Extract abundance values from derep.denoised to name the fastas. Sample name also used
     seqIds <- paste0(pairId,";size=",as.numeric(getUniques(derep.denoised)))
-    # Write to fasta
+    ## Write to fasta
     uniquesToFasta(derep.denoised,paste0(pairId,".dada.fasta"),seqIds)
-    # Save RDS object
+    ## Save RDS object
     saveRDS(derep.denoised,paste0(pairId,".dada.RDS"))
 }
     
-esvTable <- function(pattern="*.dada.RDS")
+esvTable <- function()
 {
-    # Retrieve all the dada2 denoised files for merging
-    mergerFiles <- list.files(path=".", pattern=pattern)
-    pairIds <- as.character(sapply(mergerFiles,
+    ## Retrieve all the dada2 denoised files for merging
+    denoisedFiles <- list.files(path=".", pattern="*.dada.RDS")
+    pairIds <- as.character(sapply(denoisedFiles,
                                    function(x) unlist(strsplit(basename(x),"_R\\d{1}"))[1]))
-    mergers <- lapply(mergerFiles, function (x) readRDS(x))
-    names(mergers) <- pairIds
+    denoised <- lapply(denoisedFiles, function (x) readRDS(x))
+    names(denoised) <- pairIds
 
-    saveRDS(mergers,"merged.RDS")
+    saveRDS(denoised,"denoised.RDS")
     
-    seqtab <- makeSequenceTable(mergers)
+    seqtab <- makeSequenceTable(denoised)
     esv_ids <- paste0("esv_",c(1:dim(seqtab)[2]))
-    uniquesToFasta(seqtab,"esv_seq.fasta",ids=esv_ids)
+    uniquesToFasta(seqtab,"otus0_seq.fasta",ids=esv_ids)
     colnames(seqtab) <- esv_ids
 
-    write.csv(t(seqtab),"esv_table.csv",quote=F)
-}
+    write.csv(t(seqtab),"otus0_table.csv",quote=F)
 
+    ## Make summary file
+    derepFiles <- lapply(list.files(path=".", pattern="*.derep.RDS"), function (x) readRDS(x))    
+    chimeraFiles <- lapply(list.files(path=".", pattern="*.nochimera.RDS"), function (x) readRDS(x))
+
+    summary.derep <- sapply(derepFiles, function(x) paste0(sum(x$uniques)," (",length(x$uniques)," uniques)"))        
+    summary.chimera <- sapply(chimeraFiles, function(x) paste0(sum(x$uniques)," (",length(x$uniques)," uniques)"))    
+    summary.denoised <- sapply(denoised, function(x) paste0(sum(x$denoised)," (",length(x$denoised)," uniques)"))
+
+    summary <- data.frame("Sample" = pairIds,
+                          "5-Dereplication" = summary.derep,
+                          "6-ChimeraRemoval" = summary.chimera,
+                          "7-Denoising" = summary.denoised,
+                          check.names=F)
+        
+    write.table(summary, "count_summary.tsv", row.names=F, sep="\t")                    
+
+}
 
 luluCurate <- function(abundanceFile,matchListFile,threshold)
 {

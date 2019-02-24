@@ -59,6 +59,7 @@ if( params.pairEnd ){
 
 // Header log info
 def summary = [:]
+summary['Run Name'] = workflow.runName
 summary['Reads'] = params.reads
 summary['locus'] = params.locus
 summary['pairEnd'] = params.pairEnd
@@ -289,7 +290,7 @@ process Dereplication {
     output:
 	set val(pairId), file("${pairId}_derep.RDS") into DEREP_RDS
         set val(pairId), file("${pairId}_derep.fasta") into DEREP_FASTA
-    
+        file("*derep.RDS") into DEREP_FOR_COUNT_SUMMARY
     script:
 	"""
         #!/usr/bin/env Rscript 
@@ -354,7 +355,7 @@ DEREP_FASTA_NO_CHIMERA
 process LearnErrors {
     tag { "LearnErrors.${pairId}" }
     label "low_computation"
-    publishDir "${params.outdir}/7-Denoising", mode: "copy", pattern: "*{_errors.RDS,.png}"
+    publishDir "${params.outdir}/7-Denoising", mode: "copy", pattern: "*{.RDS,.png}"
     errorStrategy "${params.errorsHandling}"
     
     input:
@@ -390,17 +391,17 @@ process Denoise {
     errorStrategy "${params.errorsHandling}"
 
     input:
-        set pairId, file(err), file(derep) from ERRORS_AND_DEREP
+        set pairId, file(err), file(nochimera) from ERRORS_AND_DEREP
 
     output:
         set pairId,file("${pairId}.dada.fasta") into DADA_FASTA
-        set pairId,file("${pairId}.dada.RDS") into DADA_RDS
+        set pairId,file(nochimera),file("${pairId}.dada.RDS") into DADA_RDS
     script:
     """
     #!/usr/bin/env Rscript
     source("${workflow.projectDir}/scripts/util.R")
 
-    dadaDenoise("${err}","${derep}","${pairId}")
+    dadaDenoise("${err}","${nochimera}","${pairId}")
     """
 }
 
@@ -411,24 +412,26 @@ process Denoise {
  */
 
 process MakeEsvTable {
-    tag { "esvTable.${pairId}" }
+    tag { "esvTable" }
     label "medium_computation"        
     publishDir "${params.outdir}/8-Clustering", mode: "copy"
     errorStrategy "${params.errorsHandling}"
     
     input:
-	file mr from DADA_RDS.collect()
+	file denoised from DADA_RDS.collect()
+        file derep from DEREP_FOR_COUNT_SUMMARY.collect()
     output:
-	file("merged.RDS")
-        set val(100),file("esv_table.csv") into ABUNDANCE_TABLES_ESV
-        set val(100),file("esv_seq.fasta") into ESV_ALL_SAMPLES,ESV_ALL_SAMPLES_LULU
+	file("denoised.RDS")
+        file("count_summary.tsv") into DENOISING_SUMMARY
+        set val(100),file("otus0_table.csv") into ABUNDANCE_TABLES_ESV
+        set val(100),file("otus0_seq.fasta") into ESV_ALL_SAMPLES,ESV_ALL_SAMPLES_LULU
         
     script:
     """
     #!/usr/bin/env Rscript
     source("${workflow.projectDir}/scripts/util.R")
 
-    esvTable(pattern="*.dada.RDS")
+    esvTable()
     """    
 }
 
@@ -462,7 +465,7 @@ process MergeFastas {
 
 /*
  *
- * VSEARCH OTU clustering at thresholds 95,97,99
+ * VSEARCH OTU clustering at several thresholds 
  *
  */
 
@@ -631,6 +634,7 @@ process SummaryFile {
     
     input:
 	file f from FASTA_LULU_FOR_SUMMARY.collect()
+        file s from DENOISING_SUMMARY
     output:
         file("sequences_per_sample_per_step.tsv")
     script:

@@ -173,7 +173,7 @@ luluCurate <- function(abundanceFile,matchListFile,threshold)
                             stringsAsFactors=FALSE
                             )
 
-    if (dim(matchList)[1] > 0) {
+    if (dim(matchList)[1] > 0 & dim(otutab)[2]>1) {
         ## Run Lulu
         curated <- lulu(otutab, matchList,
                         minimum_ratio_type="min",
@@ -191,9 +191,10 @@ luluCurate <- function(abundanceFile,matchListFile,threshold)
                     row.names=F,
                     col.names=F)
     } else {
-        file.copy(abundanceFile, paste0("curated_table_",threshold,".csv"))
+        write.csv(otutab, paste0("lulu_table_",threshold,".csv"),
+                    quote=F)
         write.table(rownames(otutab),
-                    paste0("curated_ids_",threshold,".csv"),
+                    paste0("lulu_ids_",threshold,".csv"),
                     quote=F,
                     row.names=F)
     }        
