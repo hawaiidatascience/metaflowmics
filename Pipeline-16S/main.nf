@@ -3,7 +3,7 @@
 def helpMessage() {
     log.info"""
     ===================================
-     16S-rDNA-pipeline
+    16S-rDNA-pipeline
     ===================================
     Usage:
     nextflow run 16S-pipeline --reads '*_R{1,2}.fastq.gz' --reference 'uniteDB_01-12-2017.fasta' -profile manoa      
@@ -268,7 +268,7 @@ process Subsampling {
 
 process Clustering {
     tag { "clustering.${idThreshold}" }
-    publishDir "${params.outdir}/8-clustering", mode: "copy", pattern: "*.{fasta,shared,list}"
+    publishDir "${params.outdir}/8-clustering", mode: "copy", pattern: "all_clustering*.{fasta,shared,list}"
     label "high_computation"
     
     input:
