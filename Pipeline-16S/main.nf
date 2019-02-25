@@ -234,6 +234,7 @@ process ChimeraRemoval {
 process Subsampling {
     tag { "subsampling" }
     publishDir "${params.outdir}/7-subsampling", mode: "copy"
+    label "medium_computation"
     
     input:
 	set file(count), file(fasta) from NO_CHIMERA_FASTA
@@ -293,6 +294,7 @@ process Clustering {
 process ConsensusClassification {
     tag { "consensusClassification.${idThreshold}" }
     publishDir "${params.outdir}/9-consensusClassification", mode: "copy"
+    label "high_computation"    
     
     input:
 	set val(idThreshold), file(fasta), file(list), file(count) from CONTIGS_FOR_CLASSIFICATION
@@ -319,7 +321,8 @@ process ConsensusClassification {
 process PreLulu {
     tag { "preLulus.${idThreshold}" }
     publishDir "${params.outdir}/10-lulu", mode: "copy"
-
+    label "high_computation"
+    
     input:
 	set val(idThreshold),file(fasta) from PRELULU_FASTA
     output:
@@ -352,6 +355,7 @@ process Lulu {
     tag { "Lulu.${idThreshold}" }
     publishDir "${params.outdir}/10-lulu", mode: "copy"
     errorStrategy "${params.errorsHandling}"
+    label "high_computation"    
 
     input:
 	set val(idThreshold),file(matchlist),file(table) from MATCH_LISTS.join(ABUNDANCE_TABLES)
@@ -381,6 +385,7 @@ process SingletonFilter {
     tag { "SingletonFilter.${idThreshold}" }
     publishDir "${params.outdir}/11-singletonFilter", mode: "copy"
     errorStrategy "${params.errorsHandling}"
+    label "medium_computation"    
     
     input:
 	set idThreshold,file(abundance),file(tax),file(fasta) from LULU_TO_FILTER.join(CONSENSUS_TAXONOMY).join(FASTA_TO_FILTER)
@@ -413,6 +418,7 @@ process TaxaFilter {
     tag { "convertToMothur.${idThreshold}" }
     publishDir "${params.outdir}/12-taxaFilter", mode: "copy", pattern: "*.{fasta,shared,taxonomy}"
     errorStrategy "${params.errorsHandling}"
+    label "medium_computation"    
     
     input:
 	set val(idThreshold), file(fasta), file(shared), file(tax) from FOR_TAXA_FILTER
@@ -441,6 +447,7 @@ process Results {
     tag { "mothurResults" }
     publishDir "${params.outdir}/13-Postprocessing", mode: "copy"
     errorStrategy "ignore"
+    label "medium_computation"
     
     input:
 	set file(fasta), file(shared), file(tax) from MOTHUR_TO_PROCESS
@@ -463,6 +470,7 @@ process SummaryFile {
     tag { "mothurResults" }
     publishDir "${params.outdir}/13-Postprocessing", mode: "copy"
     errorStrategy "${params.errorsHandling}"
+    label "medium_computation"
     
     input:
 	file f1 from COUNT_SUMMARIES
