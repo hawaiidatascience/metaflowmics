@@ -6,7 +6,7 @@ def helpMessage() {
     16S-rDNA-pipeline
     ===================================
     Usage:
-    nextflow run 16S-pipeline --reads '*_R{1,2}.fastq.gz' --reference 'uniteDB_01-12-2017.fasta' -profile manoa      
+    nextflow run 16S-pipeline --reads '*_R{1,2}.fastq.gz' -profile manoa_hpc
     """.stripIndent()
 }
 
