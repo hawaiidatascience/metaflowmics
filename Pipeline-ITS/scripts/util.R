@@ -68,10 +68,10 @@ esvTable <- function()
     
     seqtab <- makeSequenceTable(denoised)
     esv_ids <- paste0("esv_",c(1:dim(seqtab)[2]))
-    uniquesToFasta(seqtab,"otus0_seq.fasta",ids=esv_ids)
+    uniquesToFasta(seqtab,"otus100_seq.fasta",ids=esv_ids)
     colnames(seqtab) <- esv_ids
 
-    write.csv(t(seqtab),"otus0_table.csv",quote=F)
+    write.csv(t(seqtab),"otus100_table.csv",quote=F)
 
     ## Make summary file
     derepFiles <- lapply(list.files(path=".", pattern="*.derep.RDS"), function (x) readRDS(x))    

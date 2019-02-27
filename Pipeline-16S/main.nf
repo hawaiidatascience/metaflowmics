@@ -423,7 +423,8 @@ process TaxaFilter {
     input:
 	set val(idThreshold), file(fasta), file(shared), file(tax) from FOR_TAXA_FILTER
     output:
-	file("all_taxaFilter_${idThreshold}.{fasta,shared,taxonomy}") into MOTHUR_TO_PROCESS
+	file "all_taxaFilter_${idThreshold}.{fasta,shared,taxonomy}" into MOTHUR_TO_PROCESS,FINAL_SUMMARY
+    
     script:
     """
     ${params.script_dir}/mothur.sh \
@@ -460,10 +461,9 @@ process Results {
     """    
 }
 
+
 /*
- *
  * File summary (in scripts/generate_step_summary.py)
- *
  */
 
 process SummaryFile {
@@ -474,7 +474,7 @@ process SummaryFile {
     
     input:
 	file f1 from COUNT_SUMMARIES
-	file f2 from RESULTS.collect()
+	file f2 from FINAL_SUMMARY.collect()
     output:
         file("sequences_per_sample_per_step.tsv") into STEPS_SUMMARY
     script:

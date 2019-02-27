@@ -423,8 +423,8 @@ process MakeEsvTable {
     output:
 	file("denoised.RDS")
         file("count_summary.tsv") into DENOISING_SUMMARY
-        set val(100),file("otus0_table.csv") into ABUNDANCE_TABLES_ESV
-        set val(100),file("otus0_seq.fasta") into ESV_ALL_SAMPLES,ESV_ALL_SAMPLES_LULU
+        set val(100),file("otus100_table.csv") into ABUNDANCE_TABLES_ESV
+        set val(100),file("otus100_seq.fasta") into ESV_ALL_SAMPLES,ESV_ALL_SAMPLES_LULU
         
     script:
     """
@@ -613,7 +613,7 @@ process ClassificationCONSTAX  {
 	
     """
 
-    bash ${workflow.projectDir}/friendly_CONSTAX/constax.sh ${fasta} "${workflow.projectDir}/friendly_CONSTAX/RDPTools" ${params.usearch8} ${params.usearch10}
+    bash ${workflow.projectDir}/friendly_CONSTAX/constax.sh ${fasta} "${workflow.projectDir}/friendly_CONSTAX/RDPTools" ${params.usearch8} ${params.usearch10} ${params.confidenceThresh}
 
     mv CONSTAX_outputs/outputs annotations_${idThreshold}
     cd annotations_${idThreshold}

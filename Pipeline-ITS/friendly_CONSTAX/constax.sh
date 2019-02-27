@@ -24,7 +24,7 @@ ref_database="uniteDB_01-12-2017_nodup.fasta"
 base=${ref_database%.fasta}
 
 threads=10
-conf_threshold="0.8"
+conf_threshold="$5"
 
 set +o xtrace
 
