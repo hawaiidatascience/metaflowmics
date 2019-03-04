@@ -394,7 +394,7 @@ process SingletonFilter {
         set idThreshold, file("OTU_${idThreshold}.fasta"), file("abundance_${idThreshold}.shared"), file("consensus_${idThreshold}.taxonomy") into FOR_TAXA_FILTER
     script:
     """
-    #!/usr/bin/env python
+    #!/usr/bin/env python3
 
     import sys
     sys.path.append("${workflow.projectDir}/scripts")
@@ -434,7 +434,7 @@ process TaxaFilter {
 	--refAln=${params.referenceAln} \
 	--refTax=${params.referenceTax}
 
-    python ${params.script_dir}/filter_shared.py ${shared} ${idThreshold}
+    python3 ${params.script_dir}/filter_shared.py ${shared} ${idThreshold}
     """
 }
 
