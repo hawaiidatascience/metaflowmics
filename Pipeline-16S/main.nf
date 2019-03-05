@@ -330,11 +330,12 @@ process PreLulu {
     script:
 	
     """
-    fasta_clean="contigs_${idThreshold}_no_gap.fasta"
-    sed 's/[\\.]//g' ${fasta} > \$fasta_clean
+    fasta_noGap="contigs_${idThreshold}_nogap.fasta"
 
-    vsearch --usearch_global \$fasta_clean \
-            --db \$fasta_clean --self \
+    sed '/^>/! s/[\\.-]//g' ${fasta} > \$fasta_noGap
+
+    vsearch --usearch_global \$fasta_noGap \
+            --db \$fasta_noGap --self \
             --id .80 \
             --iddef 1 \
             --userout match_list_${idThreshold}.txt \
