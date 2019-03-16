@@ -244,7 +244,7 @@ process Subsampling {
     script:
     """
 
-    awk '{for (i=3;i<=NF;i++) sum[i]+=\$i;}; END{for (i in sum) print sum[i]}' ${count} | tail -n +2 |sort -n > sample_size.txt
+    tail -n +2  ${count} | awk '{for (i=3;i<=NF;i++) sum[i]+=\$i;}; END{for (i in sum) print sum[i]}' |sort -n > sample_size.txt
 
     percentile_value=`awk '{all[NR] = \$1} END{print all[int(NR*${params.subsamplingQuantile})]}' sample_size.txt`
     max_value=`tail -n1 sample_size.txt`
