@@ -225,6 +225,11 @@ process ChimeraRemoval {
     """
 }
 
+
+(SUBSAMPLING_IN, ALT_CHANNEL) = ( params.skipSubSampling
+				 ? [Channel.empty(), NO_CHIMERA_FASTA]
+				 : [NO_CHIMERA_FASTA, Channel.empty()] )
+
 /*
  *
  * Subsampling the samples to the 10th percentile or 1k/sample if the 10th pct is below 1k (in scripts/mothur.sh)
@@ -237,7 +242,7 @@ process Subsampling {
     label "medium_computation"
     
     input:
-	set file(count), file(fasta) from NO_CHIMERA_FASTA
+	set file(count), file(fasta) from SUBSAMPLING_IN
     output:
 	file("all_subsampling.{count_table,fasta}") into SUBSAMPLED_CONTIGS
 
@@ -273,7 +278,7 @@ process Clustering {
     label "high_computation"
     
     input:
-	set file(count), file(fasta) from SUBSAMPLED_CONTIGS
+	set file(count), file(fasta) from SUBSAMPLED_CONTIGS.mix(ALT_CHANNEL)
         each idThreshold from (0,0.03)
     output:
         set val(idThreshold), file("all_clustering_*.fasta") into PRELULU_FASTA, FASTA_TO_FILTER

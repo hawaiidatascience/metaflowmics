@@ -29,6 +29,10 @@ def write_summary(root_dir,data_dir):
         if res is None:
             res = pd.Series(index=denoising_step.index,
                             name=steps[i][0])
+        elif res.size ==0:
+            res_all_samples[i] = pd.Series(index=denoising_step.index,
+                                           name=res.name)
+            
         res.index.name = "Sample"
         res.index = res.index.astype(str)
 

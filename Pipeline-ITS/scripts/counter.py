@@ -32,7 +32,10 @@ class SequenceCounter:
             pass
 
     def setFileType(self):
-        file_no_ext,ext = splitext(glob(self.path)[0])
+        try:
+            file_no_ext,ext = splitext(glob(self.path)[0])
+        except IndexError: # in case the path is empty
+            file_no_ext,ext = splitext(self.path)
 
         if ext == '.gz':
             self.compressed = True
@@ -44,7 +47,10 @@ class SequenceCounter:
     def run(self):
         files = glob(self.path)
         print(self.name, "{} files".format(len(files)))
-        
+
+        if len(files) == 0:
+            return pd.Series([], name=self.name)
+
         if self.extension.startswith(".fast"):
             counts = [ (basename(fastx).split("_R1")[0],
                         self.countFastx(fastx))
