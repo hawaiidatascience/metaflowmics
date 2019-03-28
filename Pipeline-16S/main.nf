@@ -211,7 +211,7 @@ process MultipleSequenceAlignment {
 process ChimeraRemoval {
     tag { "chimeraRemoval" }
     publishDir "${params.outdir}/6-chimeraRemoval", mode: "copy"
-    label "high_computation"
+    label "medium_computation"
     
     input:
 	set file(count), file(fasta) from DEREP_CONTIGS_ALN
@@ -275,7 +275,7 @@ process Subsampling {
 process Clustering {
     tag { "clustering.${idThreshold}" }
     publishDir "${params.outdir}/8-clustering", mode: "copy", pattern: "all_clustering*.{fasta,shared,list}"
-    label "high_computation"
+    label "medium_computation"
     
     input:
 	set file(count), file(fasta) from SUBSAMPLED_CONTIGS.mix(ALT_CHANNEL)
@@ -299,7 +299,7 @@ process Clustering {
 process ConsensusClassification {
     tag { "consensusClassification.${idThreshold}" }
     publishDir "${params.outdir}/9-consensusClassification", mode: "copy"
-    label "high_computation"    
+    label "medium_computation"    
     
     input:
 	set val(idThreshold), file(fasta), file(list), file(count) from CONTIGS_FOR_CLASSIFICATION
@@ -326,7 +326,7 @@ process ConsensusClassification {
 process PreLulu {
     tag { "preLulus.${idThreshold}" }
     publishDir "${params.outdir}/10-lulu", mode: "copy"
-    label "high_computation"
+    label "medium_computation"
     
     input:
 	set val(idThreshold),file(fasta) from PRELULU_FASTA
@@ -361,7 +361,7 @@ process Lulu {
     tag { "Lulu.${idThreshold}" }
     publishDir "${params.outdir}/10-lulu", mode: "copy"
     errorStrategy "${params.errorsHandling}"
-    label "high_computation"    
+    label "medium_computation"    
 
     input:
 	set val(idThreshold),file(matchlist),file(table) from MATCH_LISTS.join(ABUNDANCE_TABLES)
@@ -391,7 +391,7 @@ process SingletonFilter {
     tag { "SingletonFilter.${idThreshold}" }
     publishDir "${params.outdir}/11-singletonFilter", mode: "copy"
     errorStrategy "${params.errorsHandling}"
-    label "medium_computation"    
+    label "low_computation"    
     
     input:
 	set idThreshold,file(abundance),file(tax),file(fasta) from LULU_TO_FILTER.join(CONSENSUS_TAXONOMY).join(FASTA_TO_FILTER)
@@ -476,7 +476,7 @@ process SummaryFile {
     tag { "mothurResults" }
     publishDir "${params.outdir}/13-Postprocessing", mode: "copy"
     errorStrategy "${params.errorsHandling}"
-    label "medium_computation"
+    label "low_computation"
     
     input:
 	file f1 from COUNT_SUMMARIES
