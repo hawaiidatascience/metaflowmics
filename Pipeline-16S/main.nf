@@ -279,7 +279,7 @@ process Clustering {
     
     input:
 	set file(count), file(fasta) from SUBSAMPLED_CONTIGS.mix(ALT_CHANNEL)
-        each idThreshold from (0,0.03)
+        each idThreshold from (0.03, 0)
     output:
         set val(idThreshold), file("all_clustering_*.fasta") into PRELULU_FASTA, FASTA_TO_FILTER
         set val(idThreshold), file("all_clustering_*.shared") into ABUNDANCE_TABLES
