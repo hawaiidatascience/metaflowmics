@@ -6,14 +6,14 @@ def helpMessage() {
      ITS-rDNA-pipeline
     ===================================
     Usage:
-    nextflow run ITS-pipeline --reads '*_R1.fastq.gz' --locus ITS1 --pairEnd 0 -profile manoa
+    nextflow run ITS-pipeline --reads '*_R1.fastq.gz' --locus ITS1 --pairedEnd 0 -profile manoa
 
     Mandatory arguments:
       -profile                      Hardware config to use. local / manoa
       --reads                       Path to input data
 
     Other arguments:
-      --pairEnd                     To set if the data is paired-end. Default: single-end
+      --pairedEnd                   To set if the data is paired-end. Default: single-end
       --reference                   Path to taxonomic database to be used for annotation (e.g. /path/unite.fa.gz)
       --locus                       Sequenced ITS region (ITS1,ITS2 or ALL)
       --outdir                      The output directory where the results will be saved
@@ -43,7 +43,7 @@ if (params.help){
 }
 
 // Defining input channels
-if( params.pairEnd ){
+if( params.pairedEnd ){
     Channel
         .fromFilePairs( "${params.reads}" )
         .ifEmpty { error "Cannot find any reads matching: ${params.reads}" }
@@ -62,7 +62,7 @@ def summary = [:]
 summary['Run Name'] = workflow.runName
 summary['Reads'] = params.reads
 summary['locus'] = params.locus
-summary['pairEnd'] = params.pairEnd
+summary['pairedEnd'] = params.pairedEnd
 summary['Output dir'] = params.outdir
 summary['Working dir'] = workflow.workDir
 summary['Current home'] = "$HOME"
@@ -142,7 +142,7 @@ process runFastQC {
     """
     mkdir ${pairId}_fastqc
 
-    if [ ${params.pairEnd} == true ]; then
+    if [ ${params.pairedEnd} == true ]; then
         fastqc --outdir ${pairId}_fastqc ${in_fastq.get(0)} ${in_fastq.get(1)}
     else
         fastqc --outdir ${pairId}_fastqc ${in_fastq.get(0)}
@@ -172,7 +172,7 @@ process ExtractITS {
     	
     script:
     """
-    if [ ${params.pairEnd} == true ]; then
+    if [ ${params.pairedEnd} == true ]; then
         itsxpress --fastq ${reads[0]} \
                   --fastq2 ${reads[1]} \
                   --region ${params.locus} \
