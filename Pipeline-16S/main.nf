@@ -279,7 +279,7 @@ process Clustering {
     
     input:
 	set file(count), file(fasta) from SUBSAMPLED_CONTIGS.mix(ALT_CHANNEL)
-        each idThreshold from (0.03, 0)
+        each idThreshold from (0.05, 0.03, 0.01,0)
     output:
         set val(idThreshold), file("all_clustering_*.fasta") into PRELULU_FASTA, FASTA_TO_FILTER
         set val(idThreshold), file("all_clustering_*.shared") into ABUNDANCE_TABLES
@@ -459,11 +459,13 @@ process Results {
     input:
 	set file(fasta), file(shared), file(tax) from MOTHUR_TO_PROCESS
     output:
-	set file("*.relabund"), file("*.wsummary"), file("*.tre") into RESULTS
+	set file("*.relabund"), file("*summary"), file("*.tre") into RESULTS
     script:
     """
     mothur "#get.relabund(shared=${shared})"
     mothur "#clearcut(fasta=${fasta}, DNA=T) ; count.seqs(shared=${shared}) ; unifrac.weighted(tree=current,count=current)"
+    mothur "#summary.single(shared=${shared},calc=nseqs-sobs-chao-shannon-shannoneven); \
+             summary.shared(shared=${shared},calc=braycurtis-thetayc-sharedsobs-sharedchao)"
     """    
 }
 

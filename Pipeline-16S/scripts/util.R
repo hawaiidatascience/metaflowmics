@@ -34,12 +34,6 @@ filterReads <- function(pairId,fwd,rev=NULL,
                   truncQ=truncQ,
                   minLen=minLen,
                   maxEE=maxEE)
-    ## fastqPairedFilter(c(fwd,rev), c(fwd.out,rev.out),
-    ##                   compress=FALSE,
-    ##                   truncLen=truncLen,
-    ##                   truncQ=truncQ,
-    ##                   minLen=minLen,
-    ##                   maxEE=maxEE)
     
     # Plot error profiles
     if ( !is.null(rev) )
@@ -84,8 +78,6 @@ dadaDenoise <- function(errorFile,derepFile,pairId)
     errors <- readRDS(errorFile)
     derep <- derepFastq(derepFile)
     denoised <- dada(derep, err=errors, multithread=TRUE)
-    # # Extract abundance values from derep.denoised to name the fastas. Sample name also used
-    # seqIds <- paste0(pairId,";size=",as.numeric(getUniques(derep.denoised)))
     # Save RDS object
     saveRDS(derep,paste0(pairId,".derep.RDS"))
     saveRDS(denoised,paste0(pairId,".dada.RDS"))

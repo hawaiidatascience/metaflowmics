@@ -421,7 +421,7 @@ process MakeEsvTable {
 	file denoised from DADA_RDS.collect()
         file derep from DEREP_FOR_COUNT_SUMMARY.collect()
     output:
-	file("denoised.RDS")
+	file("sequence_table.RDS")
         file("count_summary.tsv") into DENOISING_SUMMARY
         set val(100),file("otus100_table.csv") into ABUNDANCE_TABLES_ESV
         set val(100),file("otus100_seq.fasta") into ESV_ALL_SAMPLES,ESV_ALL_SAMPLES_LULU

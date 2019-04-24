@@ -122,7 +122,7 @@ elif [ $step == "consensusClassification" ]; then
     suffixTax=`echo $taxRad | cut -d. -f2`.wang
     
     cmd=("classify.seqs(fasta=${fasta}.fasta, count=${count}.count_table, template=${refAln}, taxonomy=${refTax}) ; "
-	 "classify.otu(taxonomy=${fasta}.${suffixTax}.taxonomy, count=${count}.count_table, list=${list}.list)")
+	 "classify.otu(taxonomy=${fasta}.${suffixTax}.taxonomy, count=${count}.count_table, list=${list}.list, probs=f)")
     
     outputs_mothur=("${list}.${idThreshold}.cons.taxonomy"
 		    "${list}.${idThreshold}.cons.tax.summary")

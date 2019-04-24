@@ -64,9 +64,11 @@ esvTable <- function()
     denoised <- lapply(denoisedFiles, function (x) readRDS(x))
     names(denoised) <- pairIds
 
-    saveRDS(denoised,"denoised.RDS")
+    ## saveRDS(denoised,"denoised.RDS")
     
     seqtab <- makeSequenceTable(denoised)
+    saveRDS(seqtab, "sequence_table.RDS")
+    
     esv_ids <- paste0("esv_",c(1:dim(seqtab)[2]))
     uniquesToFasta(seqtab,"otus100_seq.fasta",ids=esv_ids)
     colnames(seqtab) <- esv_ids
