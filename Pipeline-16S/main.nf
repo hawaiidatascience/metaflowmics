@@ -211,7 +211,7 @@ process MultipleSequenceAlignment {
 process ChimeraRemoval {
     tag { "chimeraRemoval" }
     publishDir "${params.outdir}/6-chimeraRemoval", mode: "copy"
-    label "medium_computation"
+    label "high_computation"
     
     input:
 	set file(count), file(fasta) from DEREP_CONTIGS_ALN
@@ -275,11 +275,11 @@ process Subsampling {
 process Clustering {
     tag { "clustering.${idThreshold}" }
     publishDir "${params.outdir}/8-clustering", mode: "copy", pattern: "all_clustering*.{fasta,shared,list}"
-    label "medium_computation"
+    label "high_computation"
     
     input:
 	set file(count), file(fasta) from SUBSAMPLED_CONTIGS.mix(ALT_CHANNEL)
-        each idThreshold from (0.05, 0.03, 0.01,0)
+        each idThreshold from (0.05, 0.03, 0.01, 0)
     output:
         set val(idThreshold), file("all_clustering_*.fasta") into PRELULU_FASTA, FASTA_TO_FILTER
         set val(idThreshold), file("all_clustering_*.shared") into ABUNDANCE_TABLES
@@ -299,7 +299,7 @@ process Clustering {
 process ConsensusClassification {
     tag { "consensusClassification.${idThreshold}" }
     publishDir "${params.outdir}/9-consensusClassification", mode: "copy"
-    label "medium_computation"    
+    label "high_computation"    
     
     input:
 	set val(idThreshold), file(fasta), file(list), file(count) from CONTIGS_FOR_CLASSIFICATION
@@ -361,7 +361,7 @@ process Lulu {
     tag { "Lulu.${idThreshold}" }
     publishDir "${params.outdir}/10-lulu", mode: "copy"
     errorStrategy "${params.errorsHandling}"
-    label "medium_computation"    
+    label "high_computation"    
 
     input:
 	set val(idThreshold),file(matchlist),file(table) from MATCH_LISTS.join(ABUNDANCE_TABLES)
@@ -391,7 +391,7 @@ process SingletonFilter {
     tag { "SingletonFilter.${idThreshold}" }
     publishDir "${params.outdir}/11-singletonFilter", mode: "copy"
     errorStrategy "${params.errorsHandling}"
-    label "low_computation"    
+    label "medium_computation"    
     
     input:
 	set idThreshold,file(abundance),file(tax),file(fasta) from LULU_TO_FILTER.join(CONSENSUS_TAXONOMY).join(FASTA_TO_FILTER)

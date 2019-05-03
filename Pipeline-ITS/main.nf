@@ -127,28 +127,28 @@ INPUT_FASTQ_LEN
  *
  */
 
-process runFastQC {
-    tag { "fastQC.${pairId}" }
-    label "low_computation"
-    publishDir "${params.outdir}/0-fastQC", mode: "copy"
-    errorStrategy 'ignore'
+// process runFastQC {
+//     tag { "fastQC.${pairId}" }
+//     publishDir "${params.outdir}/0-fastQC", mode: "copy"
+//     errorStrategy 'ignore'
+//     label "low_computation"
 
-    input:
-        set val(pairId), file(in_fastq) from INPUT_FASTQ_TO_QC
+//     input:
+//         set val(pairId), file(in_fastq) from INPUT_FASTQ_TO_QC
 
-    output:
-        file("${pairId}_fastqc/*.zip") into FASTQC_FILES
+//     output:
+//         file("${pairId}_fastqc/*.zip") into FASTQC_FILES
 
-    """
-    mkdir ${pairId}_fastqc
+//     """
+//     mkdir ${pairId}_fastqc
 
-    if [ ${params.pairedEnd} == true ]; then
-        fastqc --outdir ${pairId}_fastqc ${in_fastq.get(0)} ${in_fastq.get(1)}
-    else
-        fastqc --outdir ${pairId}_fastqc ${in_fastq.get(0)}
-    fi
-    """
-}
+//     if [ ${params.pairedEnd} == true ]; then
+//         fastqc --outdir ${pairId}_fastqc ${in_fastq.get(0)} ${in_fastq.get(1)}
+//     else
+//         fastqc --outdir ${pairId}_fastqc ${in_fastq.get(0)}
+//     fi
+//     """
+// }
 
 
 /*
@@ -413,7 +413,7 @@ process Denoise {
 
 process MakeEsvTable {
     tag { "esvTable" }
-    label "medium_computation"        
+    label "high_computation"        
     publishDir "${params.outdir}/8-Clustering", mode: "copy"
     errorStrategy "${params.errorsHandling}"
     
@@ -471,7 +471,7 @@ process MergeFastas {
 
 process Clustering {
     tag { "clustering.${idThreshold}" }
-    label "medium_computation"    
+    label "high_computation"    
     publishDir "${params.outdir}/8-Clustering", mode: "copy"
     errorStrategy "${params.errorsHandling}"
     
@@ -513,7 +513,7 @@ ALL_SAMPLES = OTU_ALL_SAMPLES.mix(ESV_ALL_SAMPLES)
 
 process PreLulu {
     tag { "preLulus.${idThreshold}" }
-    label "medium_computation"    
+    label "high_computation"    
     publishDir "${params.outdir}/9-LULU_correction", mode: "copy"
     errorStrategy "${params.errorsHandling}"
 
@@ -571,7 +571,7 @@ process Lulu {
  */
 
 process ExtractFastaLulu {
-    label "medium_computation"
+    label "high_computation"
     tag { "extractFastaLulu.${idThreshold}" }
     publishDir "${params.outdir}/10-taxonomy", mode: "copy"
     errorStrategy "${params.errorsHandling}"
@@ -601,7 +601,7 @@ process ExtractFastaLulu {
 
 process ClassificationCONSTAX  {
     tag { "classification.${idThreshold}" }
-    label "medium_computation"
+    label "high_computation"
     publishDir "${params.outdir}/10-taxonomy", mode: "copy"
     errorStrategy "${params.errorsHandling}"
 
