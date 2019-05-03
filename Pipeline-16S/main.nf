@@ -453,7 +453,7 @@ process TaxaFilter {
 process Results {
     tag { "mothurResults" }
     publishDir "${params.outdir}/13-Postprocessing", mode: "copy"
-    errorStrategy "ignore"
+    errorStrategy "${params.errorsHandling}"
     label "medium_computation"
     
     input:
