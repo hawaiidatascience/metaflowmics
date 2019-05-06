@@ -54,7 +54,7 @@ if( params.pairedEnd ){
 	.ifEmpty { error "Cannot find any reads matching: ${params.reads}" }
     	.map { filename -> tuple(filename.baseName,
 				 tuple(file(filename),filename.baseName))}
-	.into { INPUT_FASTQ ; INPUT_FASTQ_TO_QC }
+	.into { INPUT_FASTQ }
 }
 
 // Header log info
@@ -120,36 +120,6 @@ INPUT_FASTQ_LEN
     .filter{ (it[0] as int) > params.minReads }
     .map{ nreads, pairId, filename -> tuple(pairId,filename) }
     .set{ INPUT_FASTQ_OK }
-
-/*
- *
- * FastQC 
- *
- */
-
-// process runFastQC {
-//     tag { "fastQC.${pairId}" }
-//     publishDir "${params.outdir}/0-fastQC", mode: "copy"
-//     errorStrategy 'ignore'
-//     label "low_computation"
-
-//     input:
-//         set val(pairId), file(in_fastq) from INPUT_FASTQ_TO_QC
-
-//     output:
-//         file("${pairId}_fastqc/*.zip") into FASTQC_FILES
-
-//     """
-//     mkdir ${pairId}_fastqc
-
-//     if [ ${params.pairedEnd} == true ]; then
-//         fastqc --outdir ${pairId}_fastqc ${in_fastq.get(0)} ${in_fastq.get(1)}
-//     else
-//         fastqc --outdir ${pairId}_fastqc ${in_fastq.get(0)}
-//     fi
-//     """
-// }
-
 
 /*
  *
