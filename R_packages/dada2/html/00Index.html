@@ -1,0 +1,132 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head><title>R: Accurate, high-resolution sample inference from amplicon
+sequencing data</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link rel="stylesheet" type="text/css" href="R.css" />
+</head><body>
+<h1> Accurate, high-resolution sample inference from amplicon
+sequencing data
+<img class="toplogo" src="../../../doc/html/Rlogo.svg" alt="[R logo]" />
+</h1>
+<hr/>
+<div style="text-align: center;">
+<a href="../../../doc/html/packages.html"><img class="arrow" src="../../../doc/html/left.jpg" alt="[Up]" /></a>
+<a href="../../../doc/html/index.html"><img class="arrow" src="../../../doc/html/up.jpg" alt="[Top]" /></a>
+</div><h2>Documentation for package &lsquo;dada2&rsquo; version 1.10.1</h2>
+
+<ul><li><a href="../DESCRIPTION">DESCRIPTION file</a>.</li>
+<li><a href="../doc/index.html">User guides, package vignettes and other documentation.</a></li>
+<li><a href="../NEWS">Package NEWS</a>.</li>
+</ul>
+
+<h2>Help Pages</h2>
+
+
+<table width="100%">
+<tr><td style="width: 25%;"><a href="dada2-package.html">dada2-package</a></td>
+<td>DADA2 package</td></tr>
+<tr><td style="width: 25%;"><a href="addSpecies.html">addSpecies</a></td>
+<td>Add species-level annotation to a taxonomic table.</td></tr>
+<tr><td style="width: 25%;"><a href="assignSpecies.html">assignSpecies</a></td>
+<td>Taxonomic assignment to the species level by exact matching.</td></tr>
+<tr><td style="width: 25%;"><a href="assignTaxonomy.html">assignTaxonomy</a></td>
+<td>Classifies sequences against reference training dataset.</td></tr>
+<tr><td style="width: 25%;"><a href="c-dada-method.html">c-method</a></td>
+<td>Change concatenation to list construction.</td></tr>
+<tr><td style="width: 25%;"><a href="c-derep-method.html">c-method</a></td>
+<td>Change concatenation to list construction.</td></tr>
+<tr><td style="width: 25%;"><a href="collapseNoMismatch.html">collapseNoMismatch</a></td>
+<td>Combine together sequences that are identical up to shifts and/or length.</td></tr>
+<tr><td style="width: 25%;"><a href="dada.html">dada</a></td>
+<td>High resolution sample inference from amplicon data.</td></tr>
+<tr><td style="width: 25%;"><a href="dada-class.html">dada-class</a></td>
+<td>The object class returned by 'dada'</td></tr>
+<tr><td style="width: 25%;"><a href="derep-class.html">derep-class</a></td>
+<td>A class representing dereplicated sequences</td></tr>
+<tr><td style="width: 25%;"><a href="derepFastq.html">derepFastq</a></td>
+<td>Read in and dereplicate a fastq file.</td></tr>
+<tr><td style="width: 25%;"><a href="errBalancedF.html">errBalancedF</a></td>
+<td>An empirical error matrix.</td></tr>
+<tr><td style="width: 25%;"><a href="errBalancedR.html">errBalancedR</a></td>
+<td>An empirical error matrix.</td></tr>
+<tr><td style="width: 25%;"><a href="errExtremeF.html">errExtremeF</a></td>
+<td>An empirical error matrix.</td></tr>
+<tr><td style="width: 25%;"><a href="errExtremeR.html">errExtremeR</a></td>
+<td>An empirical error matrix.</td></tr>
+<tr><td style="width: 25%;"><a href="errHmpF.html">errHmpF</a></td>
+<td>An empirical error matrix.</td></tr>
+<tr><td style="width: 25%;"><a href="errHmpR.html">errHmpR</a></td>
+<td>An empirical error matrix.</td></tr>
+<tr><td style="width: 25%;"><a href="fastqFilter.html">fastqFilter</a></td>
+<td>Filter and trim a fastq file.</td></tr>
+<tr><td style="width: 25%;"><a href="fastqPairedFilter.html">fastqPairedFilter</a></td>
+<td>Filters and trims paired forward and reverse fastq files.</td></tr>
+<tr><td style="width: 25%;"><a href="filterAndTrim.html">filterAndTrim</a></td>
+<td>Filter and trim fastq file(s).</td></tr>
+<tr><td style="width: 25%;"><a href="getDadaOpt.html">getDadaOpt</a></td>
+<td>Get DADA options</td></tr>
+<tr><td style="width: 25%;"><a href="getErrors.html">getErrors</a></td>
+<td>Extract already computed error rates.</td></tr>
+<tr><td style="width: 25%;"><a href="getSequences.html">getSequences</a></td>
+<td>Get vector of sequences from input object.</td></tr>
+<tr><td style="width: 25%;"><a href="getUniques.html">getUniques</a></td>
+<td>Get the uniques-vector from the input object.</td></tr>
+<tr><td style="width: 25%;"><a href="inflateErr.html">inflateErr</a></td>
+<td>Inflates an error rate matrix by a specified factor, while accounting for saturation.</td></tr>
+<tr><td style="width: 25%;"><a href="isBimera.html">isBimera</a></td>
+<td>Determine if input sequence is a bimera of putative parent sequences.</td></tr>
+<tr><td style="width: 25%;"><a href="isBimeraDenovo.html">isBimeraDenovo</a></td>
+<td>Identify bimeras from collections of unique sequences.</td></tr>
+<tr><td style="width: 25%;"><a href="isBimeraDenovoTable.html">isBimeraDenovoTable</a></td>
+<td>Identify bimeras in a sequence table.</td></tr>
+<tr><td style="width: 25%;"><a href="isPhiX.html">isPhiX</a></td>
+<td>Determine if input sequence(s) match the phiX genome.</td></tr>
+<tr><td style="width: 25%;"><a href="isShiftDenovo.html">isShiftDenovo</a></td>
+<td>Identify sequences that are identical to a more abundant sequence up to an overall shift.</td></tr>
+<tr><td style="width: 25%;"><a href="learnErrors.html">learnErrors</a></td>
+<td>Learns the error rates from an input list, or vector, of file names or a list of 'derep-class' objects.</td></tr>
+<tr><td style="width: 25%;"><a href="loessErrfun.html">loessErrfun</a></td>
+<td>Use a loess fit to estimate error rates from transition counts.</td></tr>
+<tr><td style="width: 25%;"><a href="makeSequenceTable.html">makeSequenceTable</a></td>
+<td>Construct a sample-by-sequence observation matrix.</td></tr>
+<tr><td style="width: 25%;"><a href="mergePairs.html">mergePairs</a></td>
+<td>Merge denoised forward and reverse reads.</td></tr>
+<tr><td style="width: 25%;"><a href="mergePairsByID.html">mergePairsByID</a></td>
+<td>Merge forward and reverse reads after DADA denoising, even if reads were not originally ordered together.</td></tr>
+<tr><td style="width: 25%;"><a href="mergeSequenceTables.html">mergeSequenceTables</a></td>
+<td>Merge two or more sample-by-sequence observation matrices.</td></tr>
+<tr><td style="width: 25%;"><a href="names-set-dada-ANY-method.html">names&lt;--method</a></td>
+<td>Deactivate renaming of dada-class objects.</td></tr>
+<tr><td style="width: 25%;"><a href="names-set-derep-ANY-method.html">names&lt;--method</a></td>
+<td>Deactivate renaming of derep-class objects.</td></tr>
+<tr><td style="width: 25%;"><a href="noqualErrfun.html">noqualErrfun</a></td>
+<td>Estimate error rates for each type of transition while ignoring quality scores.</td></tr>
+<tr><td style="width: 25%;"><a href="nwalign.html">nwalign</a></td>
+<td>Needleman-Wunsch alignment.</td></tr>
+<tr><td style="width: 25%;"><a href="nwhamming.html">nwhamming</a></td>
+<td>Hamming distance after Needlman-Wunsch alignment.</td></tr>
+<tr><td style="width: 25%;"><a href="PacBioErrfun.html">PacBioErrfun</a></td>
+<td>Estimate error rates from transition counts in PacBio CCS data.</td></tr>
+<tr><td style="width: 25%;"><a href="plotErrors.html">plotErrors</a></td>
+<td>Plot observed and estimated error rates.</td></tr>
+<tr><td style="width: 25%;"><a href="plotQualityProfile.html">plotQualityProfile</a></td>
+<td>Plot quality profile of a fastq file.</td></tr>
+<tr><td style="width: 25%;"><a href="removeBimeraDenovo.html">removeBimeraDenovo</a></td>
+<td>Remove bimeras from collections of unique sequences.</td></tr>
+<tr><td style="width: 25%;"><a href="seqComplexity.html">seqComplexity</a></td>
+<td>Determine if input sequence(s) are low complexity.</td></tr>
+<tr><td style="width: 25%;"><a href="setDadaOpt.html">setDadaOpt</a></td>
+<td>Set DADA options</td></tr>
+<tr><td style="width: 25%;"><a href="show-methods.html">show-method</a></td>
+<td>method extensions to show for dada2 objects.</td></tr>
+<tr><td style="width: 25%;"><a href="tperr1.html">tperr1</a></td>
+<td>An empirical error matrix.</td></tr>
+<tr><td style="width: 25%;"><a href="uniques-vector.html">uniques-vector</a></td>
+<td>The named integer vector format used to represent collections of unique DNA sequences.</td></tr>
+<tr><td style="width: 25%;"><a href="uniquesToFasta.html">uniquesToFasta</a></td>
+<td>Write a uniques vector to a FASTA file</td></tr>
+<tr><td style="width: 25%;"><a href="writeFasta.html">writeFasta-method</a></td>
+<td>Writes a named character vector of DNA sequences to a fasta file. Values are the sequences, and names are used for the id lines.</td></tr>
+</table>
+</body></html>

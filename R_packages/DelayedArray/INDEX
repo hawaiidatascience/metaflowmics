@@ -1,0 +1,19 @@
+ArrayGrid-class         ArrayGrid and ArrayViewport objects
+DelayedArray-class      DelayedArray objects
+DelayedArray-stats      Statistical functions on DelayedArray objects
+DelayedArray-utils      Common operations on DelayedArray objects
+DelayedMatrix-stats     DelayedMatrix row/col summarization
+DelayedOp-class         DelayedOp objects
+RealizationSink         RealizationSink objects
+RleArray-class          RleArray objects
+SparseArraySeed-class   SparseArraySeed objects
+bind-arrays             Bind arrays along their rows or columns
+blockGrid               Define grids to use in the context of block
+                        processing
+block_processing        Block processing of an array-like object
+linearInd               Converting array indices into linear indices
+makeCappedVolumeBox     Utilities to make capped volume boxes
+read_block              Read/write blocks of array data
+realize                 Realize a DelayedArray object
+showtree                Visualize, simplify, and inspect a tree of
+                        delayed operations

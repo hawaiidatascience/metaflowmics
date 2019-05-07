@@ -1,0 +1,44 @@
+Package: dada2
+Type: Package
+Title: Accurate, high-resolution sample inference from amplicon
+        sequencing data
+Description: The dada2 package infers exact amplicon sequence variants (ASVs) from 
+    high-throughput amplicon sequencing data, replacing the coarser and less accurate
+    OTU clustering approach. The dada2 pipeline takes as input demultiplexed fastq 
+    files, and outputs the sequence variants and their sample-wise abundances after 
+    removing substitution and chimera errors. Taxonomic classification is available
+    via a native implementation of the RDP naive Bayesian classifier, and species-level
+    assignment to 16S rRNA gene fragments by exact matching.
+Version: 1.10.1
+Date: 2018-10-10
+Maintainer: Benjamin Callahan <benjamin.j.callahan@gmail.com>
+Author: Benjamin Callahan <benjamin.j.callahan@gmail.com>, Paul McMurdie, Susan Holmes
+License: LGPL-3
+LazyLoad: yes
+Depends: R (>= 3.2.0), Rcpp (>= 0.11.2), methods (>= 3.2.0)
+Imports: Biostrings (>= 2.42.1), ggplot2 (>= 2.1.0), data.table (>=
+        1.9.4), reshape2 (>= 1.4.1), ShortRead (>= 1.32.0),
+        RcppParallel (>= 4.3.0), parallel (>= 3.2.0), IRanges (>=
+        2.6.0), XVector (>= 0.16.0), BiocGenerics (>= 0.22.0)
+Suggests: BiocStyle, knitr, rmarkdown
+LinkingTo: Rcpp, RcppParallel
+SystemRequirements: GNU make
+VignetteBuilder: knitr
+biocViews: ImmunoOncology, Microbiome, Sequencing, Classification,
+        Metagenomics
+URL: http://benjjneb.github.io/dada2/
+BugReports: https://github.com/benjjneb/dada2/issues
+LazyData: true
+Collate: 'RcppExports.R' 'allClasses.R' 'allPackage.R' 'chimeras.R'
+        'dada.R' 'errorModels.R' 'filter.R' 'misc.R' 'multiSample.R'
+        'paired.R' 'plot-methods.R' 'sequenceIO.R' 'show-methods.R'
+        'taxonomy.R'
+RoxygenNote: 6.0.1
+git_url: https://git.bioconductor.org/packages/dada2
+git_branch: RELEASE_3_8
+git_last_commit: 322b76d
+git_last_commit_date: 2019-01-04
+Date/Publication: 2019-01-04
+NeedsCompilation: yes
+Packaged: 2019-01-05 02:06:41 UTC; biocbuild
+Built: R 3.5.1; x86_64-pc-linux-gnu; 2019-05-07 00:57:11 UTC; unix

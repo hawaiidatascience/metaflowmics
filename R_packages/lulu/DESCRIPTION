@@ -1,0 +1,34 @@
+Package: lulu
+Type: Package
+Title: Post Clustering Curation of Amplicon Data for Reliable
+        Biodiversity Metrics
+Version: 0.1.0
+Authors@R: person("Tobias", "Guldberg Frøslev", email = "tobiasgf@snm.ku.dk",
+    role = c("aut", "cre"))
+Maintainer: The package maintainer <yourself@somewhere.net>
+Description: The LULU algorithm excludes artefactual OTUs without discarding
+    rare, but real OTUs. The core mechanism is the identification and merging
+    of ‘daughter’ OTUs with consistently co-occurring, sequence-similar, but 
+    more abundant ‘parent’ OTUs across a multi-sample dataset, under the 
+    assumption that the ‘daughter’ OTUs are artefacts. The algorithm is 
+    independent of a reference database, and can thus be applied to any OTU 
+    table produced for any set of samples with any initial OTU definition 
+    algorithm. 
+License: GNU General Public License v3 (GPL-3)
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 6.0.1
+RemoteType: github
+RemoteHost: api.github.com
+RemoteRepo: lulu
+RemoteUsername: tobiasgf
+RemoteRef: master
+RemoteSha: 24cee1066c35c7a138861e7b3fbaec7549436fd2
+GithubRepo: lulu
+GithubUsername: tobiasgf
+GithubRef: master
+GithubSHA1: 24cee1066c35c7a138861e7b3fbaec7549436fd2
+NeedsCompilation: no
+Packaged: 2019-05-07 01:05:57 UTC; carisdak
+Author: Tobias Guldberg Frøslev [aut, cre]
+Built: R 3.5.1; ; 2019-05-07 01:05:58 UTC; unix

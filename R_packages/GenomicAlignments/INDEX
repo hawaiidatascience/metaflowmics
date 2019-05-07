@@ -1,0 +1,38 @@
+GAlignmentPairs-class   GAlignmentPairs objects
+GAlignments-class       GAlignments objects
+GAlignmentsList-class   GAlignmentsList objects
+GappedReads-class       (Legacy) GappedReads objects
+OverlapEncodings-class
+                        OverlapEncodings objects
+cigar-utils             CIGAR utility functions
+coverage-methods        Coverage of a GAlignments, GAlignmentPairs, or
+                        GAlignmentsList object
+encodeOverlaps-methods
+                        Encode the overlaps between RNA-seq reads and
+                        the transcripts of a gene model
+findCompatibleOverlaps-methods
+                        Finding hits between reads and transcripts that
+                        are _compatible_ with the splicing of the
+                        transcript
+findMateAlignment       Pairing the elements of a GAlignments object
+findOverlaps-methods    Finding overlapping genomic alignments
+findSpliceOverlaps-methods
+                        Classify ranges (reads) as compatible with
+                        existing genomic annotations or as having novel
+                        splice events
+intra-range-methods     Intra range transformations of a GAlignments or
+                        GAlignmentsList object
+junctions-methods       Extract junctions from genomic alignments
+mapToAlignments         Map range coordinates between reads and genome
+                        space using CIGAR alignments
+pileLettersAt           Pile the letters of a set of aligned reads on
+                        top of a set of genomic positions
+readGAlignments         Reading genomic alignments from a file
+sequenceLayer           Lay read sequences alongside the reference
+                        space, using their CIGARs
+setops-methods          Set operations on GAlignments objects
+stackStringsFromBam     Stack the read sequences stored in a BAM file
+                        on a region of interest
+summarizeOverlaps-methods
+                        Perform overlap queries between reads and
+                        genomic features

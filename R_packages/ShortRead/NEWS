@@ -1,0 +1,446 @@
+CHANGES IN VERSION 1.37
+-----------------------
+
+BUG FIXES
+
+    o (v. 1.37.2) FastqQuality() includes the last printable ASCII
+      character '~'
+
+    o (v. 1.37.3) countLines() returns numeric values, to allow for
+      files with more than 2^31-1 lines
+
+CHANGES IN VERSION 1.35
+-----------------------
+
+SIGNIFICANT USER-VISIBLE CHANGES
+
+    o Reads up to 2M bases can be parsed
+
+CHANGES IN VERSION 1.27
+-----------------------
+
+SIGNIFICANT USER-VISIBLE CHANGES
+
+    o fastqFilter allows several input 'files' to be written to a
+      single 'destinations'.
+
+    o readAligned() for BAM files is defunct. QA and associated
+      methods removed.
+
+    o srapply removed
+
+    o 'legacy' function readInfo() renamed readIntensityInfo()
+    
+
+CHANGES IN VERSION 1.25
+-----------------------
+
+SIGNIFICANT USER-VISIBLE CHANGES
+
+    o srapply is defunct
+
+    o readAligned() for BAM files is deprecated; use
+      GenomicAlignments::readGAligned instead.
+
+BUG FIXES
+
+    o close opened files when parsing old bowtie, soap, and solexa
+      export file formats.
+
+    o Don't allow R memory to be released prematurely when processing
+      old bowtie file formats / creating external pointers.
+
+    o writeFastq,FastqFile obeys 'compress' argument; mode must be
+      specified by the caller (typically mode="a")
+
+CHANGES IN VERSION 1.23
+-----------------------
+
+NEW FEATURES
+
+    o alphabetScore,PhredQuality-method implemented
+
+    o reverse, reverseComplement methods for ShortReadQ objects
+
+    o srlist, to access SRList data as a base R list.
+
+SIGNIFICANT USER-VISIBLE CHANGES
+
+    o readFastq qualityType="Auto" chooses base-64 encoding when no
+      characters are encoded at less than 59, and some are encoded at
+      greater than 74.
+
+BUG FIXES
+
+    o report() prints adapter contaminants correctly when user has
+      stringsAsFactors=FALSE
+
+    o qa(..., sample=FALSE) no longer tries to re-match 'pattern'
+      argument
+
+CHANGES IN VERSION 1.21
+-----------------------
+
+NEW FEATURES
+
+    o writeFastq can write (and does so by default) gz-compressed files
+
+SIGNIFICANT USER-VISIBLE CHANGES
+
+    o Use BiocParallel rather than srapply, mark srapply as 'Deprecated'
+
+    o qa,character-method defaults to type="fastq"
+
+    o Input of 'legacy' formats marked as such
+
+    o alphabetByCycle supports amino acid string sets
+
+CHANGES IN VERSION 1.19
+-----------------------
+
+SIGNIFICANT USER-VISIBLE CHANGES
+
+    o qa(..., type="fastq") uses a sample of n=1000000 reads by
+      default, rather than then entire file; use sample=FALSE to
+      revert to previous behavior.
+
+NEW FEATURES
+
+    o encoding,FastqQuality and encoding,SFastqQuality provide a
+      convenient map between letter encodings and their corresponding
+      integer quality values.
+
+    o filterFastq transforms one fastq file to another, removing reads
+      or nucleotides via a user-specified
+      function. trimEnds,character-method & friends use this for an
+      easy way to remove low-quality base.
+
+BUG FIXES
+
+    o writeFastq successfully writes zero-length fastq files.
+
+    o FastqStreamer / FastqSampler warn on incomplete (corrupt) files
+
+CHANGES IN VERSION 1.17
+-----------------------
+
+SIGNIFICANT USER-VISIBLE CHANGES
+
+  o FastqSampler can return records in the order encountered in the
+    sampled file.
+
+  o Increase to 10000 the number of reads examined for determining
+    Fastq quality type
+
+  o as(FastqQuality, "numeric") returns a vector of quality scores
+    concatenated end to end (previously cycle to cycle), without
+    padding to effective equal width
+
+BUG FIXES
+
+  o trimTails, successive=TRUE would return inconsistent results
+
+  o FastqStreamer, FastqSampler parse fastq files created with '\r'
+
+CHANGES IN VERSION 1.15
+-----------------------
+
+NEW FEATURES
+
+    o FastqStreamer accepts IRanges for selecting input records
+
+SIGNIFICANT USER-VISIBLE CHANGES
+
+    o as(ShortReadQ, "matrix") now accepts ShortReadQ instances with
+    heterogeneous widths, returning a matrix x[i, j] with NA values in
+    when j > width()[i].
+
+BUG FIXES
+
+    o readAligned, type="BAM" correctly adds required 'what' elements
+
+    o FastqSampler would only randomize first read; introduced 1.13.9
+    2011-12-02, fixed 1.15.4 2012-04-25
+
+    o report(qa, ...) no longer produces obviously confused base
+    calls per cycle
+
+    o FastqFileList would fail to initialize correctly from a
+    character vector
+
+CHANGES IN VERSION 1.13
+-----------------------
+
+SIGNIFICANT USER-VISIBLE CHANGES
+
+    o FastqSampler is considerably faster
+
+    o FastqSampler and FastqStreamer require explicit close() to avoid
+    warnings about closing unused connections
+
+BUG FIXES
+
+    o qa reports on very large lanes would overflow alphabetFrequency
+
+    o qa report scales adapaterContamination correctly
+
+    o FastqSampler would rarely sample fewer than requested reads
+
+    o FastqSampler supports outputs of >2^31 - 1 total nucleotides
+
+    o readFastq parses records with 0 width
+
+CHANGES IN VERSION 1.11
+-----------------------
+
+NEW FEATURES
+
+    o trimTails to trim low quality trailing nucleotides
+
+    o trimEnds to remove arbitrary (vectors of) letters from reads or
+    qualities
+
+    o FastqStreamer to iterate over a fastq file
+
+    o FastqFile, FastqFileList to represent fastq files
+
+SIGNIFICANT USER-VISIBLE CHANGES
+
+    o writeFastq has argument full, default value FALSE, disabling
+    printing of identifier a second time in '+' line
+
+    o srapply requires that options(srapply_fapply="parallel") or
+    options(srapply_fapply="Rmpi") to enable parallel processing via
+    fapply
+
+BUG FIXES
+
+    o SolexaRealign, SolexaAlign, and SolexaResult transposed strand
+    information
+
+    o FastqSampler segfaulted on some files
+
+    o writeFasta had a semi-documented argument mode; it is now
+    documented and as a consequence dis-allows argument 'append' that
+    would previously have been passed to underlying methods.
+
+CHANGES IN VERSION 1.9
+----------------------
+
+NEW FEATURES
+
+    o Support for HiSeq tile layout
+
+    o Track reads passing filters, including across logical filter
+    operations
+
+CHANGES IN VERSION 1.7
+----------------------
+
+BUG FIXES
+
+    o qa() represented the per-cycle quality scores incorrectly; this
+    influenced qa[["perCycle"]][["quality"]][["Score"]], but not the
+    qa report.
+
+    o qa() for type="SolexaExport" transposed the 'aligned' and
+    'filtered' labels on all elements of SolexaExportQA. Thanks
+    Nicolas Delhomme for the report.
+
+    o report() failed when each read was unique. Thanks Peng Yu for
+    the report.
+
+SIGNIFICANT USER-VISIBLE CHANGES
+
+    o The perCycleQuality graph in the qa report now includes boxplots
+    for all cycles instead of just the median value.
+
+    o A depthOfCoverage graph has been added to the qa report for BAM,
+    Bowtie, SolexaExport and SolexaRealign file types.
+
+    o An adapterContamination measure has been added to the qa report for BAM,
+    Bowtie, SolexaExport, SolexaRealign and Fastq file types.
+
+    o srorder is now stable (the original order of identical is
+    preservered).
+
+NEW FEATURES
+
+    o Add class BAMQA. qa() can now be called on BAM files.
+
+    o The param argument in readAligned() and qa() for 
+    type="BAM" can now be a single ScanBamParam object
+    or a list of them.  
+
+    o FastqSampler can be used to draw samples from a fastq file.
+
+CHANGES IN VERSION 1.5
+----------------------
+
+SIGNIFICANT USER-VISIBLE CHANGES
+
+    o levels(strand(aln)) is c("+", "-", "*") (was c("-", "+", "*"))
+
+    o Add USE.NAMES argument to srapply, minimum length to (internal)
+    function ..reduce.
+
+NEW FEATURES
+
+    o Optionally retrieve multiplex bar code, paired read number, and
+    id from SolexaExport (contribution from Nicolas Delhomme)
+
+    o renew() and renewable() provide an interface to updating
+    ShortRead instances
+
+    o srapply checks for and uses multicore
+
+    o readIntensities supports Illumina RTA '.cif' / '.cnf' files
+
+    o readAligned type="BAM" parses BAM files, extracting simple (no
+    indel) cigars
+
+BUG FIXES
+
+    o readIntensities type="IparIntensity" correctly handles multiple
+    tiles
+
+CHANGES IN VERSION 1.3
+----------------------
+
+SIGNIFICANT USER-VISIBLE CHANGES
+
+    o coverage,AlignedRead-method has a changed interface (shift/width
+    rather than start/end) and default behavior (return value in
+    genome coordinates, rather than minimal covered region).
+
+    o readAligned,character-method, type="Bowtie" and readFastq return
+    FastqQuality by default.
+
+    o coverage,AlignedRead-method now returns an RleList
+
+NEW FEATURES
+
+    o qa reports from _realign.txt, MAQMap files
+
+    o QualityScoreDNAStringSet coercion methods
+
+    o qa type="character" now accepts a filter argument with value
+    srFilter()
+
+    o alphabetByCycle supports variable-width XStringSets
+
+    o qa,ShortReadQ and qa,list methods for qa on existing objects
+
+BUG FIXES
+
+    o Parse .gz realign files
+
+    o alphabetScore,FastqQuality-method shifted quality by +1
+
+
+CHANGES IN VERSION 1.1
+----------------------
+
+SIGNIFICANT USER-VISIBLE CHANGES
+
+    o 454 quality scores are returned as FastqQuality-encoded
+
+    o For functions accepting dirPath, pattern to name files, allow
+    dirPath to be a vector of file names when pattern is character().
+
+    o width() on ShortRead and derived classes (including AlignedRead
+    now returns a vector of widths, of length equal to the length of
+    the object.
+
+NEW FEATURES
+
+    o Add Bowtie as a 'type' value for qa and report
+
+    o Add dustyScore() and dustyFilter() to identify low-complexity
+    regions
+
+    o Parse _qseq files (to ShortReadQ or XDataFrame)
+
+    o Parse IPAR image intensity files _int.txt.p, _nse.txt.p, 
+    _pos.txt
+
+    o Create HTML-based quality assessment reports
+
+    o Add trimLRPatterns() for ShortRead and derived classes
+    (ShortReadQ, AlignedRead).
+
+    o Add narrow() for ShortRead, QualityScore, and derived classes.
+
+    o Use append() to append two objects of the same ShortReadQ or
+    QualityScore and derived classes together
+
+    o writeFastq for classes derived from ShortReadQ
+
+    o Input functions support .gz or text files.
+
+    o readIntensity reads Solexa image intensity files into R,
+    including information about lane, tile, x, and y coordinates of
+    each read.
+
+    o readPrb returns different types of objects, depending on the
+    'as' argument of the readPrb,character-method.
+
+    o readXStringSet gets arguments skip, nrows; argument order
+    changed slightly
+
+    o New built-in SRFilters positionFilter, uniqueFilter to select
+    reads aligning to particular positions, or to select only unique
+    instances of reads aligning to each position.
+    
+    o readAligned gains a Solexa _results parser (_results files are
+    listed as 'intermediate' in the Solexa manual, and not a good
+    end-point for analysis)
+
+    o readAligned gains a Bowtie output parser
+
+    o readAligned gains ability to parse MAQ 0.7 version binary files
+
+BUG FIXES
+
+    o readQual would fail to read 454 quality scores correctly when
+    these spanned more than one line of input per read
+
+    o coverage treated reads as 1 base longer than they were
+
+    o FastqQuality got the quality encoding off by one in as(x,
+    "matrix")
+
+    o qa_solexa.Rnw incorrectly displayed read occurences when lanes
+    were presented out-of-order (an unusual occurence)
+
+    o readAligned SolexaAlign, etc., updated to parse 'chromsome' and
+    'position', and 'strand' information correctly
+
+    o readAligned MAQMapview failed for most chromosome labels
+
+CHANGES IN VERSION 1.0
+----------------------
+
+SIGNIFICANT USER-VISIBLE CHANGES
+
+    o SRFilter allows construction of filters that can be used to
+    subset existing data objects, or filter incoming (readAligned, at
+    the moment) objects.
+
+    o readAligned for Solexa-based alignments return 'strand'
+    information as factor with levels "-", "+", "*" (strand not
+    relevant), NA (no strand information available).
+
+    o srorder, srsort, srrank, and srduplicated for AligendRead class
+    now sort based on chromosome, strand, position AND sread; previous
+    behavior can be recovers by extracting the sequences
+    srsort(sread(aln)), etc.
+
+    o Functions using SolexaPath now search all relevant directories,
+    e.g., in analysisPath, rather than the first
+
+BUG FIXES
+
+    o 'run' in eland_export files is correctly parsed as a factor
+
+(start date: 29 September, 2008)

@@ -1,0 +1,35 @@
+Package: GenomeInfoDb
+Title: Utilities for manipulating chromosome and other 'seqname'
+        identifiers
+Description: Contains data and functions that
+	define and allow translation between different chromosome
+	sequence naming conventions (e.g., "chr1" versus "1"),
+	including a function that attempts to place sequence names in
+	their natural, rather than lexicographic, order.
+Version: 1.18.2
+Encoding: UTF-8
+Author: Sonali Arora, Martin Morgan, Marc Carlson, H. Pagès
+Maintainer: Bioconductor Package Maintainer <maintainer@bioconductor.org>
+biocViews: Genetics, DataRepresentation, Annotation, GenomeAnnotation
+Depends: R (>= 3.1), methods, BiocGenerics (>= 0.13.8), S4Vectors (>=
+        0.17.25), IRanges (>= 2.13.12)
+Imports: stats, stats4, utils, RCurl, GenomeInfoDbData
+Suggests: GenomicRanges, Rsamtools, GenomicAlignments, BSgenome,
+        GenomicFeatures, BSgenome.Scerevisiae.UCSC.sacCer2,
+        BSgenome.Celegans.UCSC.ce2, BSgenome.Hsapiens.NCBI.GRCh38,
+        TxDb.Dmelanogaster.UCSC.dm3.ensGene, RUnit, BiocStyle, knitr
+License: Artistic-2.0
+Collate: utils.R rankSeqlevels.R assembly-utils.R loadTaxonomyDb.R
+        fetchExtendedChromInfoFromUCSC.R fetchSequenceInfo.R seqinfo.R
+        seqlevelsStyle.R seqlevels-wrappers.R Seqinfo-class.R
+        GenomeDescription-class.R mapGenomeBuilds.R zzz.R
+VignetteBuilder: knitr
+Video: http://youtu.be/wdEjCYSXa7w
+git_url: https://git.bioconductor.org/packages/GenomeInfoDb
+git_branch: RELEASE_3_8
+git_last_commit: 557b75e
+git_last_commit_date: 2019-02-11
+Date/Publication: 2019-02-12
+NeedsCompilation: no
+Packaged: 2019-02-13 00:46:20 UTC; biocbuild
+Built: R 3.5.1; ; 2019-05-07 00:54:15 UTC; unix

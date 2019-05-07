@@ -1,0 +1,15 @@
+GenomeDescription-class
+                        GenomeDescription objects
+Seqinfo-class           Seqinfo objects
+fetchExtendedChromInfoFromUCSC
+                        Fetching chromosomes info for some of the UCSC
+                        genomes
+loadTaxonomyDb          Return a data.frame that lists the known
+                        taxonomy IDs and their corresponding organisms.
+mapGenomeBuilds         Mapping between UCSC and Ensembl Genome Builds
+rankSeqlevels           Assign sequence IDs to sequence names
+seqinfo                 Accessing/modifying sequence information
+seqlevels-wrappers      Convenience wrappers to the seqlevels() getter
+                        and setter
+seqlevelsStyle          Conveniently rename the seqlevels of an object
+                        according to a given style

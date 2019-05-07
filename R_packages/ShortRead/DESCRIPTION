@@ -1,0 +1,32 @@
+Package: ShortRead
+Type: Package
+Title: FASTQ input and manipulation
+Version: 1.40.0
+Author: Martin Morgan, Michael Lawrence, Simon Anders
+Maintainer: Bioconductor Package Maintainer
+ <maintainer@bioconductor.org>
+Description: This package implements sampling, iteration, and input of
+        FASTQ files. The package includes functions for filtering and
+        trimming reads, and for generating a quality assessment report.
+        Data are represented as DNAStringSet-derived objects, and
+        easily manipulated for a diversity of purposes.  The package
+        also contains legacy support for early single-end, ungapped
+        alignment formats.
+License: Artistic-2.0
+LazyLoad: yes
+Depends: BiocGenerics (>= 0.23.3), BiocParallel, Biostrings (>=
+        2.47.6), Rsamtools (>= 1.31.2), GenomicAlignments (>= 1.15.6)
+Imports: Biobase, S4Vectors (>= 0.17.25), IRanges (>= 2.13.12),
+        GenomeInfoDb (>= 1.15.2), GenomicRanges (>= 1.31.8), hwriter,
+        methods, zlibbioc, lattice, latticeExtra,
+Suggests: BiocStyle, RUnit, biomaRt, GenomicFeatures, yeastNagalakshmi
+LinkingTo: S4Vectors, IRanges, XVector, Biostrings
+biocViews: DataImport, Sequencing, QualityControl
+git_url: https://git.bioconductor.org/packages/ShortRead
+git_branch: RELEASE_3_8
+git_last_commit: 0cbe4b6
+git_last_commit_date: 2018-10-30
+Date/Publication: 2018-10-30
+NeedsCompilation: yes
+Packaged: 2018-10-30 23:01:59 UTC; biocbuild
+Built: R 3.5.1; x86_64-pc-linux-gnu; 2019-05-07 00:56:39 UTC; unix

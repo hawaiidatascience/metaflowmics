@@ -1,0 +1,1036 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head><title>R: FASTQ input and manipulation</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link rel="stylesheet" type="text/css" href="R.css" />
+</head><body>
+<h1> FASTQ input and manipulation
+<img class="toplogo" src="../../../doc/html/Rlogo.svg" alt="[R logo]" />
+</h1>
+<hr/>
+<div style="text-align: center;">
+<a href="../../../doc/html/packages.html"><img class="arrow" src="../../../doc/html/left.jpg" alt="[Up]" /></a>
+<a href="../../../doc/html/index.html"><img class="arrow" src="../../../doc/html/up.jpg" alt="[Top]" /></a>
+</div><h2>Documentation for package &lsquo;ShortRead&rsquo; version 1.40.0</h2>
+
+<ul><li><a href="../DESCRIPTION">DESCRIPTION file</a>.</li>
+<li><a href="../doc/index.html">User guides, package vignettes and other documentation.</a></li>
+<li><a href="../NEWS">Package NEWS</a>.</li>
+</ul>
+
+<h2>Help Pages</h2>
+
+
+<p style="text-align: center;">
+<a href="# "> </a>
+<a href="#A">A</a>
+<a href="#B">B</a>
+<a href="#C">C</a>
+<a href="#D">D</a>
+<a href="#E">E</a>
+<a href="#F">F</a>
+<a href="#G">G</a>
+<a href="#I">I</a>
+<a href="#L">L</a>
+<a href="#M">M</a>
+<a href="#N">N</a>
+<a href="#O">O</a>
+<a href="#P">P</a>
+<a href="#Q">Q</a>
+<a href="#R">R</a>
+<a href="#S">S</a>
+<a href="#T">T</a>
+<a href="#U">U</a>
+<a href="#V">V</a>
+<a href="#W">W</a>
+<a href="#Y">Y</a>
+<a href="#Z">Z</a>
+<a href="#misc">misc</a>
+</p>
+
+<table width="100%">
+<tr><td style="width: 25%;"><a href="ShortRead-package.html">ShortReadBase-package</a></td>
+<td>FASTQ input and manipulation.</td></tr>
+</table>
+
+<h2><a name="A">-- A --</a></h2>
+
+<table width="100%">
+<tr><td style="width: 25%;"><a href="accessors.html">accessors</a></td>
+<td>(Legacy) Accessors for ShortRead classes</td></tr>
+<tr><td style="width: 25%;"><a href="accessors.html">alignData</a></td>
+<td>(Legacy) Accessors for ShortRead classes</td></tr>
+<tr><td style="width: 25%;"><a href="srFilter.html">alignDataFilter</a></td>
+<td>Functions for user-created and built-in ShortRead filters</td></tr>
+<tr><td style="width: 25%;"><a href="AlignedDataFrame.html">AlignedDataFrame</a></td>
+<td>(Legacy) AlignedDataFrame constructor</td></tr>
+<tr><td style="width: 25%;"><a href="AlignedDataFrame-class.html">AlignedDataFrame-class</a></td>
+<td>(Legacy) "AlignedDataFrame" representing alignment annotations as a data frame</td></tr>
+<tr><td style="width: 25%;"><a href="AlignedRead.html">AlignedRead</a></td>
+<td>(Legacy) Construct objects of class "AlignedRead"</td></tr>
+<tr><td style="width: 25%;"><a href="AlignedRead-class.html">AlignedRead-class</a></td>
+<td>(Legacy) "AlignedRead" class for aligned short reads</td></tr>
+<tr><td style="width: 25%;"><a href="accessors.html">alignQuality</a></td>
+<td>(Legacy) Accessors for ShortRead classes</td></tr>
+<tr><td style="width: 25%;"><a href="srFilter.html">alignQualityFilter</a></td>
+<td>Functions for user-created and built-in ShortRead filters</td></tr>
+<tr><td style="width: 25%;"><a href="QualityScore-class.html">alphabet-method</a></td>
+<td>Quality scores for short reads and their alignments</td></tr>
+<tr><td style="width: 25%;"><a href="alphabetByCycle.html">alphabetByCycle</a></td>
+<td>Summarize nucleotide, amino acid, or quality scores by cycle</td></tr>
+<tr><td style="width: 25%;"><a href="QualityScore-class.html">alphabetByCycle-method</a></td>
+<td>Quality scores for short reads and their alignments</td></tr>
+<tr><td style="width: 25%;"><a href="ShortRead-class.html">alphabetByCycle-method</a></td>
+<td>"ShortRead" class for short reads</td></tr>
+<tr><td style="width: 25%;"><a href="ShortReadQ-class.html">alphabetByCycle-method</a></td>
+<td>"ShortReadQ" class for short reads and their quality scores</td></tr>
+<tr><td style="width: 25%;"><a href="alphabetByCycle.html">alphabetByCycle-method</a></td>
+<td>Summarize nucleotide, amino acid, or quality scores by cycle</td></tr>
+<tr><td style="width: 25%;"><a href="QualityScore-class.html">alphabetFrequency-method</a></td>
+<td>Quality scores for short reads and their alignments</td></tr>
+<tr><td style="width: 25%;"><a href="alphabetScore.html">alphabetScore</a></td>
+<td>Efficiently calculate the sum of quality scores across bases</td></tr>
+<tr><td style="width: 25%;"><a href="QualityScore-class.html">alphabetScore-method</a></td>
+<td>Quality scores for short reads and their alignments</td></tr>
+<tr><td style="width: 25%;"><a href="ShortReadQ-class.html">alphabetScore-method</a></td>
+<td>"ShortReadQ" class for short reads and their quality scores</td></tr>
+<tr><td style="width: 25%;"><a href="accessors.html">analysisPath</a></td>
+<td>(Legacy) Accessors for ShortRead classes</td></tr>
+<tr><td style="width: 25%;"><a href="Snapshot-class.html">annTrack</a></td>
+<td>Class '"Snapshot"'</td></tr>
+<tr><td style="width: 25%;"><a href="Snapshot-class.html">annTrack-method</a></td>
+<td>Class '"Snapshot"'</td></tr>
+<tr><td style="width: 25%;"><a href="AlignedDataFrame-class.html">append-method</a></td>
+<td>(Legacy) "AlignedDataFrame" representing alignment annotations as a data frame</td></tr>
+<tr><td style="width: 25%;"><a href="AlignedRead-class.html">append-method</a></td>
+<td>(Legacy) "AlignedRead" class for aligned short reads</td></tr>
+<tr><td style="width: 25%;"><a href="QualityScore-class.html">append-method</a></td>
+<td>Quality scores for short reads and their alignments</td></tr>
+<tr><td style="width: 25%;"><a href="ShortRead-class.html">append-method</a></td>
+<td>"ShortRead" class for short reads</td></tr>
+<tr><td style="width: 25%;"><a href="ShortRead-package.html">append-method</a></td>
+<td>FASTQ input and manipulation.</td></tr>
+<tr><td style="width: 25%;"><a href="ShortReadQ-class.html">append-method</a></td>
+<td>"ShortReadQ" class for short reads and their quality scores</td></tr>
+<tr><td style="width: 25%;"><a href="Intensity-class.html">ArrayIntensity</a></td>
+<td>(Legacy) "Intensity", "IntensityInfo", and "IntensityMeasure" base classes for short read image intensities</td></tr>
+<tr><td style="width: 25%;"><a href="Intensity-class.html">ArrayIntensity-class</a></td>
+<td>(Legacy) "Intensity", "IntensityInfo", and "IntensityMeasure" base classes for short read image intensities</td></tr>
+</table>
+
+<h2><a name="B">-- B --</a></h2>
+
+<table width="100%">
+<tr><td style="width: 25%;"><a href="accessors.html">baseCallPath</a></td>
+<td>(Legacy) Accessors for ShortRead classes</td></tr>
+<tr><td style="width: 25%;"><a href="deprecated.html">basePath</a></td>
+<td>Deprecated and defunct functions</td></tr>
+<tr><td style="width: 25%;"><a href="BowtieQA-class.html">BowtieQA-class</a></td>
+<td>(Legacy) Quality assessment summaries from Bowtie files</td></tr>
+</table>
+
+<h2><a name="C">-- C --</a></h2>
+
+<table width="100%">
+<tr><td style="width: 25%;"><a href="SRFilter-class.html">c-method</a></td>
+<td>"SRFilter" for representing functions operating on ShortRead objects</td></tr>
+<tr><td style="width: 25%;"><a href="accessors.html">chromosome</a></td>
+<td>(Legacy) Accessors for ShortRead classes</td></tr>
+<tr><td style="width: 25%;"><a href="AlignedRead-class.html">chromosome-method</a></td>
+<td>(Legacy) "AlignedRead" class for aligned short reads</td></tr>
+<tr><td style="width: 25%;"><a href="srFilter.html">chromosomeFilter</a></td>
+<td>Functions for user-created and built-in ShortRead filters</td></tr>
+<tr><td style="width: 25%;"><a href="clean.html">clean</a></td>
+<td>Remove sequences with ambiguous nucleotides from short read classes</td></tr>
+<tr><td style="width: 25%;"><a href="ShortRead-class.html">clean-method</a></td>
+<td>"ShortRead" class for short reads</td></tr>
+<tr><td style="width: 25%;"><a href="clean.html">clean-method</a></td>
+<td>Remove sequences with ambiguous nucleotides from short read classes</td></tr>
+<tr><td style="width: 25%;"><a href="Sampler-class.html">close.ShortReadFile</a></td>
+<td>Sampling and streaming records from fastq files</td></tr>
+<tr><td style="width: 25%;"><a href="AlignedRead-class.html">coerce-method</a></td>
+<td>(Legacy) "AlignedRead" class for aligned short reads</td></tr>
+<tr><td style="width: 25%;"><a href="QualityScore-class.html">coerce-method</a></td>
+<td>Quality scores for short reads and their alignments</td></tr>
+<tr><td style="width: 25%;"><a href="SRFilter-class.html">coerce-method</a></td>
+<td>"SRFilter" for representing functions operating on ShortRead objects</td></tr>
+<tr><td style="width: 25%;"><a href="ShortReadQ-class.html">coerce-method</a></td>
+<td>"ShortReadQ" class for short reads and their quality scores</td></tr>
+<tr><td style="width: 25%;"><a href="srFilter.html">compose</a></td>
+<td>Functions for user-created and built-in ShortRead filters</td></tr>
+<tr><td style="width: 25%;"><a href="countLines.html">countLines</a></td>
+<td>Count lines in all (text) files in a directory whose file name matches a pattern</td></tr>
+<tr><td style="width: 25%;"><a href="AlignedRead-class.html">coverage-method</a></td>
+<td>(Legacy) "AlignedRead" class for aligned short reads</td></tr>
+</table>
+
+<h2><a name="D">-- D --</a></h2>
+
+<table width="100%">
+<tr><td style="width: 25%;"><a href="accessors.html">dataPath</a></td>
+<td>(Legacy) Accessors for ShortRead classes</td></tr>
+<tr><td style="width: 25%;"><a href="deprecated.html">defunct</a></td>
+<td>Deprecated and defunct functions</td></tr>
+<tr><td style="width: 25%;"><a href="deprecated.html">deprecated</a></td>
+<td>Deprecated and defunct functions</td></tr>
+<tr><td style="width: 25%;"><a href="AlignedRead-class.html">detail-method</a></td>
+<td>(Legacy) "AlignedRead" class for aligned short reads</td></tr>
+<tr><td style="width: 25%;"><a href="ExperimentPath-class.html">detail-method</a></td>
+<td>(Legacy) "ExperimentPath" class representing a file hierarchy of data files</td></tr>
+<tr><td style="width: 25%;"><a href="QualityScore-class.html">detail-method</a></td>
+<td>Quality scores for short reads and their alignments</td></tr>
+<tr><td style="width: 25%;"><a href="RochePath-class.html">detail-method</a></td>
+<td>(Legacy) "RochePath" class representing a Roche (454) experiment location</td></tr>
+<tr><td style="width: 25%;"><a href="SRSet-class.html">detail-method</a></td>
+<td>(Legacy) A base class for Roche experiment-wide data</td></tr>
+<tr><td style="width: 25%;"><a href="SRUtil-class.html">detail-method</a></td>
+<td>".SRUtil" and related classes</td></tr>
+<tr><td style="width: 25%;"><a href="ShortRead-class.html">detail-method</a></td>
+<td>"ShortRead" class for short reads</td></tr>
+<tr><td style="width: 25%;"><a href="ShortReadQ-class.html">detail-method</a></td>
+<td>"ShortReadQ" class for short reads and their quality scores</td></tr>
+<tr><td style="width: 25%;"><a href="SolexaPath-class.html">detail-method</a></td>
+<td>(Legacy) "SolexaPath" class representing a standard output file hierarchy</td></tr>
+<tr><td style="width: 25%;"><a href="SolexaSet-class.html">detail-method</a></td>
+<td>(Legacy) "SolexaSet" coordinating Solexa output locations with sample annotations</td></tr>
+<tr><td style="width: 25%;"><a href="Intensity-class.html">dim-method</a></td>
+<td>(Legacy) "Intensity", "IntensityInfo", and "IntensityMeasure" base classes for short read image intensities</td></tr>
+<tr><td style="width: 25%;"><a href="QualityScore-class.html">dim-method</a></td>
+<td>Quality scores for short reads and their alignments</td></tr>
+<tr><td style="width: 25%;"><a href="srFilter.html">dustyFilter</a></td>
+<td>Functions for user-created and built-in ShortRead filters</td></tr>
+<tr><td style="width: 25%;"><a href="dustyScore.html">dustyScore</a></td>
+<td>Summarize low-complexity sequences</td></tr>
+<tr><td style="width: 25%;"><a href="dustyScore.html">dustyScore-method</a></td>
+<td>Summarize low-complexity sequences</td></tr>
+</table>
+
+<h2><a name="E">-- E --</a></h2>
+
+<table width="100%">
+<tr><td style="width: 25%;"><a href="QualityScore-class.html">encoding-method</a></td>
+<td>Quality scores for short reads and their alignments</td></tr>
+<tr><td style="width: 25%;"><a href="ExperimentPath-class.html">ExperimentPath</a></td>
+<td>(Legacy) "ExperimentPath" class representing a file hierarchy of data files</td></tr>
+<tr><td style="width: 25%;"><a href="accessors.html">experimentPath</a></td>
+<td>(Legacy) Accessors for ShortRead classes</td></tr>
+<tr><td style="width: 25%;"><a href="ExperimentPath-class.html">ExperimentPath-class</a></td>
+<td>(Legacy) "ExperimentPath" class representing a file hierarchy of data files</td></tr>
+<tr><td style="width: 25%;"><a href="SRSet-class.html">experimentPath-method</a></td>
+<td>(Legacy) A base class for Roche experiment-wide data</td></tr>
+</table>
+
+<h2><a name="F">-- F --</a></h2>
+
+<table width="100%">
+<tr><td style="width: 25%;"><a href="Snapshot-class.html">fac</a></td>
+<td>Class '"Snapshot"'</td></tr>
+<tr><td style="width: 25%;"><a href="Snapshot-class.html">fac-method</a></td>
+<td>Class '"Snapshot"'</td></tr>
+<tr><td style="width: 25%;"><a href="Sampler-class.html">FastqFile</a></td>
+<td>Sampling and streaming records from fastq files</td></tr>
+<tr><td style="width: 25%;"><a href="Sampler-class.html">FastqFile-class</a></td>
+<td>Sampling and streaming records from fastq files</td></tr>
+<tr><td style="width: 25%;"><a href="Sampler-class.html">FastqFileList</a></td>
+<td>Sampling and streaming records from fastq files</td></tr>
+<tr><td style="width: 25%;"><a href="Sampler-class.html">FastqFileList-class</a></td>
+<td>Sampling and streaming records from fastq files</td></tr>
+<tr><td style="width: 25%;"><a href="Sampler-class.html">FastqFileList-method</a></td>
+<td>Sampling and streaming records from fastq files</td></tr>
+<tr><td style="width: 25%;"><a href="Sampler-class.html">FastqFileReader-class</a></td>
+<td>Sampling and streaming records from fastq files</td></tr>
+<tr><td style="width: 25%;"><a href="FastqQA-class.html">FastqQA</a></td>
+<td>Quality assessment of fastq files and ShortReadQ objects</td></tr>
+<tr><td style="width: 25%;"><a href="FastqQA-class.html">FastqQA-class</a></td>
+<td>Quality assessment of fastq files and ShortReadQ objects</td></tr>
+<tr><td style="width: 25%;"><a href="QualityScore.html">FastqQuality</a></td>
+<td>Construct objects indicating read or alignment quality</td></tr>
+<tr><td style="width: 25%;"><a href="QualityScore-class.html">FastqQuality-class</a></td>
+<td>Quality scores for short reads and their alignments</td></tr>
+<tr><td style="width: 25%;"><a href="QualityScore.html">FastqQuality-method</a></td>
+<td>Construct objects indicating read or alignment quality</td></tr>
+<tr><td style="width: 25%;"><a href="Sampler-class.html">FastqSampler</a></td>
+<td>Sampling and streaming records from fastq files</td></tr>
+<tr><td style="width: 25%;"><a href="Sampler-class.html">FastqSampler-class</a></td>
+<td>Sampling and streaming records from fastq files</td></tr>
+<tr><td style="width: 25%;"><a href="Sampler-class.html">FastqSamplerList</a></td>
+<td>Sampling and streaming records from fastq files</td></tr>
+<tr><td style="width: 25%;"><a href="Sampler-class.html">FastqSamplerList-class</a></td>
+<td>Sampling and streaming records from fastq files</td></tr>
+<tr><td style="width: 25%;"><a href="Sampler-class.html">FastqSamplerList-method</a></td>
+<td>Sampling and streaming records from fastq files</td></tr>
+<tr><td style="width: 25%;"><a href="Sampler-class.html">FastqStreamer</a></td>
+<td>Sampling and streaming records from fastq files</td></tr>
+<tr><td style="width: 25%;"><a href="Sampler-class.html">FastqStreamer-class</a></td>
+<td>Sampling and streaming records from fastq files</td></tr>
+<tr><td style="width: 25%;"><a href="Sampler-class.html">FastqStreamer-method</a></td>
+<td>Sampling and streaming records from fastq files</td></tr>
+<tr><td style="width: 25%;"><a href="Sampler-class.html">FastqStreamerList</a></td>
+<td>Sampling and streaming records from fastq files</td></tr>
+<tr><td style="width: 25%;"><a href="Sampler-class.html">FastqStreamerList-class</a></td>
+<td>Sampling and streaming records from fastq files</td></tr>
+<tr><td style="width: 25%;"><a href="Sampler-class.html">FastqStreamerList-method</a></td>
+<td>Sampling and streaming records from fastq files</td></tr>
+<tr><td style="width: 25%;"><a href="Snapshot-class.html">files</a></td>
+<td>Class '"Snapshot"'</td></tr>
+<tr><td style="width: 25%;"><a href="Snapshot-class.html">files-method</a></td>
+<td>Class '"Snapshot"'</td></tr>
+<tr><td style="width: 25%;"><a href="filterFastq.html">filterFastq</a></td>
+<td>Filter fastq from one file to another</td></tr>
+<tr><td style="width: 25%;"><a href="qa2.html">flag</a></td>
+<td>(Updated) quality assessment reports on short reads</td></tr>
+<tr><td style="width: 25%;"><a href="qa2.html">flag-method</a></td>
+<td>(Updated) quality assessment reports on short reads</td></tr>
+<tr><td style="width: 25%;"><a href="Snapshot-class.html">functions</a></td>
+<td>Class '"Snapshot"'</td></tr>
+<tr><td style="width: 25%;"><a href="Snapshot-class.html">functions-method</a></td>
+<td>Class '"Snapshot"'</td></tr>
+</table>
+
+<h2><a name="G">-- G --</a></h2>
+
+<table width="100%">
+<tr><td style="width: 25%;"><a href="Snapshot-class.html">getTrellis</a></td>
+<td>Class '"Snapshot"'</td></tr>
+<tr><td style="width: 25%;"><a href="Snapshot-class.html">getTrellis-method</a></td>
+<td>Class '"Snapshot"'</td></tr>
+</table>
+
+<h2><a name="I">-- I --</a></h2>
+
+<table width="100%">
+<tr><td style="width: 25%;"><a href="ShortRead-class.html">id</a></td>
+<td>"ShortRead" class for short reads</td></tr>
+<tr><td style="width: 25%;"><a href="ShortRead-class.html">id-method</a></td>
+<td>"ShortRead" class for short reads</td></tr>
+<tr><td style="width: 25%;"><a href="srFilter.html">idFilter</a></td>
+<td>Functions for user-created and built-in ShortRead filters</td></tr>
+<tr><td style="width: 25%;"><a href="Snapshot-class.html">ignore.strand</a></td>
+<td>Class '"Snapshot"'</td></tr>
+<tr><td style="width: 25%;"><a href="Snapshot-class.html">ignore.strand-method</a></td>
+<td>Class '"Snapshot"'</td></tr>
+<tr><td style="width: 25%;"><a href="accessors.html">imageAnalysisPath</a></td>
+<td>(Legacy) Accessors for ShortRead classes</td></tr>
+<tr><td style="width: 25%;"><a href="QualityScore.html">IntegerQuality</a></td>
+<td>Construct objects indicating read or alignment quality</td></tr>
+<tr><td style="width: 25%;"><a href="QualityScore-class.html">IntegerQuality-class</a></td>
+<td>Quality scores for short reads and their alignments</td></tr>
+<tr><td style="width: 25%;"><a href="Intensity-class.html">intensity</a></td>
+<td>(Legacy) "Intensity", "IntensityInfo", and "IntensityMeasure" base classes for short read image intensities</td></tr>
+<tr><td style="width: 25%;"><a href="Intensity-class.html">Intensity-class</a></td>
+<td>(Legacy) "Intensity", "IntensityInfo", and "IntensityMeasure" base classes for short read image intensities</td></tr>
+<tr><td style="width: 25%;"><a href="Intensity-class.html">IntensityInfo-class</a></td>
+<td>(Legacy) "Intensity", "IntensityInfo", and "IntensityMeasure" base classes for short read image intensities</td></tr>
+<tr><td style="width: 25%;"><a href="Intensity-class.html">IntensityMeasure-class</a></td>
+<td>(Legacy) "Intensity", "IntensityInfo", and "IntensityMeasure" base classes for short read image intensities</td></tr>
+</table>
+
+<h2><a name="L">-- L --</a></h2>
+
+<table width="100%">
+<tr><td style="width: 25%;"><a href="accessors.html">laneDescription</a></td>
+<td>(Legacy) Accessors for ShortRead classes</td></tr>
+<tr><td style="width: 25%;"><a href="accessors.html">laneNames</a></td>
+<td>(Legacy) Accessors for ShortRead classes</td></tr>
+<tr><td style="width: 25%;"><a href="SolexaSet-class.html">laneNames-method</a></td>
+<td>(Legacy) "SolexaSet" coordinating Solexa output locations with sample annotations</td></tr>
+<tr><td style="width: 25%;"><a href="SRUtil-class.html">lapply-method</a></td>
+<td>".SRUtil" and related classes</td></tr>
+<tr><td style="width: 25%;"><a href="SpTrellis-class.html">left</a></td>
+<td>Class "SpTrellis"</td></tr>
+<tr><td style="width: 25%;"><a href="SpTrellis-class.html">left-method</a></td>
+<td>Class "SpTrellis"</td></tr>
+<tr><td style="width: 25%;"><a href="QualityScore-class.html">length-method</a></td>
+<td>Quality scores for short reads and their alignments</td></tr>
+<tr><td style="width: 25%;"><a href="SRUtil-class.html">length-method</a></td>
+<td>".SRUtil" and related classes</td></tr>
+<tr><td style="width: 25%;"><a href="ShortRead-class.html">length-method</a></td>
+<td>"ShortRead" class for short reads</td></tr>
+<tr><td style="width: 25%;"><a href="SnapshotFunction-class.html">limits</a></td>
+<td>Class "SnapshotFunction"</td></tr>
+<tr><td style="width: 25%;"><a href="SRFilterResult-class.html">Logic-method</a></td>
+<td>"SRFilterResult" for SRFilter output and statistics</td></tr>
+</table>
+
+<h2><a name="M">-- M --</a></h2>
+
+<table width="100%">
+<tr><td style="width: 25%;"><a href="MAQMapQA-class.html">MAQMapQA</a></td>
+<td>(Legacy) Quality assessment summaries from MAQ map files</td></tr>
+<tr><td style="width: 25%;"><a href="MAQMapQA-class.html">MAQMapQA-class</a></td>
+<td>(Legacy) Quality assessment summaries from MAQ map files</td></tr>
+<tr><td style="width: 25%;"><a href="QualityScore.html">MatrixQuality</a></td>
+<td>Construct objects indicating read or alignment quality</td></tr>
+<tr><td style="width: 25%;"><a href="QualityScore-class.html">MatrixQuality-class</a></td>
+<td>Quality scores for short reads and their alignments</td></tr>
+<tr><td style="width: 25%;"><a href="Intensity-class.html">measurementError</a></td>
+<td>(Legacy) "Intensity", "IntensityInfo", and "IntensityMeasure" base classes for short read image intensities</td></tr>
+</table>
+
+<h2><a name="N">-- N --</a></h2>
+
+<table width="100%">
+<tr><td style="width: 25%;"><a href="SRFilter-class.html">name</a></td>
+<td>"SRFilter" for representing functions operating on ShortRead objects</td></tr>
+<tr><td style="width: 25%;"><a href="SRFilter-class.html">name-method</a></td>
+<td>"SRFilter" for representing functions operating on ShortRead objects</td></tr>
+<tr><td style="width: 25%;"><a href="SRFilterResult-class.html">name-method</a></td>
+<td>"SRFilterResult" for SRFilter output and statistics</td></tr>
+<tr><td style="width: 25%;"><a href="SRUtil-class.html">names-method</a></td>
+<td>".SRUtil" and related classes</td></tr>
+<tr><td style="width: 25%;"><a href="SRUtil-class.html">names&lt;--method</a></td>
+<td>".SRUtil" and related classes</td></tr>
+<tr><td style="width: 25%;"><a href="QualityScore-class.html">narrow-method</a></td>
+<td>Quality scores for short reads and their alignments</td></tr>
+<tr><td style="width: 25%;"><a href="ShortRead-class.html">narrow-method</a></td>
+<td>"ShortRead" class for short reads</td></tr>
+<tr><td style="width: 25%;"><a href="ShortReadQ-class.html">narrow-method</a></td>
+<td>"ShortReadQ" class for short reads and their quality scores</td></tr>
+<tr><td style="width: 25%;"><a href="srFilter.html">nFilter</a></td>
+<td>Functions for user-created and built-in ShortRead filters</td></tr>
+<tr><td style="width: 25%;"><a href="QualityScore.html">NumericQuality</a></td>
+<td>Construct objects indicating read or alignment quality</td></tr>
+<tr><td style="width: 25%;"><a href="QualityScore-class.html">NumericQuality-class</a></td>
+<td>Quality scores for short reads and their alignments</td></tr>
+</table>
+
+<h2><a name="O">-- O --</a></h2>
+
+<table width="100%">
+<tr><td style="width: 25%;"><a href="srFilter.html">occurrenceFilter</a></td>
+<td>Functions for user-created and built-in ShortRead filters</td></tr>
+<tr><td style="width: 25%;"><a href="Sampler-class.html">open.ShortReadFile</a></td>
+<td>Sampling and streaming records from fastq files</td></tr>
+</table>
+
+<h2><a name="P">-- P --</a></h2>
+
+<table width="100%">
+<tr><td style="width: 25%;"><a href="Snapshot-class.html">pan</a></td>
+<td>Class '"Snapshot"'</td></tr>
+<tr><td style="width: 25%;"><a href="Snapshot-class.html">pan-method</a></td>
+<td>Class '"Snapshot"'</td></tr>
+<tr><td style="width: 25%;"><a href="SRSet-class.html">phenoData-method</a></td>
+<td>(Legacy) A base class for Roche experiment-wide data</td></tr>
+<tr><td style="width: 25%;"><a href="polyn.html">polyn</a></td>
+<td>Utilities for common, simple operations</td></tr>
+<tr><td style="width: 25%;"><a href="srFilter.html">polynFilter</a></td>
+<td>Functions for user-created and built-in ShortRead filters</td></tr>
+<tr><td style="width: 25%;"><a href="accessors.html">position</a></td>
+<td>(Legacy) Accessors for ShortRead classes</td></tr>
+<tr><td style="width: 25%;"><a href="AlignedRead-class.html">position-method</a></td>
+<td>(Legacy) "AlignedRead" class for aligned short reads</td></tr>
+<tr><td style="width: 25%;"><a href="srFilter.html">positionFilter</a></td>
+<td>Functions for user-created and built-in ShortRead filters</td></tr>
+</table>
+
+<h2><a name="Q">-- Q --</a></h2>
+
+<table width="100%">
+<tr><td style="width: 25%;"><a href="qa2.html">QA</a></td>
+<td>(Updated) quality assessment reports on short reads</td></tr>
+<tr><td style="width: 25%;"><a href="qa.html">qa</a></td>
+<td>Perform quality assessment on short reads</td></tr>
+<tr><td style="width: 25%;"><a href="QA-class.html">QA-class</a></td>
+<td>(Updated) classes for representing quality assessment results</td></tr>
+<tr><td style="width: 25%;"><a href="ShortReadQ-class.html">qa-method</a></td>
+<td>"ShortReadQ" class for short reads and their quality scores</td></tr>
+<tr><td style="width: 25%;"><a href="SolexaPath-class.html">qa-method</a></td>
+<td>(Legacy) "SolexaPath" class representing a standard output file hierarchy</td></tr>
+<tr><td style="width: 25%;"><a href="qa.html">qa-method</a></td>
+<td>Perform quality assessment on short reads</td></tr>
+<tr><td style="width: 25%;"><a href="qa2.html">qa2</a></td>
+<td>(Updated) quality assessment reports on short reads</td></tr>
+<tr><td style="width: 25%;"><a href="qa2.html">qa2-method</a></td>
+<td>(Updated) quality assessment reports on short reads</td></tr>
+<tr><td style="width: 25%;"><a href="qa2.html">QAAdapterContamination</a></td>
+<td>(Updated) quality assessment reports on short reads</td></tr>
+<tr><td style="width: 25%;"><a href="QA-class.html">QAAdapterContamination-class</a></td>
+<td>(Updated) classes for representing quality assessment results</td></tr>
+<tr><td style="width: 25%;"><a href="qa2.html">QACollate</a></td>
+<td>(Updated) quality assessment reports on short reads</td></tr>
+<tr><td style="width: 25%;"><a href="QA-class.html">QACollate-class</a></td>
+<td>(Updated) classes for representing quality assessment results</td></tr>
+<tr><td style="width: 25%;"><a href="qa2.html">QACollate-method</a></td>
+<td>(Updated) quality assessment reports on short reads</td></tr>
+<tr><td style="width: 25%;"><a href="qa2.html">QAData</a></td>
+<td>(Updated) quality assessment reports on short reads</td></tr>
+<tr><td style="width: 25%;"><a href="QA-class.html">QAData-class</a></td>
+<td>(Updated) classes for representing quality assessment results</td></tr>
+<tr><td style="width: 25%;"><a href="qa2.html">QAFastqSource</a></td>
+<td>(Updated) quality assessment reports on short reads</td></tr>
+<tr><td style="width: 25%;"><a href="QA-class.html">QAFastqSource-class</a></td>
+<td>(Updated) classes for representing quality assessment results</td></tr>
+<tr><td style="width: 25%;"><a href="qa2.html">QAFiltered</a></td>
+<td>(Updated) quality assessment reports on short reads</td></tr>
+<tr><td style="width: 25%;"><a href="QA-class.html">QAFiltered-class</a></td>
+<td>(Updated) classes for representing quality assessment results</td></tr>
+<tr><td style="width: 25%;"><a href="qa2.html">QAFlagged</a></td>
+<td>(Updated) quality assessment reports on short reads</td></tr>
+<tr><td style="width: 25%;"><a href="QA-class.html">QAFlagged-class</a></td>
+<td>(Updated) classes for representing quality assessment results</td></tr>
+<tr><td style="width: 25%;"><a href="qa2.html">QAFrequentSequence</a></td>
+<td>(Updated) quality assessment reports on short reads</td></tr>
+<tr><td style="width: 25%;"><a href="QA-class.html">QAFrequentSequence-class</a></td>
+<td>(Updated) classes for representing quality assessment results</td></tr>
+<tr><td style="width: 25%;"><a href="qa2.html">QANucleotideByCycle</a></td>
+<td>(Updated) quality assessment reports on short reads</td></tr>
+<tr><td style="width: 25%;"><a href="QA-class.html">QANucleotideByCycle-class</a></td>
+<td>(Updated) classes for representing quality assessment results</td></tr>
+<tr><td style="width: 25%;"><a href="qa2.html">QANucleotideUse</a></td>
+<td>(Updated) quality assessment reports on short reads</td></tr>
+<tr><td style="width: 25%;"><a href="QA-class.html">QANucleotideUse-class</a></td>
+<td>(Updated) classes for representing quality assessment results</td></tr>
+<tr><td style="width: 25%;"><a href="qa2.html">QAQualityByCycle</a></td>
+<td>(Updated) quality assessment reports on short reads</td></tr>
+<tr><td style="width: 25%;"><a href="QA-class.html">QAQualityByCycle-class</a></td>
+<td>(Updated) classes for representing quality assessment results</td></tr>
+<tr><td style="width: 25%;"><a href="qa2.html">QAQualityUse</a></td>
+<td>(Updated) quality assessment reports on short reads</td></tr>
+<tr><td style="width: 25%;"><a href="QA-class.html">QAQualityUse-class</a></td>
+<td>(Updated) classes for representing quality assessment results</td></tr>
+<tr><td style="width: 25%;"><a href="qa2.html">QAReadQuality</a></td>
+<td>(Updated) quality assessment reports on short reads</td></tr>
+<tr><td style="width: 25%;"><a href="QA-class.html">QAReadQuality-class</a></td>
+<td>(Updated) classes for representing quality assessment results</td></tr>
+<tr><td style="width: 25%;"><a href="qa2.html">QASequenceUse</a></td>
+<td>(Updated) quality assessment reports on short reads</td></tr>
+<tr><td style="width: 25%;"><a href="QA-class.html">QASequenceUse-class</a></td>
+<td>(Updated) classes for representing quality assessment results</td></tr>
+<tr><td style="width: 25%;"><a href="QA-class.html">QASource-class</a></td>
+<td>(Updated) classes for representing quality assessment results</td></tr>
+<tr><td style="width: 25%;"><a href="QA-class.html">QASummary-class</a></td>
+<td>(Updated) classes for representing quality assessment results</td></tr>
+<tr><td style="width: 25%;"><a href="QualityScore-class.html">QualityScore-class</a></td>
+<td>Quality scores for short reads and their alignments</td></tr>
+<tr><td style="width: 25%;"><a href="RochePath-class.html">qualPath</a></td>
+<td>(Legacy) "RochePath" class representing a Roche (454) experiment location</td></tr>
+</table>
+
+<h2><a name="R">-- R --</a></h2>
+
+<table width="100%">
+<tr><td style="width: 25%;"><a href="dotQA-class.html">rbind-method</a></td>
+<td>Virtual class for representing quality assessment results</td></tr>
+<tr><td style="width: 25%;"><a href="qa2.html">rbind-method</a></td>
+<td>(Updated) quality assessment reports on short reads</td></tr>
+<tr><td style="width: 25%;"><a href="RochePath-class.html">read454</a></td>
+<td>(Legacy) "RochePath" class representing a Roche (454) experiment location</td></tr>
+<tr><td style="width: 25%;"><a href="RochePath-class.html">read454-method</a></td>
+<td>(Legacy) "RochePath" class representing a Roche (454) experiment location</td></tr>
+<tr><td style="width: 25%;"><a href="readAligned.html">readAligned</a></td>
+<td>(Legacy) Read aligned reads and their quality scores into R representations</td></tr>
+<tr><td style="width: 25%;"><a href="SolexaPath-class.html">readAligned-method</a></td>
+<td>(Legacy) "SolexaPath" class representing a standard output file hierarchy</td></tr>
+<tr><td style="width: 25%;"><a href="SolexaSet-class.html">readAligned-method</a></td>
+<td>(Legacy) "SolexaSet" coordinating Solexa output locations with sample annotations</td></tr>
+<tr><td style="width: 25%;"><a href="deprecated.html">readAligned-method</a></td>
+<td>Deprecated and defunct functions</td></tr>
+<tr><td style="width: 25%;"><a href="readAligned.html">readAligned-method</a></td>
+<td>(Legacy) Read aligned reads and their quality scores into R representations</td></tr>
+<tr><td style="width: 25%;"><a href="readBaseQuality.html">readBaseQuality</a></td>
+<td>(Legacy) Read short reads and their quality scores into R representations</td></tr>
+<tr><td style="width: 25%;"><a href="RochePath-class.html">readBaseQuality-method</a></td>
+<td>(Legacy) "RochePath" class representing a Roche (454) experiment location</td></tr>
+<tr><td style="width: 25%;"><a href="SolexaPath-class.html">readBaseQuality-method</a></td>
+<td>(Legacy) "SolexaPath" class representing a standard output file hierarchy</td></tr>
+<tr><td style="width: 25%;"><a href="readBaseQuality.html">readBaseQuality-method</a></td>
+<td>(Legacy) Read short reads and their quality scores into R representations</td></tr>
+<tr><td style="width: 25%;"><a href="readBfaToc.html">readBfaToc</a></td>
+<td>(Legacy) Get a list of the sequences in a Maq .bfa file</td></tr>
+<tr><td style="width: 25%;"><a href="SRSet-class.html">readCount</a></td>
+<td>(Legacy) A base class for Roche experiment-wide data</td></tr>
+<tr><td style="width: 25%;"><a href="SRSet-class.html">readData</a></td>
+<td>(Legacy) A base class for Roche experiment-wide data</td></tr>
+<tr><td style="width: 25%;"><a href="SnapshotFunction-class.html">reader</a></td>
+<td>Class "SnapshotFunction"</td></tr>
+<tr><td style="width: 25%;"><a href="readFasta.html">readFasta</a></td>
+<td>Read and write FASTA files to or from ShortRead objects</td></tr>
+<tr><td style="width: 25%;"><a href="RochePath-class.html">readFasta-method</a></td>
+<td>(Legacy) "RochePath" class representing a Roche (454) experiment location</td></tr>
+<tr><td style="width: 25%;"><a href="SolexaPath-class.html">readFasta-method</a></td>
+<td>(Legacy) "SolexaPath" class representing a standard output file hierarchy</td></tr>
+<tr><td style="width: 25%;"><a href="readFasta.html">readFasta-method</a></td>
+<td>Read and write FASTA files to or from ShortRead objects</td></tr>
+<tr><td style="width: 25%;"><a href="RochePath-class.html">readFastaQual</a></td>
+<td>(Legacy) "RochePath" class representing a Roche (454) experiment location</td></tr>
+<tr><td style="width: 25%;"><a href="RochePath-class.html">readFastaQual-method</a></td>
+<td>(Legacy) "RochePath" class representing a Roche (454) experiment location</td></tr>
+<tr><td style="width: 25%;"><a href="readFastq.html">readFastq</a></td>
+<td>Read and write FASTQ-formatted files</td></tr>
+<tr><td style="width: 25%;"><a href="Sampler-class.html">readFastq-method</a></td>
+<td>Sampling and streaming records from fastq files</td></tr>
+<tr><td style="width: 25%;"><a href="SolexaPath-class.html">readFastq-method</a></td>
+<td>(Legacy) "SolexaPath" class representing a standard output file hierarchy</td></tr>
+<tr><td style="width: 25%;"><a href="readFastq.html">readFastq-method</a></td>
+<td>Read and write FASTQ-formatted files</td></tr>
+<tr><td style="width: 25%;"><a href="SRSet-class.html">readIndex</a></td>
+<td>(Legacy) A base class for Roche experiment-wide data</td></tr>
+<tr><td style="width: 25%;"><a href="readIntensities.html">readIntensities</a></td>
+<td>(Legacy) Read Illumina image intensity files</td></tr>
+<tr><td style="width: 25%;"><a href="SolexaPath-class.html">readIntensities-method</a></td>
+<td>(Legacy) "SolexaPath" class representing a standard output file hierarchy</td></tr>
+<tr><td style="width: 25%;"><a href="readIntensities.html">readIntensities-method</a></td>
+<td>(Legacy) Read Illumina image intensity files</td></tr>
+<tr><td style="width: 25%;"><a href="Intensity-class.html">readIntensityInfo</a></td>
+<td>(Legacy) "Intensity", "IntensityInfo", and "IntensityMeasure" base classes for short read image intensities</td></tr>
+<tr><td style="width: 25%;"><a href="RochePath-class.html">readPath</a></td>
+<td>(Legacy) "RochePath" class representing a Roche (454) experiment location</td></tr>
+<tr><td style="width: 25%;"><a href="readPrb.html">readPrb</a></td>
+<td>(Legacy) Read Solexa prb files as fastq-style quality scores</td></tr>
+<tr><td style="width: 25%;"><a href="SolexaPath-class.html">readPrb-method</a></td>
+<td>(Legacy) "SolexaPath" class representing a standard output file hierarchy</td></tr>
+<tr><td style="width: 25%;"><a href="readPrb.html">readPrb-method</a></td>
+<td>(Legacy) Read Solexa prb files as fastq-style quality scores</td></tr>
+<tr><td style="width: 25%;"><a href="readQseq.html">readQseq</a></td>
+<td>(Legacy) Read Solexa qseq files as fastq-style quality scores</td></tr>
+<tr><td style="width: 25%;"><a href="SolexaPath-class.html">readQseq-method</a></td>
+<td>(Legacy) "SolexaPath" class representing a standard output file hierarchy</td></tr>
+<tr><td style="width: 25%;"><a href="readQseq.html">readQseq-method</a></td>
+<td>(Legacy) Read Solexa qseq files as fastq-style quality scores</td></tr>
+<tr><td style="width: 25%;"><a href="RochePath-class.html">readQual</a></td>
+<td>(Legacy) "RochePath" class representing a Roche (454) experiment location</td></tr>
+<tr><td style="width: 25%;"><a href="RochePath-class.html">readQual-method</a></td>
+<td>(Legacy) "RochePath" class representing a Roche (454) experiment location</td></tr>
+<tr><td style="width: 25%;"><a href="readXStringColumns.html">readXStringColumns</a></td>
+<td>Read one or more columns into XStringSet (e.g., DNAStringSet) objects</td></tr>
+<tr><td style="width: 25%;"><a href="renew.html">renew</a></td>
+<td>Renew (update) a ShortRead object with new values</td></tr>
+<tr><td style="width: 25%;"><a href="renew.html">renew-method</a></td>
+<td>Renew (update) a ShortRead object with new values</td></tr>
+<tr><td style="width: 25%;"><a href="renew.html">renewable</a></td>
+<td>Renew (update) a ShortRead object with new values</td></tr>
+<tr><td style="width: 25%;"><a href="renew.html">renewable-method</a></td>
+<td>Renew (update) a ShortRead object with new values</td></tr>
+<tr><td style="width: 25%;"><a href="report.html">report</a></td>
+<td>Summarize quality assessment results into a report</td></tr>
+<tr><td style="width: 25%;"><a href="BowtieQA-class.html">report-method</a></td>
+<td>(Legacy) Quality assessment summaries from Bowtie files</td></tr>
+<tr><td style="width: 25%;"><a href="FastqQA-class.html">report-method</a></td>
+<td>Quality assessment of fastq files and ShortReadQ objects</td></tr>
+<tr><td style="width: 25%;"><a href="MAQMapQA-class.html">report-method</a></td>
+<td>(Legacy) Quality assessment summaries from MAQ map files</td></tr>
+<tr><td style="width: 25%;"><a href="SolexaExportQA-class.html">report-method</a></td>
+<td>(Legacy) Quality assessment summaries from Solexa export and realign files</td></tr>
+<tr><td style="width: 25%;"><a href="SolexaPath-class.html">report-method</a></td>
+<td>(Legacy) "SolexaPath" class representing a standard output file hierarchy</td></tr>
+<tr><td style="width: 25%;"><a href="qa2.html">report-method</a></td>
+<td>(Updated) quality assessment reports on short reads</td></tr>
+<tr><td style="width: 25%;"><a href="report.html">report-method</a></td>
+<td>Summarize quality assessment results into a report</td></tr>
+<tr><td style="width: 25%;"><a href="report.html">report_html</a></td>
+<td>Summarize quality assessment results into a report</td></tr>
+<tr><td style="width: 25%;"><a href="BowtieQA-class.html">report_html-method</a></td>
+<td>(Legacy) Quality assessment summaries from Bowtie files</td></tr>
+<tr><td style="width: 25%;"><a href="FastqQA-class.html">report_html-method</a></td>
+<td>Quality assessment of fastq files and ShortReadQ objects</td></tr>
+<tr><td style="width: 25%;"><a href="MAQMapQA-class.html">report_html-method</a></td>
+<td>(Legacy) Quality assessment summaries from MAQ map files</td></tr>
+<tr><td style="width: 25%;"><a href="SolexaExportQA-class.html">report_html-method</a></td>
+<td>(Legacy) Quality assessment summaries from Solexa export and realign files</td></tr>
+<tr><td style="width: 25%;"><a href="SpTrellis-class.html">restore</a></td>
+<td>Class "SpTrellis"</td></tr>
+<tr><td style="width: 25%;"><a href="SpTrellis-class.html">restore-method</a></td>
+<td>Class "SpTrellis"</td></tr>
+<tr><td style="width: 25%;"><a href="QualityScore-class.html">reverse-method</a></td>
+<td>Quality scores for short reads and their alignments</td></tr>
+<tr><td style="width: 25%;"><a href="ShortReadQ-class.html">reverse-method</a></td>
+<td>"ShortReadQ" class for short reads and their quality scores</td></tr>
+<tr><td style="width: 25%;"><a href="ShortReadQ-class.html">reverseComplement-method</a></td>
+<td>"ShortReadQ" class for short reads and their quality scores</td></tr>
+<tr><td style="width: 25%;"><a href="SpTrellis-class.html">right</a></td>
+<td>Class "SpTrellis"</td></tr>
+<tr><td style="width: 25%;"><a href="SpTrellis-class.html">right-method</a></td>
+<td>Class "SpTrellis"</td></tr>
+<tr><td style="width: 25%;"><a href="RochePath-class.html">RochePath</a></td>
+<td>(Legacy) "RochePath" class representing a Roche (454) experiment location</td></tr>
+<tr><td style="width: 25%;"><a href="RochePath-class.html">RochePath-class</a></td>
+<td>(Legacy) "RochePath" class representing a Roche (454) experiment location</td></tr>
+<tr><td style="width: 25%;"><a href="RocheSet-class.html">RocheSet</a></td>
+<td>(Legacy) Roche (454) experiment-wide data container</td></tr>
+<tr><td style="width: 25%;"><a href="RocheSet-class.html">RocheSet-class</a></td>
+<td>(Legacy) Roche (454) experiment-wide data container</td></tr>
+<tr><td style="width: 25%;"><a href="RochePath-class.html">RocheSet-method</a></td>
+<td>(Legacy) "RochePath" class representing a Roche (454) experiment location</td></tr>
+<tr><td style="width: 25%;"><a href="RtaIntensity.html">RtaIntensity</a></td>
+<td>(Legacy) Construct objects of class "RtaIntensity"</td></tr>
+<tr><td style="width: 25%;"><a href="RtaIntensity-class.html">RtaIntensity-class</a></td>
+<td>(Legacy) Class "RtaIntensity"</td></tr>
+<tr><td style="width: 25%;"><a href="RochePath-class.html">runNames</a></td>
+<td>(Legacy) "RochePath" class representing a Roche (454) experiment location</td></tr>
+<tr><td style="width: 25%;"><a href="RochePath-class.html">runNames-method</a></td>
+<td>(Legacy) "RochePath" class representing a Roche (454) experiment location</td></tr>
+</table>
+
+<h2><a name="S">-- S --</a></h2>
+
+<table width="100%">
+<tr><td style="width: 25%;"><a href="SRUtil-class.html">sapply-method</a></td>
+<td>".SRUtil" and related classes</td></tr>
+<tr><td style="width: 25%;"><a href="accessors.html">scanPath</a></td>
+<td>(Legacy) Accessors for ShortRead classes</td></tr>
+<tr><td style="width: 25%;"><a href="QualityScore.html">SFastqQuality</a></td>
+<td>Construct objects indicating read or alignment quality</td></tr>
+<tr><td style="width: 25%;"><a href="QualityScore-class.html">SFastqQuality-class</a></td>
+<td>Quality scores for short reads and their alignments</td></tr>
+<tr><td style="width: 25%;"><a href="QualityScore.html">SFastqQuality-method</a></td>
+<td>Construct objects indicating read or alignment quality</td></tr>
+<tr><td style="width: 25%;"><a href="ShortRead-class.html">ShortRead</a></td>
+<td>"ShortRead" class for short reads</td></tr>
+<tr><td style="width: 25%;"><a href="ShortRead-class.html">ShortRead-class</a></td>
+<td>"ShortRead" class for short reads</td></tr>
+<tr><td style="width: 25%;"><a href="ShortRead-class.html">ShortRead-method</a></td>
+<td>"ShortRead" class for short reads</td></tr>
+<tr><td style="width: 25%;"><a href="Sampler-class.html">ShortReadFile-class</a></td>
+<td>Sampling and streaming records from fastq files</td></tr>
+<tr><td style="width: 25%;"><a href="ShortReadQ-class.html">ShortReadQ</a></td>
+<td>"ShortReadQ" class for short reads and their quality scores</td></tr>
+<tr><td style="width: 25%;"><a href="ShortReadQ-class.html">ShortReadQ-class</a></td>
+<td>"ShortReadQ" class for short reads and their quality scores</td></tr>
+<tr><td style="width: 25%;"><a href="ShortReadQ-class.html">ShortReadQ-method</a></td>
+<td>"ShortReadQ" class for short reads and their quality scores</td></tr>
+<tr><td style="width: 25%;"><a href="FastqQA-class.html">ShortReadQQA-class</a></td>
+<td>Quality assessment of fastq files and ShortReadQ objects</td></tr>
+<tr><td style="width: 25%;"><a href="AlignedRead-class.html">show-method</a></td>
+<td>(Legacy) "AlignedRead" class for aligned short reads</td></tr>
+<tr><td style="width: 25%;"><a href="ExperimentPath-class.html">show-method</a></td>
+<td>(Legacy) "ExperimentPath" class representing a file hierarchy of data files</td></tr>
+<tr><td style="width: 25%;"><a href="Intensity-class.html">show-method</a></td>
+<td>(Legacy) "Intensity", "IntensityInfo", and "IntensityMeasure" base classes for short read image intensities</td></tr>
+<tr><td style="width: 25%;"><a href="QualityScore-class.html">show-method</a></td>
+<td>Quality scores for short reads and their alignments</td></tr>
+<tr><td style="width: 25%;"><a href="RochePath-class.html">show-method</a></td>
+<td>(Legacy) "RochePath" class representing a Roche (454) experiment location</td></tr>
+<tr><td style="width: 25%;"><a href="SRFilter-class.html">show-method</a></td>
+<td>"SRFilter" for representing functions operating on ShortRead objects</td></tr>
+<tr><td style="width: 25%;"><a href="SRFilterResult-class.html">show-method</a></td>
+<td>"SRFilterResult" for SRFilter output and statistics</td></tr>
+<tr><td style="width: 25%;"><a href="SRSet-class.html">show-method</a></td>
+<td>(Legacy) A base class for Roche experiment-wide data</td></tr>
+<tr><td style="width: 25%;"><a href="SRUtil-class.html">show-method</a></td>
+<td>".SRUtil" and related classes</td></tr>
+<tr><td style="width: 25%;"><a href="ShortRead-class.html">show-method</a></td>
+<td>"ShortRead" class for short reads</td></tr>
+<tr><td style="width: 25%;"><a href="ShortRead-package.html">show-method</a></td>
+<td>FASTQ input and manipulation.</td></tr>
+<tr><td style="width: 25%;"><a href="Snapshot-class.html">show-method</a></td>
+<td>Class '"Snapshot"'</td></tr>
+<tr><td style="width: 25%;"><a href="SnapshotFunction-class.html">show-method</a></td>
+<td>Class "SnapshotFunction"</td></tr>
+<tr><td style="width: 25%;"><a href="SolexaExportQA-class.html">show-method</a></td>
+<td>(Legacy) Quality assessment summaries from Solexa export and realign files</td></tr>
+<tr><td style="width: 25%;"><a href="SolexaPath-class.html">show-method</a></td>
+<td>(Legacy) "SolexaPath" class representing a standard output file hierarchy</td></tr>
+<tr><td style="width: 25%;"><a href="SolexaSet-class.html">show-method</a></td>
+<td>(Legacy) "SolexaSet" coordinating Solexa output locations with sample annotations</td></tr>
+<tr><td style="width: 25%;"><a href="SpTrellis-class.html">show-method</a></td>
+<td>Class "SpTrellis"</td></tr>
+<tr><td style="width: 25%;"><a href="dotQA-class.html">show-method</a></td>
+<td>Virtual class for representing quality assessment results</td></tr>
+<tr><td style="width: 25%;"><a href="qa2.html">show-method</a></td>
+<td>(Updated) quality assessment reports on short reads</td></tr>
+<tr><td style="width: 25%;"><a href="Snapshot-class.html">Snapshot</a></td>
+<td>Class '"Snapshot"'</td></tr>
+<tr><td style="width: 25%;"><a href="Snapshot-class.html">Snapshot-class</a></td>
+<td>Class '"Snapshot"'</td></tr>
+<tr><td style="width: 25%;"><a href="Snapshot-class.html">Snapshot-method</a></td>
+<td>Class '"Snapshot"'</td></tr>
+<tr><td style="width: 25%;"><a href="SnapshotFunction-class.html">SnapshotFunction</a></td>
+<td>Class "SnapshotFunction"</td></tr>
+<tr><td style="width: 25%;"><a href="SnapshotFunction-class.html">SnapshotFunction-class</a></td>
+<td>Class "SnapshotFunction"</td></tr>
+<tr><td style="width: 25%;"><a href="SnapshotFunction-class.html">SnapshotFunctionList</a></td>
+<td>Class "SnapshotFunction"</td></tr>
+<tr><td style="width: 25%;"><a href="SnapshotFunction-class.html">SnapshotFunctionList-class</a></td>
+<td>Class "SnapshotFunction"</td></tr>
+<tr><td style="width: 25%;"><a href="SnapshotFunction-class.html">SnapshotFunctionList-method</a></td>
+<td>Class "SnapshotFunction"</td></tr>
+<tr><td style="width: 25%;"><a href="SolexaExportQA-class.html">SolexaExportQA</a></td>
+<td>(Legacy) Quality assessment summaries from Solexa export and realign files</td></tr>
+<tr><td style="width: 25%;"><a href="SolexaExportQA-class.html">SolexaExportQA-class</a></td>
+<td>(Legacy) Quality assessment summaries from Solexa export and realign files</td></tr>
+<tr><td style="width: 25%;"><a href="SolexaIntensity.html">SolexaIntensity</a></td>
+<td>(Legacy) Construct objects of class "SolexaIntensity" and "SolexaIntensityInfo"</td></tr>
+<tr><td style="width: 25%;"><a href="SolexaIntensity-class.html">SolexaIntensity-class</a></td>
+<td>Classes "SolexaIntensity" and "SolexaIntensityInfo"</td></tr>
+<tr><td style="width: 25%;"><a href="SolexaIntensity.html">SolexaIntensityInfo</a></td>
+<td>(Legacy) Construct objects of class "SolexaIntensity" and "SolexaIntensityInfo"</td></tr>
+<tr><td style="width: 25%;"><a href="SolexaIntensity-class.html">SolexaIntensityInfo-class</a></td>
+<td>Classes "SolexaIntensity" and "SolexaIntensityInfo"</td></tr>
+<tr><td style="width: 25%;"><a href="SolexaPath-class.html">SolexaPath</a></td>
+<td>(Legacy) "SolexaPath" class representing a standard output file hierarchy</td></tr>
+<tr><td style="width: 25%;"><a href="accessors.html">solexaPath</a></td>
+<td>(Legacy) Accessors for ShortRead classes</td></tr>
+<tr><td style="width: 25%;"><a href="SolexaPath-class.html">SolexaPath-class</a></td>
+<td>(Legacy) "SolexaPath" class representing a standard output file hierarchy</td></tr>
+<tr><td style="width: 25%;"><a href="SolexaExportQA-class.html">SolexaRealignQA-class</a></td>
+<td>(Legacy) Quality assessment summaries from Solexa export and realign files</td></tr>
+<tr><td style="width: 25%;"><a href="SolexaSet-class.html">SolexaSet</a></td>
+<td>(Legacy) "SolexaSet" coordinating Solexa output locations with sample annotations</td></tr>
+<tr><td style="width: 25%;"><a href="SolexaSet-class.html">SolexaSet-class</a></td>
+<td>(Legacy) "SolexaSet" coordinating Solexa output locations with sample annotations</td></tr>
+<tr><td style="width: 25%;"><a href="SolexaPath-class.html">SolexaSet-method</a></td>
+<td>(Legacy) "SolexaPath" class representing a standard output file hierarchy</td></tr>
+<tr><td style="width: 25%;"><a href="SolexaSet-class.html">SolexaSet-method</a></td>
+<td>(Legacy) "SolexaSet" coordinating Solexa output locations with sample annotations</td></tr>
+<tr><td style="width: 25%;"><a href="SRSet-class.html">sourcePath</a></td>
+<td>(Legacy) A base class for Roche experiment-wide data</td></tr>
+<tr><td style="width: 25%;"><a href="SpTrellis-class.html">SpTrellis</a></td>
+<td>Class "SpTrellis"</td></tr>
+<tr><td style="width: 25%;"><a href="SpTrellis-class.html">SpTrellis-class</a></td>
+<td>Class "SpTrellis"</td></tr>
+<tr><td style="width: 25%;"><a href="spViewPerFeature.html">spViewPerFeature</a></td>
+<td>Tools to visualize genomic data</td></tr>
+<tr><td style="width: 25%;"><a href="deprecated.html">srapply</a></td>
+<td>Deprecated and defunct functions</td></tr>
+<tr><td style="width: 25%;"><a href="srdistance.html">srdistance</a></td>
+<td>Edit distances between reads and a small number of short references</td></tr>
+<tr><td style="width: 25%;"><a href="ShortRead-class.html">srdistance-method</a></td>
+<td>"ShortRead" class for short reads</td></tr>
+<tr><td style="width: 25%;"><a href="srdistance.html">srdistance-method</a></td>
+<td>Edit distances between reads and a small number of short references</td></tr>
+<tr><td style="width: 25%;"><a href="srFilter.html">srdistanceFilter</a></td>
+<td>Functions for user-created and built-in ShortRead filters</td></tr>
+<tr><td style="width: 25%;"><a href="srduplicated.html">srduplicated</a></td>
+<td>Order, sort, and find duplicates in XStringSet objects</td></tr>
+<tr><td style="width: 25%;"><a href="AlignedRead-class.html">srduplicated-method</a></td>
+<td>(Legacy) "AlignedRead" class for aligned short reads</td></tr>
+<tr><td style="width: 25%;"><a href="QualityScore-class.html">srduplicated-method</a></td>
+<td>Quality scores for short reads and their alignments</td></tr>
+<tr><td style="width: 25%;"><a href="ShortRead-class.html">srduplicated-method</a></td>
+<td>"ShortRead" class for short reads</td></tr>
+<tr><td style="width: 25%;"><a href="srduplicated.html">srduplicated-method</a></td>
+<td>Order, sort, and find duplicates in XStringSet objects</td></tr>
+<tr><td style="width: 25%;"><a href="ShortRead-class.html">sread</a></td>
+<td>"ShortRead" class for short reads</td></tr>
+<tr><td style="width: 25%;"><a href="ShortRead-class.html">sread-method</a></td>
+<td>"ShortRead" class for short reads</td></tr>
+<tr><td style="width: 25%;"><a href="SRUtil-class.html">SRError</a></td>
+<td>".SRUtil" and related classes</td></tr>
+<tr><td style="width: 25%;"><a href="SRUtil-class.html">SRError-class</a></td>
+<td>".SRUtil" and related classes</td></tr>
+<tr><td style="width: 25%;"><a href="srFilter.html">srFilter</a></td>
+<td>Functions for user-created and built-in ShortRead filters</td></tr>
+<tr><td style="width: 25%;"><a href="SRFilter-class.html">SRFilter-class</a></td>
+<td>"SRFilter" for representing functions operating on ShortRead objects</td></tr>
+<tr><td style="width: 25%;"><a href="SRFilter-class.html">srFilter-method</a></td>
+<td>"SRFilter" for representing functions operating on ShortRead objects</td></tr>
+<tr><td style="width: 25%;"><a href="srFilter.html">srFilter-method</a></td>
+<td>Functions for user-created and built-in ShortRead filters</td></tr>
+<tr><td style="width: 25%;"><a href="SRFilterResult-class.html">SRFilterResult</a></td>
+<td>"SRFilterResult" for SRFilter output and statistics</td></tr>
+<tr><td style="width: 25%;"><a href="SRFilterResult-class.html">SRFilterResult-class</a></td>
+<td>"SRFilterResult" for SRFilter output and statistics</td></tr>
+<tr><td style="width: 25%;"><a href="SRUtil-class.html">SRList</a></td>
+<td>".SRUtil" and related classes</td></tr>
+<tr><td style="width: 25%;"><a href="SRUtil-class.html">srlist</a></td>
+<td>".SRUtil" and related classes</td></tr>
+<tr><td style="width: 25%;"><a href="SRUtil-class.html">SRList-class</a></td>
+<td>".SRUtil" and related classes</td></tr>
+<tr><td style="width: 25%;"><a href="srduplicated.html">srorder</a></td>
+<td>Order, sort, and find duplicates in XStringSet objects</td></tr>
+<tr><td style="width: 25%;"><a href="AlignedRead-class.html">srorder-method</a></td>
+<td>(Legacy) "AlignedRead" class for aligned short reads</td></tr>
+<tr><td style="width: 25%;"><a href="QualityScore-class.html">srorder-method</a></td>
+<td>Quality scores for short reads and their alignments</td></tr>
+<tr><td style="width: 25%;"><a href="ShortRead-class.html">srorder-method</a></td>
+<td>"ShortRead" class for short reads</td></tr>
+<tr><td style="width: 25%;"><a href="srduplicated.html">srorder-method</a></td>
+<td>Order, sort, and find duplicates in XStringSet objects</td></tr>
+<tr><td style="width: 25%;"><a href="srduplicated.html">srrank</a></td>
+<td>Order, sort, and find duplicates in XStringSet objects</td></tr>
+<tr><td style="width: 25%;"><a href="AlignedRead-class.html">srrank-method</a></td>
+<td>(Legacy) "AlignedRead" class for aligned short reads</td></tr>
+<tr><td style="width: 25%;"><a href="QualityScore-class.html">srrank-method</a></td>
+<td>Quality scores for short reads and their alignments</td></tr>
+<tr><td style="width: 25%;"><a href="ShortRead-class.html">srrank-method</a></td>
+<td>"ShortRead" class for short reads</td></tr>
+<tr><td style="width: 25%;"><a href="srduplicated.html">srrank-method</a></td>
+<td>Order, sort, and find duplicates in XStringSet objects</td></tr>
+<tr><td style="width: 25%;"><a href="SRSet-class.html">SRSet-class</a></td>
+<td>(Legacy) A base class for Roche experiment-wide data</td></tr>
+<tr><td style="width: 25%;"><a href="srduplicated.html">srsort</a></td>
+<td>Order, sort, and find duplicates in XStringSet objects</td></tr>
+<tr><td style="width: 25%;"><a href="QualityScore-class.html">srsort-method</a></td>
+<td>Quality scores for short reads and their alignments</td></tr>
+<tr><td style="width: 25%;"><a href="ShortRead-class.html">srsort-method</a></td>
+<td>"ShortRead" class for short reads</td></tr>
+<tr><td style="width: 25%;"><a href="srduplicated.html">srsort-method</a></td>
+<td>Order, sort, and find duplicates in XStringSet objects</td></tr>
+<tr><td style="width: 25%;"><a href="SRUtil-class.html">SRVector</a></td>
+<td>".SRUtil" and related classes</td></tr>
+<tr><td style="width: 25%;"><a href="SRUtil-class.html">SRVector-class</a></td>
+<td>".SRUtil" and related classes</td></tr>
+<tr><td style="width: 25%;"><a href="SRUtil-class.html">SRWarn</a></td>
+<td>".SRUtil" and related classes</td></tr>
+<tr><td style="width: 25%;"><a href="SRUtil-class.html">SRWarn-class</a></td>
+<td>".SRUtil" and related classes</td></tr>
+<tr><td style="width: 25%;"><a href="SRFilterResult-class.html">stats</a></td>
+<td>"SRFilterResult" for SRFilter output and statistics</td></tr>
+<tr><td style="width: 25%;"><a href="SRFilterResult-class.html">stats-method</a></td>
+<td>"SRFilterResult" for SRFilter output and statistics</td></tr>
+<tr><td style="width: 25%;"><a href="AlignedRead-class.html">strand-method</a></td>
+<td>(Legacy) "AlignedRead" class for aligned short reads</td></tr>
+<tr><td style="width: 25%;"><a href="srFilter.html">strandFilter</a></td>
+<td>Functions for user-created and built-in ShortRead filters</td></tr>
+</table>
+
+<h2><a name="T">-- T --</a></h2>
+
+<table width="100%">
+<tr><td style="width: 25%;"><a href="tables.html">tables</a></td>
+<td>Summarize XStringSet read frequencies</td></tr>
+<tr><td style="width: 25%;"><a href="ShortRead-class.html">tables-method</a></td>
+<td>"ShortRead" class for short reads</td></tr>
+<tr><td style="width: 25%;"><a href="tables.html">tables-method</a></td>
+<td>Summarize XStringSet read frequencies</td></tr>
+<tr><td style="width: 25%;"><a href="Snapshot-class.html">togglefun</a></td>
+<td>Class '"Snapshot"'</td></tr>
+<tr><td style="width: 25%;"><a href="Snapshot-class.html">togglefun-method</a></td>
+<td>Class '"Snapshot"'</td></tr>
+<tr><td style="width: 25%;"><a href="Snapshot-class.html">togglep</a></td>
+<td>Class '"Snapshot"'</td></tr>
+<tr><td style="width: 25%;"><a href="Snapshot-class.html">togglep-method</a></td>
+<td>Class '"Snapshot"'</td></tr>
+<tr><td style="width: 25%;"><a href="Snapshot-class.html">togglez</a></td>
+<td>Class '"Snapshot"'</td></tr>
+<tr><td style="width: 25%;"><a href="Snapshot-class.html">togglez-method</a></td>
+<td>Class '"Snapshot"'</td></tr>
+<tr><td style="width: 25%;"><a href="Snapshot-class.html">trellis-class</a></td>
+<td>Class '"Snapshot"'</td></tr>
+<tr><td style="width: 25%;"><a href="trimTails.html">trimEnds</a></td>
+<td>Trim ends of reads based on nucleotides or qualities</td></tr>
+<tr><td style="width: 25%;"><a href="trimTails.html">trimEnds-method</a></td>
+<td>Trim ends of reads based on nucleotides or qualities</td></tr>
+<tr><td style="width: 25%;"><a href="ShortRead-class.html">trimLRPatterns-method</a></td>
+<td>"ShortRead" class for short reads</td></tr>
+<tr><td style="width: 25%;"><a href="trimTails.html">trimTails</a></td>
+<td>Trim ends of reads based on nucleotides or qualities</td></tr>
+<tr><td style="width: 25%;"><a href="QualityScore-class.html">trimTails-method</a></td>
+<td>Quality scores for short reads and their alignments</td></tr>
+<tr><td style="width: 25%;"><a href="ShortReadQ-class.html">trimTails-method</a></td>
+<td>"ShortReadQ" class for short reads and their quality scores</td></tr>
+<tr><td style="width: 25%;"><a href="trimTails.html">trimTails-method</a></td>
+<td>Trim ends of reads based on nucleotides or qualities</td></tr>
+<tr><td style="width: 25%;"><a href="trimTails.html">trimTailw</a></td>
+<td>Trim ends of reads based on nucleotides or qualities</td></tr>
+<tr><td style="width: 25%;"><a href="QualityScore-class.html">trimTailw-method</a></td>
+<td>Quality scores for short reads and their alignments</td></tr>
+<tr><td style="width: 25%;"><a href="ShortReadQ-class.html">trimTailw-method</a></td>
+<td>"ShortReadQ" class for short reads and their quality scores</td></tr>
+<tr><td style="width: 25%;"><a href="trimTails.html">trimTailw-method</a></td>
+<td>Trim ends of reads based on nucleotides or qualities</td></tr>
+</table>
+
+<h2><a name="U">-- U --</a></h2>
+
+<table width="100%">
+<tr><td style="width: 25%;"><a href="ShortRead-deprecated.html">uniqueFilter</a></td>
+<td>Deprecated functions from the ShortRead package</td></tr>
+</table>
+
+<h2><a name="V">-- V --</a></h2>
+
+<table width="100%">
+<tr><td style="width: 25%;"><a href="accessors.html">vclass</a></td>
+<td>(Legacy) Accessors for ShortRead classes</td></tr>
+<tr><td style="width: 25%;"><a href="Snapshot-class.html">view</a></td>
+<td>Class '"Snapshot"'</td></tr>
+<tr><td style="width: 25%;"><a href="Snapshot-class.html">view-method</a></td>
+<td>Class '"Snapshot"'</td></tr>
+<tr><td style="width: 25%;"><a href="SnapshotFunction-class.html">viewer</a></td>
+<td>Class "SnapshotFunction"</td></tr>
+<tr><td style="width: 25%;"><a href="Snapshot-class.html">vrange</a></td>
+<td>Class '"Snapshot"'</td></tr>
+<tr><td style="width: 25%;"><a href="Snapshot-class.html">vrange-method</a></td>
+<td>Class '"Snapshot"'</td></tr>
+</table>
+
+<h2><a name="W">-- W --</a></h2>
+
+<table width="100%">
+<tr><td style="width: 25%;"><a href="QualityScore-class.html">width-method</a></td>
+<td>Quality scores for short reads and their alignments</td></tr>
+<tr><td style="width: 25%;"><a href="ShortRead-class.html">width-method</a></td>
+<td>"ShortRead" class for short reads</td></tr>
+<tr><td style="width: 25%;"><a href="readFasta.html">writeFasta</a></td>
+<td>Read and write FASTA files to or from ShortRead objects</td></tr>
+<tr><td style="width: 25%;"><a href="ShortRead-class.html">writeFasta-method</a></td>
+<td>"ShortRead" class for short reads</td></tr>
+<tr><td style="width: 25%;"><a href="readFasta.html">writeFasta-method</a></td>
+<td>Read and write FASTA files to or from ShortRead objects</td></tr>
+<tr><td style="width: 25%;"><a href="readFastq.html">writeFastq</a></td>
+<td>Read and write FASTQ-formatted files</td></tr>
+<tr><td style="width: 25%;"><a href="ShortReadQ-class.html">writeFastq-method</a></td>
+<td>"ShortReadQ" class for short reads and their quality scores</td></tr>
+</table>
+
+<h2><a name="Y">-- Y --</a></h2>
+
+<table width="100%">
+<tr><td style="width: 25%;"><a href="Sampler-class.html">yield</a></td>
+<td>Sampling and streaming records from fastq files</td></tr>
+<tr><td style="width: 25%;"><a href="Sampler-class.html">yield-method</a></td>
+<td>Sampling and streaming records from fastq files</td></tr>
+</table>
+
+<h2><a name="Z">-- Z --</a></h2>
+
+<table width="100%">
+<tr><td style="width: 25%;"><a href="SpTrellis-class.html">zi</a></td>
+<td>Class "SpTrellis"</td></tr>
+<tr><td style="width: 25%;"><a href="SpTrellis-class.html">zi-method</a></td>
+<td>Class "SpTrellis"</td></tr>
+<tr><td style="width: 25%;"><a href="SpTrellis-class.html">zo</a></td>
+<td>Class "SpTrellis"</td></tr>
+<tr><td style="width: 25%;"><a href="SpTrellis-class.html">zo-method</a></td>
+<td>Class "SpTrellis"</td></tr>
+<tr><td style="width: 25%;"><a href="Snapshot-class.html">zoom</a></td>
+<td>Class '"Snapshot"'</td></tr>
+<tr><td style="width: 25%;"><a href="Snapshot-class.html">zoom-method</a></td>
+<td>Class '"Snapshot"'</td></tr>
+</table>
+
+<h2><a name="misc">-- misc --</a></h2>
+
+<table width="100%">
+<tr><td style="width: 25%;"><a href="SRFilterResult-class.html">!-method</a></td>
+<td>"SRFilterResult" for SRFilter output and statistics</td></tr>
+<tr><td style="width: 25%;"><a href="AlignedRead-class.html">%in%-method</a></td>
+<td>(Legacy) "AlignedRead" class for aligned short reads</td></tr>
+<tr><td style="width: 25%;"><a href="dotQA-class.html">.QA-class</a></td>
+<td>Virtual class for representing quality assessment results</td></tr>
+<tr><td style="width: 25%;"><a href="QA-class.html">.QA2-class</a></td>
+<td>(Updated) classes for representing quality assessment results</td></tr>
+<tr><td style="width: 25%;"><a href="ShortRead-package.html">.Roche-class</a></td>
+<td>FASTQ input and manipulation.</td></tr>
+<tr><td style="width: 25%;"><a href="ShortRead-package.html">.ShortReadBase-class</a></td>
+<td>FASTQ input and manipulation.</td></tr>
+<tr><td style="width: 25%;"><a href="ShortRead-package.html">.Solexa-class</a></td>
+<td>FASTQ input and manipulation.</td></tr>
+<tr><td style="width: 25%;"><a href="SRUtil-class.html">.SRUtil-class</a></td>
+<td>".SRUtil" and related classes</td></tr>
+<tr><td style="width: 25%;"><a href="AlignedRead-class.html">[-method</a></td>
+<td>(Legacy) "AlignedRead" class for aligned short reads</td></tr>
+<tr><td style="width: 25%;"><a href="Intensity-class.html">[-method</a></td>
+<td>(Legacy) "Intensity", "IntensityInfo", and "IntensityMeasure" base classes for short read image intensities</td></tr>
+<tr><td style="width: 25%;"><a href="QualityScore-class.html">[-method</a></td>
+<td>Quality scores for short reads and their alignments</td></tr>
+<tr><td style="width: 25%;"><a href="SRUtil-class.html">[-method</a></td>
+<td>".SRUtil" and related classes</td></tr>
+<tr><td style="width: 25%;"><a href="ShortRead-class.html">[-method</a></td>
+<td>"ShortRead" class for short reads</td></tr>
+<tr><td style="width: 25%;"><a href="ShortReadQ-class.html">[-method</a></td>
+<td>"ShortReadQ" class for short reads and their quality scores</td></tr>
+<tr><td style="width: 25%;"><a href="SolexaIntensity-class.html">[-method</a></td>
+<td>Classes "SolexaIntensity" and "SolexaIntensityInfo"</td></tr>
+<tr><td style="width: 25%;"><a href="ShortReadQ-class.html">[&lt;--method</a></td>
+<td>"ShortReadQ" class for short reads and their quality scores</td></tr>
+<tr><td style="width: 25%;"><a href="Intensity-class.html">[[-method</a></td>
+<td>(Legacy) "Intensity", "IntensityInfo", and "IntensityMeasure" base classes for short read image intensities</td></tr>
+<tr><td style="width: 25%;"><a href="QualityScore-class.html">[[-method</a></td>
+<td>Quality scores for short reads and their alignments</td></tr>
+<tr><td style="width: 25%;"><a href="SRUtil-class.html">[[-method</a></td>
+<td>".SRUtil" and related classes</td></tr>
+</table>
+</body></html>

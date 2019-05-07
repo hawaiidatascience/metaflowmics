@@ -1,0 +1,329 @@
+CHANGES IN VERSION 1.18.0
+-------------------------
+
+    No NEW FEATURES or SIGNIFICANT USER-VISIBLE CHANGES or BUG FIXES since
+    version 1.16.0
+
+
+CHANGES IN VERSION 1.16.0
+-------------------------
+
+NEW FEATURES
+
+    o Add coercion from list to GAlignmentsList. 
+
+SIGNIFICANT USER-VISIBLE CHANGES
+
+    o Improve performance of [[<- on GAlignmentsList objects. This is a 100x
+      speedup or more on a big GAlignmentsList object.
+
+BUG FIXES
+
+    o Remove spurious warning in summarizeOverlaps().
+
+
+CHANGES IN VERSION 1.14.0
+-------------------------
+
+SIGNIFICANT USER-VISIBLE CHANGES
+
+    o makeGAlignmentPairs() no more drops pairs with discordant seqnames.
+
+    o Change 'maxgap' and 'minoverlap' argument defaults in methods of the
+      findOverlaps() so they adhere to the new argument defaults of the generic
+      defined in IRanges 2.12.0. See NEWS file in the IRanges package for more
+      information about this change.
+
+DEPRECATED AND DEFUNCT
+
+    o Remove 'force' argument from seqinfo() and seqlevels() setters (the
+      argument got deprecated in BioC 3.5 in favor of new and more flexible
+      'pruning.mode' argument).
+
+BUG FIXES
+
+    o Fix bug in pairing code of readGAlignmentPairs() when one mate in a pair
+      is lost because of user-supplied filtering (e.g. mapqFilter=10).
+
+
+CHANGES IN VERSION 1.12.0
+-------------------------
+
+NEW FEATURES
+
+    o seqlevels() setter now supports "fine" and "tidy" pruning modes on
+      GAlignmentsList objects (in addition to "coarse" mode, which is the
+      default).
+
+    o Add "pcompare", "is.unsorted", "order", "sort", and "rank" methods for
+      GAlignments objects.
+
+    o Add encodingHalves(), a low-level overlap encoding utility.
+
+SIGNIFICANT USER-VISIBLE CHANGES
+
+    o Tweak behavior of isCompatibleWithSplicing() on paired-end encodings.
+
+    o Minor tweaks to low-level encoding utilities Lencoding(), Rencoding(),
+      Lnjunc(), Rnjunc(), and njunc(). All of them now are based on new
+      encodingHalves() low level utility.
+
+    o Speed up first() and last() on GAlignmentPairs object when the object has
+      no names. Thanks to Pete Hickey for the suggestion.
+
+    o 2x to 3x speedup to "junctions" methods.
+
+DEPRECATED AND DEFUNCT
+
+    o Argument 'force' of seqinfo() and seqlevels() setters is deprecated in
+      favor of new and more flexible 'pruning.mode' argument.
+
+BUG FIXES
+
+    o Make grglist() work on GAlignmentPairs object with strandMode set to 0.
+      Thanks to Dario Strbenac for catching and reporting this.
+
+    o Fix bug affecting extractSteppedExonRanks() on certain paired-end
+      encodings.
+
+    o Fix subsetting of OverlapEncodings objects and modernize their "show"
+      method.
+
+
+CHANGES IN VERSION 1.10.0
+-------------------------
+
+NEW FEATURES
+
+    o The GAlignmentPairs container now supports pairs with discordant strand
+      and/or seqnames. The "granges" and "ranges" methods for GAlignmentPairs
+      objects get new argument 'on.discordant.seqnames' to let the user control
+      how to handle pairs with discordant seqnames.
+      See ?GAlignmentPairs for more information.
+
+    o Add "invertStrand" method for GAlignmentPairs objects.
+
+    o Add 'use.names' argument to the "ranges", "granges", "grglist" and
+      "rglist" methods for GAlignments and GAlignmentsList objects.
+
+    o Add 'use.names' argument to the "granges" and "grglist" methods for
+      GAlignmentPairs objects.
+
+    o Add "ranges" method for GAlignmentPairs objects.
+
+SIGNIFICANT USER-VISIBLE CHANGES
+
+    o The 'at' argument of pileLettersAt() is now expected to be a GPos object
+      (GRanges still accepted).
+
+    o 50x speed-up of the granges() extractor for GAlignmentPairs object. The
+      improvement is based on a suggestion by Arne Muller. 
+
+DEPRECATED AND DEFUNCT
+
+    o Remove left() and right() generics and methods (were defunct in BioC 3.3).
+
+    o Remove 'invert.strand' argument from "first" and "last" methods for
+      GAlignmentPairs objects (was defunct in BioC 3.3).
+
+    o Remove strand() setter for GAlignmentPairs objects (was defunct in BioC
+      3.3).
+
+    o Remove 'order.as.in.query' argument from "grglist" method for
+      GAlignmentPairs objects and from "grglist" and "rglist" methods for
+      GAlignmentsList objects (was defunct in BioC 3.3).
+
+BUG FIXES
+
+    o Fix 'use.names=FALSE' in "grglist" and "rglist" methods for
+      GAlignmentsList objects.
+
+
+CHANGES IN VERSION 1.8.0
+------------------------
+
+NEW FEATURES
+
+    o Add coercion from GAlignments or GAlignmentPairs to DataFrame, and from
+      GAlignmentsList to GAlignmentPairs.
+
+SIGNIFICANT USER-VISIBLE CHANGES
+
+    o Use DESeq2 instead of DESeq in summarizeOverlaps examples (better late
+      than never).
+
+DEPRECATED AND DEFUNCT
+
+    o After being deprecated in BioC 3.2, the left() and right() getters and
+      strand() setter for GAlignmentPairs objects are now defunct.
+
+    o After being deprecated in BioC 3.2, the 'invert.strand' argument of the
+      first() and last() getters for GAlignmentPairs objects are now defunct.
+
+    o After being deprecated in BioC 3.2, the 'order.as.in.query' argument of
+      the "grglist" method for GAlignmentPairs objects is now defunct.
+
+    o After being deprecated in BioC 3.2, the 'order.as.in.query' argument of
+      the "rglist" and "grglist" methods for GAlignmentsList objects are now
+      defunct.
+
+    o Remove the "mapCoords" and "pmapCoords" methods (were defunct in BioC
+      3.2).
+
+    o Remove the readGAlignment*FromBam() functions (were defunct in BioC 3.2).
+
+BUG FIXES
+
+    o seqnames() setter for GAlignments objects is now consistent with
+      seqnames() setter for GRanges objects.
+
+
+CHANGES IN VERSION 1.6.0
+------------------------
+
+NEW FEATURES
+
+    o Add strandMode() getter and setter for GAlignmentPairs objects in
+      response to the following post:
+
+        https://support.bioconductor.org/p/65844/
+
+      See ?strandMode for more information.
+
+    o The readGAlignment*() functions now allow repeated seqnames in the BAM
+      header.
+
+    o Add "coverage" method for GAlignmentsList objects.
+
+    o The strand setter now works on a GAlignmentsList object in a restricted
+      way (only strand(x) <- "+" or "-" or "*" is supported).
+
+SIGNIFICANT USER-VISIBLE CHANGES
+
+    o summarizeOverlaps() now returns a RangedSummarizedExperiment object
+      (defined in the new SummarizedExperiment package) instead of an "old"
+      SummarizedExperiment object (defined in the GenomicRanges package).
+
+    o Slightly modify the behavior of junctions() on a GAlignmentPairs object
+      so that the returned ranges now have the "real strand" set on them.
+      See ?junctions and the documentation of the 'real.strand' argument in
+      the man page of GAlignmentPairs objects for more information.
+
+    o Add 'real.strand' argument to first() and last() getters for
+      GAlignmentPairs objects.
+
+DEPRECATED AND DEFUNCT
+
+    o Deprecate left() and right() getters and strand() setter for
+      GAlignmentPairs objects.
+
+    o Deprecate 'invert.strand' argument of first() and last() getters for
+      GAlignmentPairs objects.
+
+    o Deprecate 'order.as.in.query' argument of "grglist" method for
+      GAlignmentPairs objects.
+
+    o Deprecate 'order.as.in.query' argument in "rglist" method for
+      GAlignmentsList objects (this concept is not defined for these objects
+      in general and the argument was ignored anyway).
+
+    o After being deprecated in BioC 3.1, the "mapCoords" and "pmapCoords"
+      methods are now defunct. mapToAlignments() should be used instead.
+
+    o After being deprecated in BioC 3.1, the readGAlignment*FromBam()
+      functions are now defunct. Everybody says "Let's all use the
+      readGAlignment*() functions instead! (no FromBam suffix). Yeah!"
+
+BUG FIXES
+
+    o Various fixes to grglist/granges/rglist/ranges methods for
+      GAlignmentsList objects:
+      - Respect cigar information (as claimed in man page).
+      - Restore 'drop.D.ranges' argument in "grglist" method (mistakenly got
+        deprecated at the beginning of BioC 3.2 devel cycle).
+      - The 'drop.D.ranges' argument in "rglist" method now works (was
+        ignored).
+      - Handle empty list elements.
+
+
+CHANGES IN VERSION 1.4.0
+------------------------
+
+NEW FEATURES
+
+    o All "findOverlaps" methods now support 'select' equal "last" or
+      "arbitrary" (in addition to "all" and "first").
+
+SIGNIFICANT USER-VISIBLE CHANGES
+
+    o Add mapToAlignments(), pmapToAlignments(), mapFromAlignments(), and
+      pmapFromAlignments() as replacements for the "mapCoords" and "pmapCoords"
+      methods for GAlignments objects.
+
+    o Clarify use of 'fragments' in summarizeOverlaps() man page.
+
+    o Tweak "show" method for GAlignments objects to display a shorter
+      version of long CIGARs.
+
+    o Add checks and more helpful error message for summarizeOverlaps() when
+      "file does not exist"
+
+DEPRECATED AND DEFUNCT
+
+    o Deprecated readGAlignment*FromBam() functions in favor of 
+      readGAlignments(), readGAlignmentPairs(), readGAlignmentsList() and
+      readGappedReads().
+
+    o Deprecated "mapCoords" and "pmapCoords" methods.
+
+    o Removed Lngap(), Rngap(), introns(), and
+      makeGAlignmentsListFromFeatureFragments() functions, and "ngap", "map",
+      "pmap", and "splitAsListReturnedClass" methods (were defunct in
+      GenomicAlignments 1.2.0).
+
+BUG FIXES
+
+    o Fix off-by-one error when processing 'S' in query_locs_to_ref_locs().
+
+
+CHANGES IN VERSION 1.2.0
+------------------------
+
+NEW FEATURES
+
+    o Add 'preprocess.reads' argument to "summarizeOverlaps" methods.
+
+    o Add alphabetFrequencyFromBam().
+
+SIGNIFICANT USER-VISIBLE CHANGES
+
+    o Export GappedReads() constructor.
+
+    o coverage,Bamfile-method now returns empty RleList rather than NULL 
+
+    o Add "mapCoords" and "pmapCoords" methods.
+
+    o Defunct "map" and "pmap" methods (skip deprecation).
+
+BUG FIXES
+
+    o Bug fix in flipQuery().
+
+    o Fix issue with "show" method for GAlignments and GAlignmentPairs objects
+      when 'showHeadLines' global option is set to Inf.
+
+
+CHANGES IN VERSION 1.0.0
+------------------------
+
+The first version of GenomicAlignments was included in Bioconductor 2.14. 
+The package was created from existing code in IRanges, ShortRead, 
+Rsamtools and GenomicRanges. 
+
+NEW FEATURES
+
+    o coverage,BamFile-method uses \code{yieldSize} to iterate through 
+      large files
+
+    o coverage,character-method calculates coverage from a BAM file
+

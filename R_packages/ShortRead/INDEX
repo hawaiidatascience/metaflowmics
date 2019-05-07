@@ -1,0 +1,107 @@
+.QA-class               Virtual class for representing quality
+                        assessment results
+.SRUtil-class           ".SRUtil" and related classes
+AlignedDataFrame        (Legacy) AlignedDataFrame constructor
+AlignedDataFrame-class
+                        (Legacy) "AlignedDataFrame" representing
+                        alignment annotations as a data frame
+AlignedRead             (Legacy) Construct objects of class
+                        "AlignedRead"
+AlignedRead-class       (Legacy) "AlignedRead" class for aligned short
+                        reads
+BowtieQA-class          (Legacy) Quality assessment summaries from
+                        Bowtie files
+ExperimentPath-class    (Legacy) "ExperimentPath" class representing a
+                        file hierarchy of data files
+FastqFile-class         Sampling and streaming records from fastq files
+FastqQA                 Quality assessment of fastq files and
+                        ShortReadQ objects
+Intensity-class         (Legacy) "Intensity", "IntensityInfo", and
+                        "IntensityMeasure" base classes for short read
+                        image intensities
+MAQMapQA-class          (Legacy) Quality assessment summaries from MAQ
+                        map files
+NumericQuality          Construct objects indicating read or alignment
+                        quality
+QA-class                (Updated) classes for representing quality
+                        assessment results
+QualityScore-class      Quality scores for short reads and their
+                        alignments
+RochePath-class         (Legacy) "RochePath" class representing a Roche
+                        (454) experiment location
+RocheSet-class          (Legacy) Roche (454) experiment-wide data
+                        container
+RtaIntensity            (Legacy) Construct objects of class
+                        "RtaIntensity"
+RtaIntensity-class      (Legacy) Class "RtaIntensity"
+SRFilter-class          "SRFilter" for representing functions operating
+                        on ShortRead objects
+SRFilterResult-class    "SRFilterResult" for SRFilter output and
+                        statistics
+SRSet-class             (Legacy) A base class for Roche experiment-wide
+                        data
+ShortRead-class         "ShortRead" class for short reads
+ShortReadBase-package   FASTQ input and manipulation.
+ShortReadQ-class        "ShortReadQ" class for short reads and their
+                        quality scores
+Snapshot-class          Class '"Snapshot"'
+SnapshotFunction-class
+                        Class "SnapshotFunction"
+SolexaExportQA-class    (Legacy) Quality assessment summaries from
+                        Solexa export and realign files
+SolexaIntensity         (Legacy) Construct objects of class
+                        "SolexaIntensity" and "SolexaIntensityInfo"
+SolexaIntensity-class   Classes "SolexaIntensity" and
+                        "SolexaIntensityInfo"
+SolexaPath-class        (Legacy) "SolexaPath" class representing a
+                        standard output file hierarchy
+SolexaSet-class         (Legacy) "SolexaSet" coordinating Solexa output
+                        locations with sample annotations
+SpTrellis-class         Class "SpTrellis"
+accessors               (Legacy) Accessors for ShortRead classes
+alphabetByCycle         Summarize nucleotide, amino acid, or quality
+                        scores by cycle
+alphabetScore           Efficiently calculate the sum of quality scores
+                        across bases
+clean                   Remove sequences with ambiguous nucleotides
+                        from short read classes
+countLines              Count lines in all (text) files in a directory
+                        whose file name matches a pattern
+deprecated              Deprecated and defunct functions
+dustyScore              Summarize low-complexity sequences
+filterFastq             Filter fastq from one file to another
+polyn                   Utilities for common, simple operations
+qa                      Perform quality assessment on short reads
+qa2                     (Updated) quality assessment reports on short
+                        reads
+readAligned             (Legacy) Read aligned reads and their quality
+                        scores into R representations
+readBaseQuality         (Legacy) Read short reads and their quality
+                        scores into R representations
+readBfaToc              (Legacy) Get a list of the sequences in a Maq
+                        .bfa file
+readFasta               Read and write FASTA files to or from ShortRead
+                        objects
+readFastq               Read and write FASTQ-formatted files
+readIntensities         (Legacy) Read Illumina image intensity files
+readPrb                 (Legacy) Read Solexa prb files as fastq-style
+                        quality scores
+readQseq                (Legacy) Read Solexa qseq files as fastq-style
+                        quality scores
+readXStringColumns      Read one or more columns into XStringSet (e.g.,
+                        DNAStringSet) objects
+renewable               Renew (update) a ShortRead object with new
+                        values
+report                  Summarize quality assessment results into a
+                        report
+spViewPerFeature        Tools to visualize genomic data
+srFilter                Functions for user-created and built-in
+                        ShortRead filters
+srdistance              Edit distances between reads and a small number
+                        of short references
+srduplicated            Order, sort, and find duplicates in XStringSet
+                        objects
+tables                  Summarize XStringSet read frequencies
+trimTails               Trim ends of reads based on nucleotides or
+                        qualities
+uniqueFilter            Deprecated functions from the ShortRead package

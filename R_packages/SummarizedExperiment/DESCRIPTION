@@ -1,0 +1,37 @@
+Package: SummarizedExperiment
+Title: SummarizedExperiment container
+Description: The SummarizedExperiment container contains one or more assays,
+	each represented by a matrix-like object of numeric or other mode.
+	The rows typically represent genomic ranges of interest and the columns
+	represent samples.
+Version: 1.12.0
+Encoding: UTF-8
+Author: Martin Morgan, Valerie Obenchain, Jim Hester, Hervé Pagès
+Maintainer: Bioconductor Package Maintainer <maintainer@bioconductor.org>
+biocViews: Genetics, Infrastructure, Sequencing, Annotation, Coverage,
+        GenomeAnnotation
+Depends: R (>= 3.2), methods, GenomicRanges (>= 1.33.6), Biobase,
+        DelayedArray (>= 0.3.20)
+Imports: utils, stats, tools, Matrix, BiocGenerics (>= 0.15.3),
+        S4Vectors (>= 0.17.25), IRanges (>= 2.13.16), GenomeInfoDb (>=
+        1.13.1)
+Suggests: annotate, AnnotationDbi, hgu95av2.db, GenomicFeatures,
+        TxDb.Hsapiens.UCSC.hg19.knownGene, BiocStyle, knitr, rmarkdown,
+        digest, jsonlite, rhdf5, HDF5Array (>= 1.7.5), airway, RUnit,
+        testthat
+VignetteBuilder: knitr
+License: Artistic-2.0
+Collate: Assays-class.R SummarizedExperiment-class.R
+        RangedSummarizedExperiment-class.R intra-range-methods.R
+        inter-range-methods.R coverage-methods.R findOverlaps-methods.R
+        nearest-methods.R makeSummarizedExperimentFromExpressionSet.R
+        makeSummarizedExperimentFromDataFrame.R
+        makeSummarizedExperimentFromLoom.R readKallisto.R zzz.R
+git_url: https://git.bioconductor.org/packages/SummarizedExperiment
+git_branch: RELEASE_3_8
+git_last_commit: 5f84168
+git_last_commit_date: 2018-10-30
+Date/Publication: 2018-10-30
+NeedsCompilation: no
+Packaged: 2018-10-31 00:43:27 UTC; biocbuild
+Built: R 3.5.1; ; 2019-05-07 00:55:20 UTC; unix

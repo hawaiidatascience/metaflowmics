@@ -1,0 +1,340 @@
+useDynLib(DelayedArray)
+
+import(methods)
+importFrom(stats, setNames,
+                  dnorm, pnorm, qnorm,
+                  dbinom, pbinom, qbinom,
+                  dpois, ppois, qpois,
+                  dlogis, plogis, qlogis)
+importFrom(stats4, summary)
+import(matrixStats)
+import(BiocGenerics)
+import(S4Vectors)
+import(IRanges)
+import(BiocParallel)
+
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Export S4 classes
+###
+
+exportClasses(
+    ## Array-class.R:
+    Array,
+
+    ## ArrayGrid-class.R:
+    ArrayViewport, ArrayGrid, ArbitraryArrayGrid, RegularArrayGrid,
+
+    ## SparseArraySeed-class.R:
+    SparseArraySeed,
+
+    ## DelayedOp-class.R:
+    DelayedOp,
+    DelayedUnaryOp,
+    DelayedSubset,
+    DelayedAperm,
+    DelayedUnaryIsoOp,
+    DelayedUnaryIsoOpStack,
+    DelayedUnaryIsoOpWithArgs,
+    DelayedSubassign,
+    DelayedDimnames,
+    DelayedNaryOp,
+    DelayedNaryIsoOp,
+    DelayedAbind,
+
+    ## DelayedArray-class.R:
+    DelayedArray, DelayedMatrix,
+    DelayedArray1,
+
+    ## chunkGrid.R:
+    integer_OR_NULL,
+
+    ## RealizationSink-class.R:
+    RealizationSink, arrayRealizationSink,
+
+    ## RleArray-class.R:
+    RleArraySeed, SolidRleArraySeed, RleRealizationSink, ChunkedRleArraySeed,
+    RleArray, RleMatrix
+)
+
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Export S3 methods
+###
+
+S3method(aperm, ArbitraryArrayGrid)
+S3method(aperm, RegularArrayGrid)
+S3method(aperm, SparseArraySeed)
+S3method(aperm, DelayedArray)
+
+S3method(as.array, Array)
+S3method(as.array, SparseArraySeed)
+
+S3method(as.character, Array)
+S3method(as.character, ArrayGrid)
+
+S3method(as.complex, Array)
+
+S3method(as.data.frame, Array)
+
+S3method(as.integer, Array)
+
+S3method(as.logical, Array)
+
+S3method(as.matrix, Array)
+S3method(as.matrix, SparseArraySeed)
+
+S3method(as.numeric, Array)
+
+S3method(as.raw, Array)
+
+S3method(as.vector, Array)
+
+S3method(mean, DelayedArray)
+
+S3method(range, DelayedArray)
+
+S3method(split, DelayedArray)
+
+S3method(summary, DelayedOp)
+S3method(summary, DelayedSubset)
+S3method(summary, DelayedAperm)
+S3method(summary, DelayedUnaryIsoOpStack)
+S3method(summary, DelayedUnaryIsoOpWithArgs)
+S3method(summary, DelayedDimnames)
+S3method(summary, DelayedNaryIsoOp)
+S3method(summary, DelayedAbind)
+
+S3method(t, Array)
+
+S3method(unique, DelayedArray)
+
+### We also export them thru the export() directive so that (a) they can be
+### called directly, (b) tab-completion on the name of the generic shows them,
+### and (c) methods() doesn't asterisk them.
+
+export(
+    aperm.ArbitraryArrayGrid,
+    aperm.RegularArrayGrid,
+    aperm.SparseArraySeed,
+    aperm.DelayedArray,
+
+    as.array.Array,
+    as.array.SparseArraySeed,
+
+    as.character.ArrayGrid,
+    as.character.Array,
+
+    as.complex.Array,
+
+    as.data.frame.Array,
+
+    as.integer.Array,
+
+    as.logical.Array,
+
+    as.matrix.Array,
+    as.matrix.SparseArraySeed,
+
+    as.numeric.Array,
+
+    as.raw.Array,
+
+    as.vector.Array,
+
+    mean.DelayedArray,
+
+    range.DelayedArray,
+
+    split.DelayedArray,
+
+    summary.DelayedOp,
+    summary.DelayedSubset,
+    summary.DelayedAperm,
+    summary.DelayedUnaryIsoOpStack,
+    summary.DelayedUnaryIsoOpWithArgs,
+    summary.DelayedDimnames,
+    summary.DelayedNaryIsoOp,
+    summary.DelayedAbind,
+
+    t.Array,
+
+    unique.DelayedArray
+)
+
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Export S4 methods for generics not defined in DelayedArray
+###
+
+exportMethods(
+    ## Methods for generics defined in the base package:
+    length, names, "names<-",
+    dim, "dim<-", dimnames, "dimnames<-",
+    "[", "[[", "[<-",
+    lengths,
+    as.array, as.matrix, as.data.frame, as.vector,
+    as.logical, as.integer, as.numeric, as.complex, as.character, as.raw,
+    c, split,
+    drop, t,
+    is.na, is.finite, is.infinite, is.nan,
+    "!",
+    #"+", "-", "*", "/", "^", "%%", "%/%",  # "Arith" group generic
+    "==", "!=", "<=", ">=", "<", ">",       # "Compare" group generic
+    sweep,
+    anyNA, which,
+    unique,
+    max, min, range, sum, prod, any, all,   # "Summary" group generic
+    mean,
+    round, signif,
+    rowSums, colSums, rowMeans, colMeans,
+    nchar, tolower, toupper,
+    sub, gsub,
+
+    ## Methods for generics defined in the methods package:
+    coerce, show,
+
+    ## Methods for generics defined in the stats package:
+    dnorm, pnorm, qnorm,
+    dbinom, pbinom, qbinom,
+    dpois, ppois, qpois,
+    dlogis, plogis, qlogis,
+
+    ## Methods for generics defined in the stats4 package:
+    summary,
+
+    ## Methods for generics defined in the BiocGenerics package:
+    dims,
+    cbind, rbind,
+    grepl,
+    table,
+    path, "path<-",
+    updateObject,
+
+    ## Methods for generics defined in the S4Vectors package:
+    showAsCell, isEmpty,
+
+    ## Methods for generics defined in the IRanges package:
+    ranges, start, end, width,
+    splitAsList
+)
+
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Export non-generic functions
+###
+
+export(
+    ## linearInd.R:
+    linearInd,
+
+    ## ArrayGrid-class.R:
+    ArrayViewport, makeNindexFromArrayViewport,
+    ArbitraryArrayGrid, RegularArrayGrid,
+
+    ## SparseArraySeed-class.R:
+    SparseArraySeed, dense2sparse, sparse2dense,
+
+    ## makeCappedVolumeBox.R:
+    makeCappedVolumeBox, makeRegularArrayGridOfCappedLengthViewports,
+
+    ## blockGrid.R:
+    setAutoBlockSize, getAutoBlockSize,
+    get_type_size, getAutoBlockLength,
+    setAutoBlockShape, getAutoBlockShape,
+    blockGrid, rowGrid, colGrid,
+
+    ## showtree.R:
+    showtree, contentIsPristine,
+
+    ## DelayedArray-class.R:
+    new_DelayedArray,
+
+    ## block_processing.R:
+    setAutoGridMaker, getAutoGridMaker,
+    setAutoBPPARAM, getAutoBPPARAM,
+    blockApply, blockReduce,
+    effectiveGrid, currentBlockId, currentViewport,
+    BLOCK_write_to_sink,
+
+    ## RealizationSink-class.R:
+    supportedRealizationBackends,
+    getRealizationBackend, setRealizationBackend,
+    RealizationSink,
+
+    ## RleArray-class.R:
+    RleArray
+)
+
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Export S4 generics defined in DelayedArray + export corresponding methods
+###
+
+export(
+    ## bind-arrays.R:
+    arbind, acbind,
+
+    ## extract_array.R:
+    extract_array, type,
+
+    ## ArrayGrid-class.R:
+    refdim, maxlength, aperm, downsample,
+
+    ## SparseArraySeed-class.R:
+    aind, nzdata, sparsity, is_sparse, extract_sparse_array,
+
+    ## read_block.R:
+    read_block, write_block,
+    read_sparse_block, write_sparse_block,
+
+    ## mapToGrid.R:
+    mapToGrid, mapToRef,
+
+    ## makeCappedVolumeBox.R:
+    isLinear,
+
+    ## DelayedOp-class.R:
+    is_noop,
+
+    ## showtree.R:
+    simplify, netSubsetAndAperm,
+
+    ## DelayedArray-class.R:
+    matrixClass, DelayedArray, nseed, seed, "seed<-",
+
+    ## chunkGrid.R:
+    chunkdim, chunkGrid,
+
+    ## RealizationSink-class.R:
+    close,
+
+    ## realize.R:
+    realize,
+
+    ## DelayedArray-utils.R:
+    pmax2, pmin2, apply,
+
+    ## DelayedMatrix-stats.R:
+    rowMaxs, colMaxs, rowMins, colMins, rowRanges, colRanges
+)
+
+### Exactly the same list as above.
+exportMethods(
+    arbind, acbind,
+    extract_array, type,
+    refdim, maxlength, aperm, downsample,
+    aind, nzdata, sparsity, is_sparse, extract_sparse_array,
+    read_block, write_block,
+    mapToGrid, mapToRef,
+    isLinear,
+    is_noop,
+    simplify, netSubsetAndAperm,
+    matrixClass, DelayedArray, nseed, seed, "seed<-",
+    chunkdim, chunkGrid,
+    close,
+    realize,
+    pmax2, pmin2, apply,
+    rowMaxs, colMaxs, rowMins, colMins, rowRanges, colRanges
+)
+

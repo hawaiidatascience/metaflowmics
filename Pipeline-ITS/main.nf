@@ -583,7 +583,7 @@ process ClassificationCONSTAX  {
 	
     """
 
-    bash ${workflow.projectDir}/friendly_CONSTAX/constax.sh ${fasta} "${workflow.projectDir}/friendly_CONSTAX/RDPTools" ${params.usearch8} ${params.usearch10} ${params.confidenceThresh}
+    bash ${workflow.projectDir}/friendly_CONSTAX/constax.sh ${fasta} "${params.RDP_path}" ${params.usearch8} ${params.usearch10} ${params.confidenceThresh}
 
     mv CONSTAX_outputs/outputs annotations_${idThreshold}
     cd annotations_${idThreshold}

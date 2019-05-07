@@ -1,0 +1,81 @@
+PacBioErrfun            Estimate error rates from transition counts in
+                        PacBio CCS data.
+addSpecies              Add species-level annotation to a taxonomic
+                        table.
+assignSpecies           Taxonomic assignment to the species level by
+                        exact matching.
+assignTaxonomy          Classifies sequences against reference training
+                        dataset.
+c,dada-method           Change concatenation to list construction.
+c,derep-method          Change concatenation to list construction.
+collapseNoMismatch      Combine together sequences that are identical
+                        up to shifts and/or length.
+dada                    High resolution sample inference from amplicon
+                        data.
+dada-class              The object class returned by 'dada'
+dada2-package           DADA2 package
+derep-class             A class representing dereplicated sequences
+derepFastq              Read in and dereplicate a fastq file.
+errBalancedF            An empirical error matrix.
+errBalancedR            An empirical error matrix.
+errExtremeF             An empirical error matrix.
+errExtremeR             An empirical error matrix.
+errHmpF                 An empirical error matrix.
+errHmpR                 An empirical error matrix.
+fastqFilter             Filter and trim a fastq file.
+fastqPairedFilter       Filters and trims paired forward and reverse
+                        fastq files.
+filterAndTrim           Filter and trim fastq file(s).
+getDadaOpt              Get DADA options
+getErrors               Extract already computed error rates.
+getSequences            Get vector of sequences from input object.
+getUniques              Get the uniques-vector from the input object.
+inflateErr              Inflates an error rate matrix by a specified
+                        factor, while accounting for saturation.
+isBimera                Determine if input sequence is a bimera of
+                        putative parent sequences.
+isBimeraDenovo          Identify bimeras from collections of unique
+                        sequences.
+isBimeraDenovoTable     Identify bimeras in a sequence table.
+isPhiX                  Determine if input sequence(s) match the phiX
+                        genome.
+isShiftDenovo           Identify sequences that are identical to a more
+                        abundant sequence up to an overall shift.
+learnErrors             Learns the error rates from an input list, or
+                        vector, of file names or a list of
+                        'derep-class' objects.
+loessErrfun             Use a loess fit to estimate error rates from
+                        transition counts.
+makeSequenceTable       Construct a sample-by-sequence observation
+                        matrix.
+mergePairs              Merge denoised forward and reverse reads.
+mergePairsByID          Merge forward and reverse reads after DADA
+                        denoising, even if reads were not originally
+                        ordered together.
+mergeSequenceTables     Merge two or more sample-by-sequence
+                        observation matrices.
+names<-,dada,ANY-method
+                        Deactivate renaming of dada-class objects.
+names<-,derep,ANY-method
+                        Deactivate renaming of derep-class objects.
+noqualErrfun            Estimate error rates for each type of
+                        transition while ignoring quality scores.
+nwalign                 Needleman-Wunsch alignment.
+nwhamming               Hamming distance after Needlman-Wunsch
+                        alignment.
+plotErrors              Plot observed and estimated error rates.
+plotQualityProfile      Plot quality profile of a fastq file.
+removeBimeraDenovo      Remove bimeras from collections of unique
+                        sequences.
+seqComplexity           Determine if input sequence(s) are low
+                        complexity.
+setDadaOpt              Set DADA options
+show,derep-method       method extensions to show for dada2 objects.
+tperr1                  An empirical error matrix.
+uniques-vector          The named integer vector format used to
+                        represent collections of unique DNA sequences.
+uniquesToFasta          Write a uniques vector to a FASTA file
+writeFasta,character-method
+                        Writes a named character vector of DNA
+                        sequences to a fasta file. Values are the
+                        sequences, and names are used for the id lines.

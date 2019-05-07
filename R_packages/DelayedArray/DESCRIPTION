@@ -1,0 +1,43 @@
+Package: DelayedArray
+Title: Delayed operations on array-like objects
+Description: Wrapping an array-like object (typically an on-disk object) in
+	a DelayedArray object allows one to perform common array operations
+	on it without loading the object in memory. In order to reduce memory
+	usage and optimize performance, operations on the object are either
+	delayed or executed using a block processing mechanism. Note that this
+	also works on in-memory array-like objects like DataFrame objects
+	(typically with Rle columns), Matrix objects, and ordinary arrays and
+	data frames.
+Version: 0.8.0
+Encoding: UTF-8
+Author: Hervé Pagès <hpages@fredhutch.org>, with contributions from
+	Peter Hickey <peter.hickey@gmail.com>
+Maintainer: Hervé Pagès <hpages@fredhutch.org>
+biocViews: Infrastructure, DataRepresentation, Annotation,
+        GenomeAnnotation
+Depends: R (>= 3.4), methods, stats4, matrixStats, BiocGenerics (>=
+        0.27.1), S4Vectors (>= 0.19.15), IRanges (>= 2.11.17),
+        BiocParallel
+Imports: stats
+LinkingTo: S4Vectors
+Suggests: Matrix, HDF5Array, genefilter, SummarizedExperiment, airway,
+        pryr, DelayedMatrixStats, knitr, BiocStyle, RUnit
+License: Artistic-2.0
+VignetteBuilder: knitr
+Collate: utils.R compress_atomic_vector.R Nindex-utils.R aperm2.R
+        linearInd.R bind-arrays.R Array-class.R extract_array.R
+        ArrayGrid-class.R show-utils.R SparseArraySeed-class.R
+        read_block.R mapToGrid.R makeCappedVolumeBox.R blockGrid.R
+        DelayedOp-class.R showtree.R DelayedArray-class.R chunkGrid.R
+        block_processing.R RealizationSink-class.R realize.R
+        DelayedArray-subsetting.R DelayedArray-utils.R
+        DelayedMatrix-utils.R DelayedArray-stats.R
+        DelayedMatrix-stats.R RleArray-class.R zzz.R
+git_url: https://git.bioconductor.org/packages/DelayedArray
+git_branch: RELEASE_3_8
+git_last_commit: 7c23cf4
+git_last_commit_date: 2018-10-30
+Date/Publication: 2018-10-30
+NeedsCompilation: yes
+Packaged: 2018-10-31 01:42:10 UTC; biocbuild
+Built: R 3.5.1; x86_64-pc-linux-gnu; 2019-05-07 00:53:59 UTC; unix

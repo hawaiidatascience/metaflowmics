@@ -1,0 +1,378 @@
+CHANGES IN VERSION 1.9.2
+-----------------------
+
+NEW FEATURES
+
+    o PacBio CCS reads up to 3 kilobases are now supported. See also PacBioErrfun, the new and recommended error-estimation function for PacBio CCS data.
+
+SIGNIFICANT USER-VISIBLE CHANGES
+
+    o primer.fwd has been replaced by orient.fwd in the filterAndTrim function. This option consistently orients mixed-orientation single-end or paired-end reads based on matching the provided sequence fragment to the start or end of each read (or paired read). Intended for use with mixed-orientation reads that included sequenced primers. If primers aren't included in the amplicons, an external re-orientation solution remains preferable.
+    
+    o trimRight has been added to the filterAndTrim function. This removes the specified number of bases from the end ("right" side) of each read.
+    
+BUG FIXES
+
+    o collapseNoMismatch now collapses identical sequences as well (previous behavior is togglable).
+
+CHANGES IN VERSION 1.9.1
+-----------------------
+
+BUG FIXES
+
+    o mergePairs now gracefully handles cases when zero reads succesfully merge.
+
+    o plotQualityProfile now works correclty when given a directory containing fastq files.
+
+CHANGES IN VERSION 1.7.8
+-----------------------
+
+SIGNIFICANT USER-VISIBLE CHANGES
+
+    o nbases has replaced the nreads parameter in the learnErrors function. As suggested by the name, this controls the amount of data the machine learning uses by the total number of bases rather than the read count, which is more appropriate given the range of read-lengths in target applications.
+
+    o OMEGA_C has been set to 1e-40 by default. This means that error-correction is no longer performed on all reads, but instead just those a post-hoc probability less than OMEGA_C=1e-40. In practice this has a very small impact on final abundances.
+
+BUG FIXES
+
+    o The memory usage and speed of assignSpecies on large datasets has significantly improved.
+
+CHANGES IN VERSION 1.7.7
+-----------------------
+
+NEW FEATURES
+
+    o Error-correction can now be modified, and turned off, by the OMEGA_C parameter, which controls the threshold at which reads that are inferred to contain errors are corrected (or not) to the sequence from which they are inferred to originate.
+
+SIGNIFICANT USER-VISIBLE CHANGES
+
+    o The DADA2 options enabling the quick gapless alignment check, and extremely conservative greediness in the partioning method were turned on by default (GAPLESS=TRUE, GREEDY=TRUE). Some speedup in the core denoising algorithm.
+
+    o plotQualityProfile now includes a cumulative description of read length variation.
+
+CHANGES IN VERSION 1.7.6
+-----------------------
+
+NEW FEATURES
+
+    o A new and extremely conservative form of greediness in the core denoising algorithm was added, and can be turned on by setting the DADA2 option GREEDY=TRUE. This provides some speedup in the core denoising algorithm.
+
+CHANGES IN VERSION 1.7.5
+-----------------------
+
+NEW FEATURES
+
+    o The dada(...) function now accepts a list of "priors", i.e. sequences for which there is prior evidence they might be real. Input sequences that match one of the priors are evaluated against a relaxed threshold of statistical evidence (OMEGA_P instead of OMEGA_A), and can be detected even as singletons.
+
+    o The dada(...) function can perform "pseudo-pooling" with dada(..., pool="pseudo"). In pseudo-pooling, the input samples are denoised independently, then a set of sequences that appear in at least MIN_PREVALENCE samples are used as priors for a second and final round of sample inference. MIN_PREVALENCE=2 by default.
+
+CHANGES IN VERSION 1.7.4
+-----------------------
+
+NEW FEATURES
+
+    o A new fast screen for optimal gapless alignments in the core denoising algorithm was added, and can be turned on by setting the DADA2 option GAPLESS=TRUE. This provides some speedup in the core denoising algorithm.
+    
+CHANGES IN VERSION 1.7.3
+-----------------------
+
+BUG FIXES
+
+    o Fixed an overflow bug on sequences 260nts or longer in the SSE=2 code.
+
+CHANGES IN VERSION 1.7.2
+-----------------------
+
+SIGNIFICANT USER-VISIBLE CHANGES
+
+    o The DADA2 option enabling explicit 8-bit SSE vectorization in the C code was turned on by default (SSE=2). Some speedup in the core denoising algorithm.
+
+CHANGES IN VERSION 1.7.1
+-----------------------
+
+NEW FEATURES
+
+    o seqComplexity calculates the complexity of input sequences, and can be used to identify and filter out low-complexity sequences.
+    
+SIGNIFICANT USER-VISIBLE CHANGES
+
+    o The default minOverlap parameter of mergePairs was reduced from 20 to 12, and the alignment parameters used during merging were altered to more strongly penalize mismatches and gaps, which improves merging performance in repetitive sequences.
+
+CHANGES IN VERSION 1.5.6
+-----------------------
+
+SIGNIFICANT USER-VISIBLE CHANGES
+
+    o The default values of the minFoldParentOverAbundance parameter changed. Minor impact on removeBimeraDenovo(...) output.
+
+    o The new MIN_ABUNDANCE option (default 1) specifies the minimum required abundance for a unique sequence to be output as a denoised sequence variant. Higher values can significantly reduce computation time on large samples, or pooled sets of samples.
+
+BUG FIXES
+
+    o collapseNoMismatch now properly collapses together sequences that overhand others sequences on both sides (and is faster).
+
+CHANGES IN VERSION 1.5.4
+-----------------------
+
+BUG FIXES
+
+    o End-point off-by-one bug in kmer distance calculations fixed. Minor impact on dada(...) output.
+
+    o Multithreading bug fixed.
+
+CHANGES IN VERSION 1.5.3
+-----------------------
+
+SIGNIFICANT USER-VISIBLE CHANGES
+
+    o A version of the kmer-distance calculation that is explicitly SSE vectorized has been added and can be toggled on with the dada(..., SSE=1) option. This is intended for use when the code has not been natively compiled by a modern compiler, such as is the case for the bioconda binaries.
+
+CHANGES IN VERSION 1.5.2
+-----------------------
+
+SIGNIFICANT USER-VISIBLE CHANGES
+
+    o assignSpecies has been reimplemented to be much, much faster (>100x faster with enough query sequences).
+
+    o The allowOneOff flag has been set to FALSE by default in the xxxBimeraDenovo functions. 
+
+BUG FIXES
+
+    o The compress option is now respected by filterAndTrim.
+
+CHANGES IN VERSION 1.5.1
+-----------------------
+
+SIGNIFICANT USER-VISIBLE CHANGES
+
+    o The parsing functions to create the training fastas compatible with assignTaxonomy and assignSpecies from the Silva and RDP databases are now included as private functions in the taxonomy.R file. In parallel, updated versions of both RDP (trainset 16) and Silva (v128) training fastas were released on Zenodo.
+
+CHANGES IN VERSION 1.3.5
+-----------------------
+
+SIGNIFICANT USER-VISIBLE CHANGES
+
+    o The default chimera removal method is now "consensus" in the removeBimeraDenovo function (method="consensus").
+
+    o The filtering functions now remove phiX by default (rm.phix=TRUE).
+
+
+CHANGES IN VERSION 1.3.4
+-----------------------
+
+NEW FEATURES
+
+    o filterAndTrim is the new multithreaded interface for filtering and trimming. It is R-vectorized, in that it accepts vectors of input/output files. Supports both single-read and paired-read filtering.
+    
+SIGNIFICANT USER-VISIBLE CHANGES
+
+    o Consensus chimera removal now supports multithreading.
+
+    o The new trimOverhang option in mergePairs allows the portion of paired reads that overhang the start of the other read to be removed when merging.
+
+    o Faster filtering by not enforcing redundant filtering conditions.
+
+CHANGES IN VERSION 1.3.3
+-----------------------
+
+NEW FEATURES
+
+    o ITS support. The dada method now handles variable-length amplicons, which allows common ITS sequencing strategies to be processed. Taxonomic assignment against the UNITE database is also now available.
+    
+SIGNIFICANT USER-VISIBLE CHANGES
+
+    o The xxxFilter methods now have maxLen and minLen filtering parameters.
+
+CHANGES IN VERSION 1.3.2
+-----------------------
+
+NEW FEATURES
+
+    o learnErrors is a new method for learning error rates from a targeted number of reads. This wraps pre-existing functionality -- dada(..., selfConsist=TRUE) -- in a much easier to use form.
+    
+    o assignTaxonomy is multithreaded (multithread=TRUE) and can individually test reverse-complemented sequences and use them to classify if they better match the reference (tryRC=TRUE).
+
+CHANGES IN VERSION 1.3.1
+-----------------------
+
+SIGNIFICANT USER-VISIBLE CHANGES
+
+    o The xxxFilter methods now (invisibily) return the number of reads that went in and that passed the filter.
+
+    o fastqFilter now has a maxLen parameter, primarily for filtering/trimming 454 data.
+
+BUG FIXES
+
+    o trimLeft is now enforced before any filtering is performed.
+
+    o Rscript invocations should now work without requiring an initial library(methods) call.
+
+CHANGES IN VERSION 1.1.7
+-----------------------
+
+SIGNIFICANT USER-VISIBLE CHANGES
+
+    o The isBimeraDenovoTable method is now available through the convenience interface removeBimeraDenovo(..., tableMethod="consensus").
+
+    o The vectorized Needleman-Wunsch algorithm is now available through nwalign(..., vec=TRUE). This aligner is very fast for short sequences, but performs no overflow checking so use on longer sequences (2kb+) with care.
+
+BUG FIXES
+
+    o It is now more difficult to mess up the internal structure of dada-class and derep-class objects.
+
+CHANGES IN VERSION 1.1.6
+-----------------------
+
+NEW FEATURES
+
+    o isBimeraDenovoTable is a new function for detecting chimeras on multi-sample sequence tables. It first identifies bimeras on a per-sample basis, and then uses a consensus approach to identify bimeric sequences. This improves the specificity of bimera classification for datasets with many samples.
+    
+SIGNIFICANT USER-VISIBLE CHANGES
+
+    o The filenames is now included in the plotQualityProfile plot.
+
+BUG FIXES
+
+    o assignTaxonomy now works for sequences containg Ns.
+
+    o Bimera detection now correctly handles non-unique sequences in the input.
+
+    o Fixed a memory leak when using the HOMOPOLYMER_GAP_PENALTY option.
+
+    o Warnings and errors during error estimation from small samples in the dada(…) function are now handled appropriately.
+
+
+CHANGES IN VERSION 1.1.4
+-----------------------
+
+NEW FEATURES
+
+    o Multithreaded chimera detection. The isBimeraDenovo(...) function is now multithreaded. This behavior is controlled by the multithread argument to the function, and is FALSE by default.
+
+CHANGES IN VERSION 1.1.3
+-----------------------
+
+SIGNIFICANT USER-VISIBLE CHANGES
+
+    o The vectorized aligner has been updated. It is now more flexible, handling different length sequences and variable end-gap penalties. It is also faster: On default settings the dada(...) function is now 15-25% faster, and isBimeraDenovo is 2-4x faster.
+
+CHANGES IN VERSION 1.1.2
+-----------------------
+
+NEW FEATURES
+
+    o Species-level taxonomic assignment. The new assignSpecies(...) function uses exact matching to assign sequences to the species level. Currently a valid species training fasta is only available for the RDP taxonomic database.
+    
+CHANGES IN VERSION 1.1.1
+-----------------------
+
+BUG FIXES
+
+    o Fixed the memory leak in isBimeraDenovo and friends.
+
+    o Sequence tables are now integer rather than numeric.
+
+
+CHANGES IN VERSION 1.1
+-----------------------
+
+NEW FEATURES
+
+    o Multithreading. The dada(...) function is now multithreaded. This behavior is controlled by the multithread argument to the function, and is FALSE by default.
+    
+SIGNIFICANT USER-VISIBLE CHANGES
+
+    o The phiX removal functionality in fastqFilter/fastqPairedFilter is now substantially faster.
+
+BUG FIXES
+
+    o Certain diagnostic return values of dada(..., pool=TRUE) are now appropriately constructed.
+
+    o A 2-5% speedup from switching to C++11 hashed containers.
+
+CHANGES IN VERSION 1.0
+-----------------------
+
+NEW FEATURES
+
+    o The dada2 package is now available from Bioconductor (http://bioconductor.org)
+
+
+CHANGES IN VERSION 0.99.9
+-----------------------
+
+NEW FEATURES
+
+    o fastqFilter and fastqPairedFilter can now remove phiX contamination if rm.phix argument set to TRUE
+
+
+CHANGES IN VERSION 0.99.8
+-----------------------
+
+SIGNIFICANT USER-VISIBLE CHANGES
+
+    o Banding in nwalign is now turned off by default
+
+BUG FIXES
+
+    o Graceful handling of sequences which are not classified at any level by assignTaxonomy
+
+
+CHANGES IN VERSION 0.99.7
+-----------------------
+
+SIGNIFICANT USER-VISIBLE CHANGES
+
+    o isBimera was rewritten in C, significantly increasing speed
+
+BUG FIXES
+
+    o An edge case bimera detection bug was fixed
+
+
+CHANGES IN VERSION 0.99.6
+-----------------------
+
+SIGNIFICANT USER-VISIBLE CHANGES
+
+    o Function documentation was reviewed and revised throughout the package
+
+
+CHANGES IN VERSION 0.99.5
+-----------------------
+
+NEW FEATURES
+
+    o plotQualityProfile displays a visual summary of the quality scores over sequences in a fastq file
+    
+    o removeBimeraDenovo conveniently identifies and removes chimeras from the input unique sequences
+
+SIGNIFICANT USER-VISIBLE CHANGES
+
+    o The dada2 package is now part of the devel branch of Bioconductor (http://bioconductor.org)
+
+BUG FIXES
+
+    o assignTaxonomy now handles varying levels of taxonomic classification in the training data
+
+
+CHANGES IN VERSION 0.10.7
+-----------------------
+
+NEW FEATURES
+
+    o dada2 now supports 454 pyrosequencing. When calling the dada function on 454 data, we recommend
+       using the parameters USE_QUALS = FALSE, HOMOPOLYMER_GAP_PENALTY = -1, BAND_SIZE = 32
+
+SIGNIFICANT USER-VISIBLE CHANGES
+
+    o mergePairs is now "vectorized" over lists of input dada-class and derep-class objects
+
+    o Added a homo_gap argument to nwalign which sets the homopolymer gap penalty in the N-W alignment
+
+BUG FIXES
+
+    o assignTaxonomy now uses less memory
+
+
+

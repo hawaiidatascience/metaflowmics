@@ -1,0 +1,232 @@
+useDynLib(GenomicAlignments)
+
+import(methods)
+importFrom(utils, read.table)
+importFrom(stats, setNames)
+import(BiocGenerics)
+import(S4Vectors)
+import(IRanges)
+import(GenomeInfoDb)
+import(GenomicRanges)
+import(SummarizedExperiment)
+import(Biostrings)
+import(Rsamtools)
+importFrom(BiocParallel, bplapply)
+
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Export S4 classes
+###
+
+exportClasses(
+    GAlignments,
+    GAlignmentPairs,
+    GAlignmentsList,
+    GappedReads,
+    OverlapEncodings
+)
+
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Export S3 methods
+###
+
+S3method(as.data.frame, OverlapEncodings)
+
+S3method(levels, OverlapEncodings)
+
+### We also export them thru the export() directive so that (a) they can be
+### called directly, (b) tab-completion on the name of the generic shows them,
+### and (c) methods() doesn't asterisk them.
+export(
+    as.data.frame.OverlapEncodings,
+
+    levels.OverlapEncodings
+)
+
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Export S4 methods for generics not defined in GenomicAlignments
+###
+
+exportMethods(
+    length,
+    names, "names<-",
+    c,
+    "[[",
+    show,
+    coerce,
+    unlist,
+    order, sort, rank,
+    levels,
+    update,
+
+    ## Generics defined in BiocGenerics:
+    as.data.frame, is.unsorted, order, sort, rank,
+    start, end, width, strand, "strand<-", invertStrand,
+    updateObject,
+
+    ## Generics defined in S4Vectors:
+    bindROWS,
+    parallelSlotNames, "elementMetadata<-", pcompare,
+
+    ## Generics defined in IRanges:
+    ranges, rglist,
+    relistToClass,
+    findOverlaps,
+    windows,
+    narrow,
+    coverage,
+    pintersect,
+
+    ## Generics defined in GenomeInfoDb:
+    seqinfo, "seqinfo<-",
+    seqnames, "seqnames<-",
+    seqlevelsInUse,
+
+    ## Generics defined in GenomicRanges:
+    granges, grglist,
+
+    ## Generics defined in Biostrings:
+    encoding,
+
+    ## Generics defined in S4Vectors:
+    first, second
+)
+
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Export non-generic functions
+###
+
+export(
+    validCigar,
+    CIGAR_OPS,
+    explodeCigarOps, explodeCigarOpLengths,
+    cigarToRleList,
+    cigarRangesAlongReferenceSpace,
+    cigarRangesAlongQuerySpace,
+    cigarRangesAlongPairwiseSpace,
+    extractAlignmentRangesOnReference,
+    cigarWidthAlongReferenceSpace,
+    cigarWidthAlongQuerySpace,
+    cigarWidthAlongPairwiseSpace,
+    cigarNarrow, cigarQNarrow,
+    cigarOpTable,
+    queryLoc2refLoc, queryLocs2refLocs,
+
+    GAlignments,
+    GAlignmentPairs,
+    GAlignmentsList,
+    GappedReads,
+
+    Lencoding, Rencoding, Lnjunc, Rnjunc,
+
+    findMateAlignment, makeGAlignmentPairs,
+    getDumpedAlignments, countDumpedAlignments, flushDumpedAlignments,
+
+    readGAlignments,
+    readGAlignmentPairs,
+    readGAlignmentsList,
+    readGappedReads,
+
+    NATURAL_INTRON_MOTIFS,
+    summarizeJunctions,
+    readTopHatJunctions,
+    readSTARJunctions,
+
+    sequenceLayer,
+    pileLettersAt,
+    stackStringsFromBam,
+    alphabetFrequencyFromBam,
+
+    encodeOverlaps1,
+    flipQuery,
+    selectEncodingWithCompatibleStrand,
+    extractQueryStartInTranscript,
+
+    countCompatibleOverlaps,
+
+    Union, IntersectionNotEmpty, IntersectionStrict
+)
+
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Export S4 generics defined in GenomicAlignments + export corresponding
+### methods
+###
+
+export(
+    ## GAlignments-class.R:
+    rname, "rname<-", cigar, qwidth, njunc,
+
+    ## GAlignmentPairs-class.R:
+    last, strandMode, "strandMode<-", isProperPair,
+
+    ## GappedReads-class.R:
+    qseq,
+
+    ## OverlapEncodings-class.R:
+    Loffset, Roffset, flippedQuery,
+    encodingHalves,
+    isCompatibleWithSplicing,
+
+    ## readGAlignments.R:
+    readGAlignments,
+    readGAlignmentPairs,
+    readGAlignmentsList,
+    readGappedReads,
+
+    ## junctions-methods.R:
+    junctions,
+
+    ## intra-range-methods.R:
+    qnarrow,
+
+    ## encodeOverlaps-methods.R:
+    encodeOverlaps,
+    isCompatibleWithSkippedExons,
+    extractSteppedExonRanks,
+    extractSpannedExonRanks,
+    extractSkippedExonRanks,
+
+    ## findCompatibleOverlaps-methods.R:
+    findCompatibleOverlaps,
+
+    ## summarizeOverlaps-methods.R:
+    summarizeOverlaps,
+
+    ## findSpliceOverlaps-methods.R:
+    findSpliceOverlaps,
+
+    ## coordinateMapping-methods.R:
+    mapToAlignments, pmapToAlignments, 
+    mapFromAlignments, pmapFromAlignments
+)
+
+### Exactly the same list as above.
+exportMethods(
+    rname, "rname<-", cigar, qwidth, njunc,
+    first, last, strandMode, "strandMode<-", isProperPair,
+    qseq,
+    Loffset, Roffset, flippedQuery,
+    encodingHalves,
+    isCompatibleWithSplicing,
+    readGAlignments,
+    readGAlignmentPairs,
+    readGAlignmentsList,
+    readGappedReads,
+    junctions,
+    qnarrow,
+    encodeOverlaps,
+    isCompatibleWithSkippedExons,
+    extractSteppedExonRanks,
+    extractSpannedExonRanks,
+    extractSkippedExonRanks,
+    findCompatibleOverlaps,
+    summarizeOverlaps,
+    findSpliceOverlaps,
+    mapToAlignments, pmapToAlignments,
+    mapFromAlignments, pmapFromAlignments
+)
+

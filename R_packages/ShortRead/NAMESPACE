@@ -1,0 +1,37 @@
+useDynLib(ShortRead, .registration=TRUE)
+
+import(zlibbioc, methods, BiocGenerics, S4Vectors, IRanges,
+    Biostrings, GenomeInfoDb, GenomicRanges, GenomicAlignments,
+    Rsamtools, Biobase)
+
+importFrom(BiocParallel, bplapply)
+
+importFrom(grDevices, colorRampPalette, dev.off, jpeg, pdf, png)
+
+importFrom(hwriter, hwrite, hwriteImage)
+
+importFrom(lattice, dotplot, histogram, levelplot, llines, lsegments,
+           ltext, panel.abline, panel.dotplot, panel.grid,
+           panel.histogram, panel.levelplot, panel.xyplot,
+           strip.custom, xyplot)
+
+importFrom(latticeExtra, xyplot.list)
+
+importFrom(stats, approxfun, setNames)
+
+importFrom(utils, capture.output, packageDescription, read.csv,
+           read.table, Sweave)
+
+exportClassPattern("^.*$")
+
+exportMethods(show, coerce, dim, length, "[", "[<-", "[[", alphabetFrequency,
+              alphabet, coverage, encoding, narrow, reverse, reverseComplement,
+              strand, trimLRPatterns, width, append, rbind, "%in%", c, lapply,
+              sapply)
+
+export(pData, phenoData, varLabels, varMetadata)
+
+exportPattern("^[^\\.]")
+
+S3method(close, ShortReadFile)
+S3method(open, ShortReadFile)
