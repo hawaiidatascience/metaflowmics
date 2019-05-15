@@ -1,10 +1,3 @@
----
-layout: post
-title: "README for setting up the conda environment for cmaiki"
-author: "Razvan Sultana"
-date: "May 14, 2019"
----
-
 ### Install conda
 
 Install conda as shown at [bioconda.github.io](https://bioconda.github.io/) :
