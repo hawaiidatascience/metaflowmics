@@ -11,13 +11,6 @@ Do you wish the installer to initialize Miniconda3
 by running conda init? [yes|no]
 ```
 5. Exit the current session and login again to activate conda
-6. Modify the channel list as follows:
-```
-conda config --add channels defaults
-conda config --add channels bioconda
-conda config --add channels r
-conda config --add channels conda-forge
-```
 
 ### Download the workflows
 
