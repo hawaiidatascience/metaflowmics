@@ -23,7 +23,7 @@ git clone git@github.com:hawaiidatascience/nextflow_cmaiki.git
 
 All the dependencies of the workflow will be installed in the conda environment `cmaiki` with:
 ```
-source build_conda_env`
+source build_conda_env
 ```
 
 ### Run the test for 16S
