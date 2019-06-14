@@ -1,0 +1,9 @@
+work
+.nextflow*
+Results-*
+*result*
+*packages
+databases
+report.html
+timeline.html
+trace.txt
