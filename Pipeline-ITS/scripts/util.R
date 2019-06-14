@@ -37,7 +37,7 @@ learnErrorRates <- function(noChimeraDerepFile,pairId)
                           nbases=1e8)
 
     fig <- plotErrors(errors, nominalQ=TRUE)
-    ggsave(paste0("R1_",pairId,".err.png"), plot=fig, type="cairo-png")
+    ggsave(paste0("R1_",pairId,"_err.png"), plot=fig, type="cairo-png")
 
     saveRDS(errors, paste0(pairId,"_errors.RDS"))
 }
@@ -50,15 +50,15 @@ dadaDenoise <- function(errorFile,derepFile,pairId)
     ## Extract abundance values from derep.denoised to name the fastas. Sample name also used
     seqIds <- paste0(pairId,";size=",as.numeric(getUniques(derep.denoised)))
     ## Write to fasta
-    uniquesToFasta(derep.denoised,paste0(pairId,".dada.fasta"),seqIds)
+    uniquesToFasta(derep.denoised,paste0(pairId,"_dada.fasta"),seqIds)
     ## Save RDS object
-    saveRDS(derep.denoised,paste0(pairId,".dada.RDS"))
+    saveRDS(derep.denoised,paste0(pairId,"_dada.RDS"))
 }
     
 esvTable <- function()
 {
     ## Retrieve all the dada2 denoised files for merging
-    denoisedFiles <- list.files(path=".", pattern="*.dada.RDS")
+    denoisedFiles <- list.files(path=".", pattern="*_dada.RDS")
     pairIds <- as.character(sapply(denoisedFiles,
                                    function(x) unlist(strsplit(basename(x),"_"))[1]))
     denoised <- lapply(denoisedFiles, function (x) readRDS(x))
@@ -76,8 +76,8 @@ esvTable <- function()
     write.csv(t(seqtab),"otus100_table.csv",quote=F)
 
     ## Make summary file
-    derepFiles <- lapply(list.files(path=".", pattern="*.derep.RDS"), function (x) readRDS(x))    
-    chimeraFiles <- lapply(list.files(path=".", pattern="*.nochimera.RDS"), function (x) readRDS(x))
+    derepFiles <- lapply(list.files(path=".", pattern="*_derep.RDS"), function (x) readRDS(x))    
+    chimeraFiles <- lapply(list.files(path=".", pattern="*_nochimera.RDS"), function (x) readRDS(x))
 
     summary.derep <- sapply(derepFiles, function(x) paste0(sum(x$uniques)," (",length(x$uniques)," uniques)"))        
     summary.chimera <- sapply(chimeraFiles, function(x) paste0(sum(x$uniques)," (",length(x$uniques)," uniques)"))    

@@ -342,8 +342,8 @@ process Denoise {
         set pairId, file(err), file(nochimera) from ERRORS_AND_DEREP
 
     output:
-        set pairId,file("${pairId}.dada.fasta") into DADA_FASTA
-        set pairId,file(nochimera),file("${pairId}.dada.RDS") into DADA_RDS
+        set pairId,file("${pairId}_dada.fasta") into DADA_FASTA
+        set pairId,file(nochimera),file("${pairId}_dada.RDS") into DADA_RDS
     script:
     """
     #!/usr/bin/env Rscript

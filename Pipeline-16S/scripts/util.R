@@ -79,8 +79,8 @@ dadaDenoise <- function(errorFile,derepFile,pairId)
     derep <- derepFastq(derepFile)
     denoised <- dada(derep, err=errors, multithread=TRUE)
     # Save RDS object
-    saveRDS(derep,paste0(pairId,".derep.RDS"))
-    saveRDS(denoised,paste0(pairId,".dada.RDS"))
+    saveRDS(derep,paste0(pairId,"_derep.RDS"))
+    saveRDS(denoised,paste0(pairId,"_dada.RDS"))
 }
     
 esvTable <- function(minOverlap, maxMismatch, singleEnd)
