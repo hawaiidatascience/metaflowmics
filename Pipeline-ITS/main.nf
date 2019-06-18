@@ -59,7 +59,6 @@ summary['pairedEnd'] = params.pairedEnd
 summary['Output dir'] = params.outdir
 summary['Working dir'] = workflow.workDir
 summary['Current home'] = "$HOME"
-summary['Current user'] = "$USER"
 summary['Current path'] = "$PWD"
 summary['Config Profile'] = workflow.profile
 summary['Clustering thresholds'] = clusteringThresholds
@@ -473,6 +472,7 @@ process PreLulu {
 	
     """
     vsearch --usearch_global ${fasta} \
+            --threads ${task.cpus} \
             --db ${fasta} --self \
             --id .84 \
             --iddef 1 \
@@ -558,8 +558,8 @@ process ClassificationSintax {
     script:
 	
     """
-    vsearch --db ${params.uniteDB} --sintax ${fasta} \
-            --sintax_cutoff ${params.confidenceThresh} \
+    vsearch --threads ${task.cpus} --db ${params.uniteDB} \
+            --sintax ${fasta} --sintax_cutoff ${params.confidenceThresh} \
             --tabbedout annotations_sintax_${idThreshold}.tsv
 
     """

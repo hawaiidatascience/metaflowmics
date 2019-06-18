@@ -28,7 +28,7 @@ filterReads <- function(pairId,fwd,rev=NULL,
     }
 
     # Apply dada2's filterAndTrim
-    filterAndTrim(fwd, fwd.out,rev=rev, filt.rev=rev.out,
+    filterAndTrim(fwd, fwd.out, rev=rev, filt.rev=rev.out,
                   compress=FALSE,
                   truncLen=truncLen,
                   truncQ=truncQ,

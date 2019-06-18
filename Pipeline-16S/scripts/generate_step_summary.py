@@ -34,7 +34,7 @@ def write_summary(root_dir,data_dir):
                                            name=res.name)
             
         res.index.name = "Sample"
-        res.index = [ row.split("_")[0] for row in res.index.astype(str) ]
+        # res.index = [ row.split("_")[0] for row in res.index.astype(str) ]
 
     summary = pd.concat(res_all_samples,axis=1,sort=True)    
     summary.index.name = "SampleID"

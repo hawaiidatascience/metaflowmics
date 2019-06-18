@@ -32,7 +32,6 @@ summary['Output dir'] = params.outdir
 summary['Script dir'] = params.script_dir
 summary['Working dir'] = workflow.workDir
 summary['Current home'] = "$HOME"
-summary['Current user'] = "$USER"
 summary['Current path'] = "$PWD"
 summary['Config Profile'] = workflow.profile
 summary['Clustering thresholds'] = params.clusteringThresholds
@@ -43,6 +42,7 @@ log.info "========================================="
 Channel
     .fromFilePairs( params.reads, size: params.singleEnd ? 1 : 2 )
     .ifEmpty { error "Cannot find any reads matching: ${params.reads}" }
+    .map { it -> tuple(it[0].replaceAll("-","_"), it[1]) }
     .set { INPUT_FASTQ }
 
 /*
@@ -255,15 +255,11 @@ process Subsampling {
 
     tail -n +2  ${count} | awk '{for (i=3;i<=NF;i++) sum[i]+=\$i;}; END{for (i in sum) print sum[i]}' |sort -n > sample_size.txt
 
-    percentile_value=`awk '{all[NR] = \$1} END{print all[int(NR*${params.subsamplingQuantile})]}' sample_size.txt`
+    percentile_value=`awk '{all[NR] = \$1} END{ pct=int(0.5+NR*${params.subsamplingQuantile}); if (pct>0) print all[pct]; else print all[1]}' sample_size.txt`
     max_value=`tail -n1 sample_size.txt`
 
-    if [ \$percentile_value -lt ${params.minSubsampling} ] || [ -z \$percentile_value ]
-        then percentile_value=${params.minSubsampling}
-    fi
-
-    if [ \$percentile_value -gt \$max_value ]
-        then percentile_value=\$max_value
+    if [ \$percentile_value -lt ${params.minSubsampling} ] && [ ${params.minSubsampling} -lt \$max_value ]; then
+        percentile_value=${params.minSubsampling}    
     fi
 
     ${params.script_dir}/mothur.sh --step=subsampling --subsamplingNb=\$percentile_value
@@ -426,7 +422,7 @@ process SingletonFilter {
 
 process TaxaFilter {
     tag { "convertToMothur.${idThreshold}" }
-    publishDir "${params.outdir}/12-taxaFilter", mode: "copy", pattern: "*.{fasta,shared,taxonomy}"
+    publishDir "${params.outdir}/12-taxaFilter", mode: "copy", pattern: "{abundance_table_*.shared,annotations_*.taxonomy,sequences_*.fasta}"
     errorStrategy "${params.errorsHandling}"
     label "medium_computation"    
     
@@ -434,7 +430,7 @@ process TaxaFilter {
 	set val(idThreshold), file(fasta), file(shared), file(tax) from FOR_TAXA_FILTER
     output:
 	set val(idThreshold), file(fasta), file(shared), file(tax) into MOTHUR_TO_PROCESS
-        file "*.{fasta,shared,taxonomy}" into FINAL_SUMMARY
+        set file("abundance_table_*.shared"), file("annotations_*.taxonomy"), file("sequences_*.fasta")  into FINAL_SUMMARY
     
     script:
     """

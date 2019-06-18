@@ -138,12 +138,12 @@ elif [ $step == "consensusClassification" ]; then
 elif [ $step == "taxaFilter" ]; then
     inputs_mothur=("${tax}.taxonomy" "${shared}.shared" "${fasta}.fasta")
     
-    cmd=("remove.lineage(constaxonomy=${tax}.taxonomy, shared=${shared}.shared, taxon='${taxaToFilter}', label=${mothurThresh}) ; "
+    cmd=("remove.lineage(constaxonomy=${tax}.taxonomy, shared=${shared}.shared, taxon='${taxaToFilter}', label=${idThreshold}) ; "
 	 "list.seqs(taxonomy=${tax}.pick.cons.taxonomy) ; "
 	 "get.seqs(fasta=${fasta}.fasta,accnos=current)")
     
     outputs_mothur=("${tax}.pick.cons.taxonomy"
-		    "${shared}.${mothurThresh}.pick.shared"
+		    "${shared}.${idThreshold}.pick.shared"
 		    "${fasta}.pick.fasta")
     
     outputs_renamed=("annotations_${idThreshold}.taxonomy"

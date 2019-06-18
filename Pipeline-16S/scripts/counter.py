@@ -52,7 +52,7 @@ class SequenceCounter:
             return pd.Series([], name=self.name)
 
         if self.extension.startswith(".fast"):
-            counts = [ (basename(fastx).split("_")[0],
+            counts = [ (basename(fastx).split("_R1")[0].replace("-","_"),
                         self.countFastx(fastx))
                        for fastx in files ]
             return pd.Series(dict(counts),name=self.name)
