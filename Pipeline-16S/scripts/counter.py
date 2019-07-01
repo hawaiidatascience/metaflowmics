@@ -59,25 +59,30 @@ class SequenceCounter:
             self.compressed = False
             self.extension = ext
 
-    def run(self,id_threshold):
+    def run(self,id_threshold,sample_names=None):
         files = glob(self.path)
         print(self.name, "{} files".format(len(files)))
 
         if self.extension.startswith(".fast"):
-            counts = [ (basename(fastx).split("_R1")[0].replace("-","_"),
-                        self.countFastx(fastx))
-                       for fastx in files ]
+            counts = dict([ (basename(fastx).split("_R1")[0].replace("-","_"),
+                             self.countFastx(fastx))
+                            for fastx in files ])
 
-            return (self.step_nb,pd.Series(dict(counts),name=self.name).astype(int))
+            if sample_names is None:
+                sample_names = list(counts.keys())
+            summary_series = pd.Series(counts,name=self.name,index=sample_names).fillna(0).astype(int)
+
+            return summary_series
         
         elif self.extension in [".shared",".count_table",".csv",".tsv"]:
             counts = [ self.countTable(table) for table in files ]
             if len(counts) > 1:
                 counts = [ count for count in counts if id_threshold in count.name ]
-                # counts = sorted(counts, key=lambda x: float(x.name.split("_")[-1]))
-            return (self.step_nb,pd.concat(counts,axis=1))
+            summary_df = pd.concat(counts,axis=1).reindex(sample_names).fillna(0)
+                
+            return summary_df 
         else:
-            return (self.step_nb, pd.Series([],name=self.name))
+            return pd.Series([])
             
     def countFastx(self,filename):
         open_cmd = "zcat" * (self.compressed) + "cat" * (not self.compressed)
@@ -87,9 +92,9 @@ class SequenceCounter:
                      .decode()
                      .strip())
         if self.extension == ".fastq":
-            return result / 4
+            return int(result / 4)
         elif self.extension == ".fasta":
-            return result / 2
+            return int(result / 2)
         else:
             print("Wrong extension (neither .fasta or .fastq): {}".format(self.extension))
 

@@ -405,7 +405,7 @@ process PreLulu {
 
     vsearch --usearch_global \$fasta_noGap \
             --db \$fasta_noGap --self \
-            --id .80 \
+            --id ${params.min_match} \
             --iddef 1 \
             --userout match_list_${idThreshold}.txt \
             -userfields query+target+id \
@@ -536,7 +536,6 @@ process SummaryFile {
     """
     #!/usr/bin/env python3
 
-    import re
     from shutil import copyfile
     from generate_step_summary import write_summary
 
