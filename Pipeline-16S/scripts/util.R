@@ -140,8 +140,8 @@ esvTable <- function(minOverlap, maxMismatch, singleEnd)
     }
 
     summary <- data.frame("Sample" = sample.names,
-                          "3a-dereplication" = summary.derepF,
-                          "3b-denoising" = summary.denoisedF,
+                          "3-dereplication" = summary.derepF,
+                          "3.5-denoising" = summary.denoisedF,
                           "4-esv" = summary.merged,
                           check.names=F)
         

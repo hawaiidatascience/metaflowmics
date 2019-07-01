@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-set -o xtrace
-
 getRad() {
     files=$(ls -1 *$1 2>/dev/null)
     if [ ! -z files ]; then
@@ -9,11 +7,15 @@ getRad() {
     fi
 }
 
+set -o xtrace
+
 fasta=`getRad .fasta`
 shared=`getRad .shared`
 count=`getRad .count_table`
 tax=`getRad .taxonomy`
 list=`getRad .list`
+
+set +o xtrace
 
 pairId=all
 
@@ -66,7 +68,7 @@ if [ ! -z $idThreshold ]; then
 fi
 
 if [ $step == "MSA" ]; then
-    inputs_mothur=("${fasta}.fasta" "${count}.count_table")
+    inputs_to_copy=("${fasta}.fasta" "${count}.count_table")
     
     # output_suffix=`echo ${optimize} | sed s/-/./g`
     # out="${out}_${output_suffix}"
@@ -95,13 +97,15 @@ elif [ $step == "chimera" ]; then
 		     "${out}.count_table")
 
 elif [ $step == "subsampling" ]; then
-    cmd=("sub.sample(persample=true, fasta=${fasta}.fasta, count=${count}.count_table, size=${subsamplingNb})")
+    cmd=("sub.sample(persample=true, fasta=${fasta}.fasta, count=${count}.count_table, taxonomy= ${tax}.taxonomy, size=${subsamplingNb})")
     
     outputs_mothur=("${fasta}.subsample.fasta"
-		    "${count}.subsample.count_table")
+		    "${count}.subsample.count_table"
+		    "${tax}.subsample.taxonomy")
     
     outputs_renamed=("${out}.fasta"
-		     "${out}.count_table")
+		     "${out}.count_table"
+		     "${out}.taxonomy")
 
 elif [ $step == "clustering" ]; then
     
@@ -116,18 +120,26 @@ elif [ $step == "clustering" ]; then
 	 "get.oturep(count=${count}.count_table, fasta=${fasta}.fasta, list=${fasta}.${method}.list, method=abundance, rename=T, label=${mothurThresh}) ; "
 	)
 	
-    outputs_mothur=("${fasta}.${method}.list"
+    outputs_mothur=("${fasta}.${method}.${mothurThresh}.rep.fasta"
+		    "${count}.${method}.${mothurThresh}.rep.count_table"
 		    "${fasta}.${method}.shared"
-		    "${fasta}.${method}.${mothurThresh}.rep.fasta"
-		    "${count}.${method}.${mothurThresh}.rep.count_table")
+		    "${fasta}.${method}.list"		    
+		   )
     
-    outputs_renamed=("${out}.list" "${out}.shared" "${out}.fasta" "${out}.count_table" )
+    outputs_renamed=("${out}.fasta" "${out}.count_table" "${out}.shared" "${out}.list")
+
+elif [ $step == "preClassification" ]; then
+    suffixTax=`echo $taxRad | cut -d. -f2`.wang
+    
+    cmd=("classify.seqs(fasta=${fasta}.fasta, count=${count}.count_table, template=${refAln}, taxonomy=${refTax})")
+    
+    outputs_mothur=("${fasta}.${suffixTax}.taxonomy")
+    outputs_renamed=("${out}.taxonomy")
     
 elif [ $step == "consensusClassification" ]; then
     suffixTax=`echo $taxRad | cut -d. -f2`.wang
     
-    cmd=("classify.seqs(fasta=${fasta}.fasta, count=${count}.count_table, template=${refAln}, taxonomy=${refTax}) ; "
-	 "classify.otu(taxonomy=${fasta}.${suffixTax}.taxonomy, count=${count}.count_table, list=${list}.list, probs=f)")
+    cmd=("classify.otu(taxonomy=${tax}.taxonomy, count=${count}.count_table, list=${list}.list, probs=f)")
     
     outputs_mothur=("${list}.${mothurThresh}.cons.taxonomy"
 		    "${list}.${mothurThresh}.cons.tax.summary")
@@ -136,19 +148,37 @@ elif [ $step == "consensusClassification" ]; then
 		     "${out}.summary")
 
 elif [ $step == "taxaFilter" ]; then
-    inputs_mothur=("${tax}.taxonomy" "${shared}.shared" "${fasta}.fasta")
-    
-    cmd=("remove.lineage(constaxonomy=${tax}.taxonomy, shared=${shared}.shared, taxon='${taxaToFilter}', label=${idThreshold}) ; "
-	 "list.seqs(taxonomy=${tax}.pick.cons.taxonomy) ; "
-	 "get.seqs(fasta=${fasta}.fasta,accnos=current)")
-    
-    outputs_mothur=("${tax}.pick.cons.taxonomy"
-		    "${shared}.${idThreshold}.pick.shared"
-		    "${fasta}.pick.fasta")
-    
-    outputs_renamed=("annotations_${idThreshold}.taxonomy"
-		     "abundance_table_${idThreshold}.shared"
-		     "sequences_${idThreshold}.fasta")
+    # 2 cases depending on whether we do the taxa filtering on the taxonomy or constaxonomy file
+    # For the latter case, we need to also process the .shared file 
+    if [ -f "${shared}.shared" ]; then
+	inputs_to_copy=("${fasta}.fasta" "${shared}.shared" "${tax}.taxonomy")
+
+        outputs_mothur=("${fasta}.pick.fasta"
+			"${shared}.pick.shared"
+			"${tax}.pick.cons.taxonomy")
+	
+	outputs_renamed=("${out}.fasta"
+			 "${out}.shared"
+			 "${out}.taxonomy")
+	
+	cmd=("remove.lineage(constaxonomy=${tax}.taxonomy, shared=${shared}.shared, taxon='${taxaToFilter}') ; "
+	     "list.seqs(taxonomy=${tax}.pick.cons.taxonomy) ; "
+	     "get.seqs(fasta=${fasta}.fasta,accnos=current)")
+
+    else
+	inputs_to_copy=("${count}.fasta" "${count}.count_table" "${fasta}.taxonomy")
+
+	outputs_mothur=("${fasta}.pick.fasta"
+			"${count}.pick.count_table"
+		        "${tax}.pick.taxonomy")
+	outputs_renamed=("${out}.fasta"
+			 "${out}.count_table"
+			 "${out}.taxonomy")
+	
+	cmd=("remove.lineage(taxonomy=${tax}.taxonomy, count=${count}.count_table, taxon='${taxaToFilter}') ; "
+	     "list.seqs(taxonomy=${tax}.pick.taxonomy) ; "
+	     "get.seqs(fasta=${fasta}.fasta, accnos=current)")
+    fi
 
 elif [ $step == "postprocessing" ]; then
     cmd=("get.relabund(shared=${shared}.shared) ; "
@@ -166,7 +196,9 @@ res=$( IFS=$' '; echo "${cmd[*]}" )
 echo $res
 
 # Execute
-mothur "#${res}"
+set -o xtrace
+[ -z $MOTHUR ] && mothur "#${res}" || $MOTHUR "#${res}"
+set +o xtrace
 
 # Rename output files
 n=$((${#outputs_mothur[@]}-1))
@@ -174,14 +206,16 @@ for i in `seq 0 $n`
 do
     # if the output file exists
     if [ -e ${outputs_mothur[$i]} ]; then
+	echo "Success: Renaming ${outputs_mothur[$i]}"
 	mv ${outputs_mothur[$i]} ${outputs_renamed[$i]}
     # Special case when screen.seqs (sometime mothur doesnt produce an output file). In this case, just copy the input into the output
     elif [ $step = "MSA" ] || [ $step = "taxaFilter" ]; then
-	echo "${outputs_mothur[$i]} does not exist. Renaming."
-	cp ${inputs_mothur[$i]} ${outputs_renamed[$i]}
+	echo "WARNING: ${outputs_mothur[$i]} does not exist. Copying input."
+	cp ${inputs_to_copy[$i]} ${outputs_renamed[$i]}
     # Otherwise, raise an error
     else
-	echo "${outputs_mothur[$i]} does not exist. Aborting."
+	echo "ERROR: ${outputs_mothur[$i]} does not exist. Aborting."
 	exit 1
     fi
 done
+

@@ -4,38 +4,53 @@ import subprocess
 from os.path import basename,dirname,splitext
 import re
 
+def guess_file_extension(files):
+    extensions = { f.split(".")[-1] for f in files }
+
+    if 'shared' in extensions:
+        return ".shared"
+    else:
+        return ".count_table"
+    
+def get_file_extension(filename):
+    splits = filename.split(".")
+
+    if splits[-1]=='gz':
+        return "{}.{}".format(*splits[-2:])
+    return splits[-1]
+
 class SequenceCounter:
 
-    def __init__(self,name,
-                 folder=None,
-                 pattern=None,
-                 path=None):
+    def __init__(self, name=None, path=None):
         self.name = name
-        self.folder = folder
-        self.pattern = pattern
         self.path = path
+        self.extension = None
         self.fillInfo()
         self.setFileType()
-
+        
     def fillInfo(self):
-        if self.path is None:
-            self.path = "{}/{}".format(self.folder,self.pattern)
-        elif self.pattern is None:
-            self.folder = dirname(self.path)
-            self.pattern = basename(self.path)
-        else:
-            print("Error: You need to provide a path or [folder+pattern]")
-            exit(1)
+        if self.name is None:
+            self.name = basename(glob(dirname(self.path))[0])
+        self.step_nb = float(self.name.split('-')[0])
         try:
-            self.id_threshold = re.findall(r"\d[.]*[\d]*", self.pattern)[0]
+            self.id_threshold = re.findall(r"\d+", self.pattern)[0]
         except:
             pass
 
     def setFileType(self):
-        try:
-            file_no_ext,ext = splitext(glob(self.path)[0])
-        except IndexError: # in case the path is empty
+        files = glob(self.path)
+
+        # Special case with taxa filter where the extension can be .count_table XOR shared
+        if self.path.split(".")[-1] == "*":
+            self.extension = guess_file_extension(files)
+            self.compressed = False
+            self.path += self.extension[1:]                
+            return
+        
+        if len(files)==0:
             file_no_ext,ext = splitext(self.path)
+        else:
+            file_no_ext,ext = splitext(glob(self.path)[0])
 
         if ext == '.gz':
             self.compressed = True
@@ -44,24 +59,25 @@ class SequenceCounter:
             self.compressed = False
             self.extension = ext
 
-    def run(self):
+    def run(self,id_threshold):
         files = glob(self.path)
         print(self.name, "{} files".format(len(files)))
-
-        if len(files) == 0:
-            return pd.Series([], name=self.name)
 
         if self.extension.startswith(".fast"):
             counts = [ (basename(fastx).split("_R1")[0].replace("-","_"),
                         self.countFastx(fastx))
                        for fastx in files ]
-            return pd.Series(dict(counts),name=self.name)
+
+            return (self.step_nb,pd.Series(dict(counts),name=self.name).astype(int))
         
         elif self.extension in [".shared",".count_table",".csv",".tsv"]:
             counts = [ self.countTable(table) for table in files ]
             if len(counts) > 1:
-                counts = sorted(counts, key=lambda x: float(x.name.split("_")[-1]))
-            return pd.concat(counts,axis=1)
+                counts = [ count for count in counts if id_threshold in count.name ]
+                # counts = sorted(counts, key=lambda x: float(x.name.split("_")[-1]))
+            return (self.step_nb,pd.concat(counts,axis=1))
+        else:
+            return (self.step_nb, pd.Series([],name=self.name))
             
     def countFastx(self,filename):
         open_cmd = "zcat" * (self.compressed) + "cat" * (not self.compressed)
@@ -83,18 +99,18 @@ class SequenceCounter:
         try:
             id_threshold = float(re.findall(r"\d[.]*[\d]*",
                                             splitext(basename(filename))[0])[0])
-            name = "{0}_{1:.2g}".format(self.name,id_threshold)
+            name = "{0}_{1:d}".format(self.name,int(id_threshold))
         except:
             id_threshold = ""
                     
         if self.extension == ".shared":
-            table = pd.read_table(filename, index_col="Group").drop(["label","numOtus"],axis=1).T
+            table = pd.read_csv(filename, index_col="Group", sep='\t').drop(["label","numOtus"],axis=1).T
         elif self.extension == ".count_table":
-            table = pd.read_table(filename, index_col=0).drop("total",axis=1)
+            table = pd.read_csv(filename, index_col=0, sep="\t").drop("total",axis=1)
         elif self.extension == ".csv":
             table = pd.read_csv(filename,index_col=0)
         elif self.extension == ".tsv":
-            table = pd.read_table(filename,index_col=0)
+            table = pd.read_csv(filename,index_col=0,sep='\t')
         else:
             print("Wrong extension (neither .shared or .count_table): {}".format(self.extension))
 
