@@ -96,38 +96,6 @@ elif [ $step == "chimera" ]; then
     outputs_renamed=("${out}.fasta"
 		     "${out}.count_table")
 
-elif [ $step == "subsampling" ]; then
-    cmd=("sub.sample(persample=true, fasta=${fasta}.fasta, count=${count}.count_table, taxonomy= ${tax}.taxonomy, size=${subsamplingNb})")
-    
-    outputs_mothur=("${fasta}.subsample.fasta"
-		    "${count}.subsample.count_table"
-		    "${tax}.subsample.taxonomy")
-    
-    outputs_renamed=("${out}.fasta"
-		     "${out}.count_table"
-		     "${out}.taxonomy")
-
-elif [ $step == "clustering" ]; then
-    
-    if [ ${idThreshold} -eq 100 ]; then
-	method="unique"
-    else
-	method="dgc"
-    fi
-
-    cmd=("cluster(count=${count}.count_table, fasta=${fasta}.fasta, method=${method}, cutoff=${mothurThresh}) ; "
-	 "make.shared(list=${fasta}.${method}.list, count=${count}.count_table) ; "
-	 "get.oturep(count=${count}.count_table, fasta=${fasta}.fasta, list=${fasta}.${method}.list, method=abundance, rename=T, label=${mothurThresh}) ; "
-	)
-	
-    outputs_mothur=("${fasta}.${method}.${mothurThresh}.rep.fasta"
-		    "${count}.${method}.${mothurThresh}.rep.count_table"
-		    "${fasta}.${method}.shared"
-		    "${fasta}.${method}.list"		    
-		   )
-    
-    outputs_renamed=("${out}.fasta" "${out}.count_table" "${out}.shared" "${out}.list")
-
 elif [ $step == "preClassification" ]; then
     suffixTax=`echo $taxRad | cut -d. -f2`.wang
     
@@ -136,6 +104,17 @@ elif [ $step == "preClassification" ]; then
     outputs_mothur=("${fasta}.${suffixTax}.taxonomy")
     outputs_renamed=("${out}.taxonomy")
     
+elif [ $step == "clustering" ]; then
+    method=`[ ${idThreshold} -eq 100 ] && echo 'unique' || echo 'dgc'`
+
+    cmd=("cluster(count=${count}.count_table, fasta=${fasta}.fasta, method=${method}, cutoff=${mothurThresh}) ; "
+	 "make.shared(list=${fasta}.${method}.list, count=${count}.count_table)")
+	
+    outputs_mothur=("${fasta}.${method}.shared"
+		    "${fasta}.${method}.list")
+    
+    outputs_renamed=("${out}.shared" "${out}.list")
+
 elif [ $step == "consensusClassification" ]; then
     suffixTax=`echo $taxRad | cut -d. -f2`.wang
     
@@ -147,10 +126,40 @@ elif [ $step == "consensusClassification" ]; then
     outputs_renamed=("${out}.taxonomy"
 		     "${out}.summary")
 
+elif [ $step == "otuRepr" ]; then
+    cmd=("get.oturep(count=${count}.count_table, fasta=${fasta}.fasta, list=${list}.list, method=abundance, rename=T)")
+
+    outputs_mothur=("${list}.${mothurThresh}.rep.fasta")
+    outputs_renamed=("${out}.fasta")
+
+elif [ $step == "subsampling" ]; then
+    cmd=("sub.sample(persample=true, fasta=${fasta}.fasta, constaxonomy=${tax}.taxonomy, shared=${shared}.shared, size=${subsamplingNb})")
+    inputs_to_copy=("${fasta}.fasta")
+    
+    outputs_mothur=("${fasta}.subsample.fasta"
+		    "${tax}.subsample.taxonomy"
+		    "${shared}.${mothurThresh}.subsample.shared")
+    
+    outputs_renamed=("${out}.fasta"
+		     "${out}.taxonomy"
+		     "${out}.shared")
+
 elif [ $step == "taxaFilter" ]; then
     # 2 cases depending on whether we do the taxa filtering on the taxonomy or constaxonomy file
     # For the latter case, we need to also process the .shared file 
-    if [ -f "${shared}.shared" ]; then
+    if [ -f "${shared}.list" ]; then
+	inputs_to_copy=("${tax}.taxonomy" "${list}.list" "${shared}.shared")
+
+        outputs_mothur=("${tax}.pick.cons.taxonomy"
+			"${list}.${mothurThresh}.pick.list"
+			"${shared}.${mothurThresh}.pick.shared")
+			
+	outputs_renamed=("${out}.taxonomy"
+			 "${out}.list"
+			 "${out}.shared")
+	
+	cmd=("remove.lineage(constaxonomy=${tax}.taxonomy, shared=${shared}.shared, list=${list}.list, taxon='${taxaToFilter}') ; ")
+    else
 	inputs_to_copy=("${fasta}.fasta" "${shared}.shared" "${tax}.taxonomy")
 
         outputs_mothur=("${fasta}.pick.fasta"
@@ -165,19 +174,6 @@ elif [ $step == "taxaFilter" ]; then
 	     "list.seqs(taxonomy=${tax}.pick.cons.taxonomy) ; "
 	     "get.seqs(fasta=${fasta}.fasta,accnos=current)")
 
-    else
-	inputs_to_copy=("${count}.fasta" "${count}.count_table" "${fasta}.taxonomy")
-
-	outputs_mothur=("${fasta}.pick.fasta"
-			"${count}.pick.count_table"
-		        "${tax}.pick.taxonomy")
-	outputs_renamed=("${out}.fasta"
-			 "${out}.count_table"
-			 "${out}.taxonomy")
-	
-	cmd=("remove.lineage(taxonomy=${tax}.taxonomy, count=${count}.count_table, taxon='${taxaToFilter}') ; "
-	     "list.seqs(taxonomy=${tax}.pick.taxonomy) ; "
-	     "get.seqs(fasta=${fasta}.fasta, accnos=current)")
     fi
 
 elif [ $step == "postprocessing" ]; then
@@ -197,7 +193,7 @@ echo $res
 
 # Execute
 set -o xtrace
-[ -z $MOTHUR ] && mothur "#${res}" || $MOTHUR "#${res}"
+mothur "#${res}"
 set +o xtrace
 
 # Rename output files
@@ -206,11 +202,11 @@ for i in `seq 0 $n`
 do
     # if the output file exists
     if [ -e ${outputs_mothur[$i]} ]; then
-	echo "Success: Renaming ${outputs_mothur[$i]}"
+	echo "Success: Renaming ${outputs_mothur[$i]} to ${outputs_renamed[$i]}"
 	mv ${outputs_mothur[$i]} ${outputs_renamed[$i]}
     # Special case when screen.seqs (sometime mothur doesnt produce an output file). In this case, just copy the input into the output
-    elif [ $step = "MSA" ] || [ $step = "taxaFilter" ]; then
-	echo "WARNING: ${outputs_mothur[$i]} does not exist. Copying input."
+    elif [ $step = "MSA" ] || [ $step = "taxaFilter" ] || [ $step = "subsampling" ]; then
+	echo "WARNING: ${outputs_mothur[$i]} does not exist. Copying input (${inputs_to_copy[$i]})."
 	cp ${inputs_to_copy[$i]} ${outputs_renamed[$i]}
     # Otherwise, raise an error
     else

@@ -9,10 +9,10 @@ def write_summary(root_dir,data_dir,id_threshold):
              ("*multipleSequenceAlignment","all_MSA.count_table"),
              ("*chimeraRemoval","all_chimera.count_table"),
              ("*preClassification","*.taxonomy"),
-             ("*taxaFilter","all_taxaFilter*.*"),
-             ("*subsampling","all_subsampling.count_table"),
-             ("*clustering","all_clustering_*.shared"),
              ("*consensusClassification","*.taxonomy"),             
+             ("*clustering","all_clustering_*.shared"),
+             ("*taxaFilter","all_taxaFilter*.*"),
+             ("*subsampling","all_subsampling*.shared"),
              ("*lulu","lulu_table_*.csv"),
              ("*singletonFilter","singleton_filtered_*.shared")
     ]

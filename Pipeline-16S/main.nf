@@ -50,7 +50,7 @@ Channel
 process FilterAndTrim {
     // Quality filter and trimming using dada2. 
     tag { "FilterAndTrim.${pairId}" }
-    publishDir output_dirs[0], mode: "copy"
+    publishDir output_dirs[0], mode: "copy", pattern: "*.{fastq,png}"
     label "low_computation"
     
     input:
@@ -94,7 +94,7 @@ FASTQ_TRIMMED_RAW
 
 process LearnErrors {
     tag { "LearnErrors.${pairId}" }
-    publishDir output_dirs[1], mode: "copy"
+    publishDir output_dirs[1], mode: "copy", pattern: "*.{RDS,png}"
     label "medium_computation"
 
     input:
@@ -121,7 +121,7 @@ process LearnErrors {
 
 process Denoise {
     tag { "Denoising.${pairId}" }
-    publishDir output_dirs[2], mode: "copy"
+    publishDir output_dirs[2], mode: "copy", pattern: "*.RDS"
     label "medium_computation"
     
     input:
@@ -196,8 +196,6 @@ process MultipleSequenceAlignment {
     """
     #!/usr/bin/env bash
 
-    export MOTHUR=mothur1_41_3
-
     ${script_dir}/mothur.sh \
        --step=MSA \
        --refAln=${params.referenceAln} \
@@ -214,14 +212,14 @@ process MultipleSequenceAlignment {
 
 process ChimeraRemoval {
     tag { "chimeraRemoval" }
-    publishDir output_dirs[5], mode: "copy"
+    publishDir output_dirs[5], mode: "copy", pattern: "*.{fasta,count_table}"
     label "high_computation"
     
     input:
-	set file(count), file(fasta) from DEREP_CONTIGS_ALN
+	set file(fasta), file(count) from DEREP_CONTIGS_ALN
 
     output:
-        file("all_chimera.{count_table,fasta}") into NO_CHIMERA_FASTA
+        file("all_chimera.{fasta,count_table}") into (NO_CHIMERA_FASTA, FASTA_FOR_REPR)
     
     script:
     """
@@ -231,7 +229,7 @@ process ChimeraRemoval {
 
 process PreClassification {
     tag { "preClassification" }
-    publishDir output_dirs[6], mode: "copy"
+    publishDir output_dirs[6], mode: "copy", pattern: "*.taxonomy"
     label "high_computation"
     
     input:
@@ -250,87 +248,6 @@ process PreClassification {
 }
 
 /*
-Positioning of taxa filtering (here or at the end)
---> Redirect channel depending on the choice
-*/
-
-(CLASSIFIED_CONTIGS_1, CLASSIFIED_CONTIGS_2) = ( params.taxaFilterAtEnd
-						? [Channel.empty(), PRE_CLASSIFIED_CONTIGS]
-						: [PRE_CLASSIFIED_CONTIGS, Channel.empty()] )
-
-process TaxaFilterInterm {
-    tag { "convertToMothur.${idThreshold}" }
-    publishDir output_dirs[7], mode: "copy"
-    errorStrategy "${params.errorsHandling}"
-    label "medium_computation"    
-    
-    input:
-	set file(count), file(fasta), file(tax) from CLASSIFIED_CONTIGS_1
-    output:
-        file("all_taxaFilter.{count_table,fasta,taxonomy}")  into INTERM_TAXA_FILTER
-        // set file("all_taxaFilter.count_table"), file(fasta), file(tax) into COUNTS_FOR_SUBSAMPLING_EST
-    
-    script:
-    """
-    ${script_dir}/mothur.sh \
-	--step=taxaFilter \
-        --taxaToFilter='${params.taxaToFilter}' \
-	--refAln=${params.referenceAln} \
-	--refTax=${params.referenceTax}
-    """
-}
-
-process GetSubsamlingValue {
-    errorStrategy "${params.errorsHandling}"
-    label "low_computation"    
-    
-    input:
-	set file(count), file(fasta), file(tax) from INTERM_TAXA_FILTER.mix(CLASSIFIED_CONTIGS_2)
-    output:
-	stdout thresh into SUBSAMPLING_THRESHOLDS
-        set file(count), file(fasta), file(tax) into FOR_SUBSAMPLING
-    
-    script:
-    """
-    #!/usr/bin/env python3
-     
-    from util import getSubsamplingThreshold
-
-    getSubsamplingThreshold("${count}",${params.subsamplingQuantile},${params.minSubsampling})   
-    """    
-}
-
-(SUBSAMPLING_IN, ALT_CHANNEL) = ( params.skipSubsampling
-				 ? [Channel.empty(), FOR_SUBSAMPLING]
-				 : [FOR_SUBSAMPLING, Channel.empty()] )
-
-/*
- *
- * Subsampling the samples to the 10th percentile or 1k/sample if the 10th pct is below 1k (in scripts/mothur.sh)
- *
- */
-
-process Subsampling {
-    tag { "subsampling" }
-    publishDir output_dirs[8], mode: "copy"
-    label "medium_computation"
-    
-    input:
-	set file(count), file(fasta), file(tax), val(subSampThresh) from SUBSAMPLING_IN.combine(SUBSAMPLING_THRESHOLDS.splitText())
-        
-    output:
-	file("all_subsampling.{count_table,fasta,taxonomy}") into SUBSAMPLED_CONTIGS
-
-    script:
-    """
-    #!/usr/bin/env bash
-
-    export MOTHUR=mothur1_41_3
-    ${script_dir}/mothur.sh --step=subsampling --subsamplingNb=${subSampThresh}
-    """
-}
-
-/*
  *
  * Clustering with VSEARCH, dgc method (in scripts/mothur.sh)
  *
@@ -338,16 +255,15 @@ process Subsampling {
 
 process Clustering {
     tag { "clustering.${idThreshold}" }
-    publishDir output_dirs[9], mode: "copy", pattern: "all_clustering*.{fasta,shared,list}"
+    publishDir output_dirs[7], mode: "copy", pattern: "all_clustering*.{fasta,shared,list}"
     label "high_computation"
     
     input:
-	set file(count), file(fasta), file(tax) from SUBSAMPLED_CONTIGS.mix(ALT_CHANNEL)
+	set file(count), file(fasta), file(tax) from PRE_CLASSIFIED_CONTIGS
         each idThreshold from clusteringThresholds
     output:
-        set val(idThreshold), file("all_clustering_*.fasta") into PRELULU_FASTA, FASTA_TO_FILTER
-        set val(idThreshold), file("all_clustering_*.shared") into ABUNDANCE_TABLES
-        set val(idThreshold), file(count), file(tax), file("all_clustering_*.list") into CONTIGS_FOR_CLASSIFICATION
+        set val(idThreshold), file(count), file(tax), file("all_clustering_*.list"), file("all_clustering_*.shared") \
+    into CONTIGS_FOR_CLASSIFICATION
     script:
     """
     ${script_dir}/mothur.sh --step=clustering --idThreshold=${idThreshold}
@@ -362,14 +278,14 @@ process Clustering {
 
 process ConsensusClassification {
     tag { "consensusClassification.${idThreshold}" }
-    publishDir output_dirs[10], mode: "copy"
-    label "high_computation"    
+    publishDir output_dirs[8], mode: "copy", pattern: "all_consensusClassification*.{summary,taxonomy}"
+    label "medium_computation"    
     
     input:
-	set val(idThreshold), file(count), file(tax), file(list) from CONTIGS_FOR_CLASSIFICATION
+	set val(idThreshold), file(count), file(tax), file(list), file(shared) from CONTIGS_FOR_CLASSIFICATION
     output:
 	file("all_consensusClassification_*.summary") into CLASSIFICATION_SUMMARY
-	set val(idThreshold), file("all_consensusClassification_*.taxonomy") into CONSENSUS_TAXONOMY
+        set val(idThreshold), file("all_consensusClassification_*.taxonomy"), file(list), file(shared) into CONSTAXONOMY_CONTIGS
     script:
     """
     ${script_dir}/mothur.sh --step=consensusClassification \
@@ -378,6 +294,111 @@ process ConsensusClassification {
  	--refTax=${params.referenceTax}
     """
 }
+
+/*
+Positioning of taxa filtering (here or at the end)
+--> Redirect channel depending on the choice
+*/
+
+(CLASSIFIED_CONTIGS_1, CLASSIFIED_CONTIGS_2) = ( params.taxaFilterAtEnd
+						? [Channel.empty(), CONSTAXONOMY_CONTIGS]
+						: [CONSTAXONOMY_CONTIGS, Channel.empty()] )
+
+process TaxaFilterInterm {
+    tag { "convertToMothur.${idThreshold}" }
+    publishDir output_dirs[9], mode: "copy"
+    errorStrategy "${params.errorsHandling}"
+    label "medium_computation"    
+    
+    input:
+	set val(idThreshold), file(tax), file(list), file(shared) from CLASSIFIED_CONTIGS_1
+    output:
+        set val(idThreshold), file("all_taxaFilter*.taxonomy"), file("all_taxaFilter*.list"), file("all_taxaFilter*.shared") \
+        into INTERM_TAXA_FILTER
+    script:
+    """
+    ${script_dir}/mothur.sh \
+	--step=taxaFilter \
+        --idThreshold=${idThreshold} \
+        --taxaToFilter='${params.taxaToFilter}' \
+	--refAln=${params.referenceAln} \
+	--refTax=${params.referenceTax}
+    """
+}
+
+OTU_REPR_IN = INTERM_TAXA_FILTER.mix(CLASSIFIED_CONTIGS_2)
+
+process OtuRepresentative {
+    tag { "OtuRepresentative.${idThreshold}" }
+    errorStrategy "${params.errorsHandling}"
+    label "medium_computation"    
+    
+    input:
+	set val(idThreshold), file(tax), file(list), file(shared), file(fasta), file(count) \
+        from OTU_REPR_IN.combine(FASTA_FOR_REPR)
+    output:
+        set val(idThreshold), file("*.fasta"), file(tax), file(shared) into FOR_SUBSAMPLING
+        set val(idThreshold), file(shared) into SUBSAMPLING_EST    
+    script:
+    """
+    ${script_dir}/mothur.sh --step=otuRepr --idThreshold=${idThreshold}
+    """    
+}
+
+process GetSubsamlingValue {
+    errorStrategy "${params.errorsHandling}"
+    label "low_computation"    
+    
+    input:
+	set val(idThreshold), file(shared) from SUBSAMPLING_EST
+    output:
+	set val(idThreshold), stdout into SUBSAMPLING_THRESHOLDS
+    
+    script:
+    """
+    #!/usr/bin/env python3
+     
+    from util import getSubsamplingThreshold
+
+    getSubsamplingThreshold("${shared}",${params.subsamplingQuantile},${params.minSubsampling})   
+    """    
+}
+
+
+(SUBSAMPLING_IN, ALT_CHANNEL) = ( params.skipSubsampling
+				 ? [Channel.empty(), FOR_SUBSAMPLING]
+				 : [FOR_SUBSAMPLING, Channel.empty()] )
+
+/*
+ *
+ * Subsampling the samples to the 10th percentile or 1k/sample if the 10th pct is below 1k (in scripts/mothur.sh)
+ *
+ */
+
+process Subsampling {
+    tag { "subsampling" }
+    publishDir output_dirs[10], mode: "copy"
+    label "medium_computation"
+    
+    input:
+	set val(idThreshold), file(fasta), file(tax), file(shared), val(subSampThresh) \
+        from SUBSAMPLING_IN.join(SUBSAMPLING_THRESHOLDS)
+
+    output:
+	set val(idThreshold), file("all_subsampling*.fasta"), file("all_subsampling*.taxonomy"), file("all_subsampling*.shared") \
+        into SUBSAMPLED_OUT
+    
+    script:
+    """
+    #!/usr/bin/env bash
+
+    ${script_dir}/mothur.sh --step=subsampling --idThreshold=${idThreshold} --subsamplingNb=${subSampThresh} 
+    """
+}
+
+(CONTIGS_FOR_PRELULU,FASTA_TO_FILTER,SUBSAMPLED_TAX,ABUNDANCE_TABLES_FOR_LULU) = SUBSAMPLED_OUT
+    .mix(ALT_CHANNEL)
+    .separate(4) { x -> [ tuple(x[0],x[1]), tuple(x[0],x[1]), tuple(x[0],x[2]), tuple(x[0],x[3]) ] }
 
 /*
  *
@@ -393,7 +414,7 @@ process PreLulu {
     label "medium_computation"
     
     input:
-	set val(idThreshold),file(fasta) from PRELULU_FASTA
+	set val(idThreshold),file(fasta) from CONTIGS_FOR_PRELULU
     output:
 	set val(idThreshold),file("match_list_${idThreshold}.txt") into MATCH_LISTS
     script:
@@ -405,7 +426,7 @@ process PreLulu {
 
     vsearch --usearch_global \$fasta_noGap \
             --db \$fasta_noGap --self \
-            --id ${params.min_match} \
+            --id 0.${params.min_match} \
             --iddef 1 \
             --userout match_list_${idThreshold}.txt \
             -userfields query+target+id \
@@ -428,9 +449,9 @@ process Lulu {
     label "high_computation"    
 
     input:
-	set val(idThreshold),file(matchlist),file(table) from MATCH_LISTS.join(ABUNDANCE_TABLES)
+	set val(idThreshold),file(matchlist),file(table) from MATCH_LISTS.join(ABUNDANCE_TABLES_FOR_LULU)
     output:
-        set val(idThreshold), file("lulu_table_${idThreshold}.csv") into LULU_TO_FILTER
+        set val(idThreshold), file("lulu_table_${idThreshold}.csv") into TABLE_TO_FILTER
         file("lulu_ids_${idThreshold}.csv") into IDS_LULU
         file("lulu*.log_*") optional true
     script:
@@ -458,9 +479,9 @@ process SingletonFilter {
     label "low_computation"    
     
     input:
-	set idThreshold,file(abundance),file(tax),file(fasta) from LULU_TO_FILTER.join(CONSENSUS_TAXONOMY).join(FASTA_TO_FILTER)
+	set idThreshold, file(fasta), file(abundance), file(tax) from FASTA_TO_FILTER.join(TABLE_TO_FILTER).join(SUBSAMPLED_TAX)
     output:
-        set val(idThreshold), file("singleton_filtered_*.{fasta,shared,taxonomy}") into FOR_TAXA_FILTER
+        set idThreshold, file("singleton_filtered_*.{fasta,shared,taxonomy}") into FOR_TAXA_FILTER
     script:
     """
     #!/usr/bin/env python3
@@ -491,18 +512,12 @@ process TaxaFilterEnd {
     label "medium_computation"    
     
     input:
-	set val(idThreshold), file(fasta), file(shared), file(tax) from TAXA_FILT_IN
+	set val(idThreshold), file(f) from TAXA_FILT_IN
     output:
         set val(idThreshold), file("all_taxaFilter_*.{fasta,shared,taxonomy}") into TAXA_FILT_OUT
     
     script:
     """
-    # Need to modify names to have consistent output between [TaxaFilterEnd] = true and false
-
-    ## mv ${fasta} seq_${idThreshold}.fasta
-    ## mv ${shared} table_${idThreshold}.shared
-    ## mv ${tax} annot_${idThreshold}.taxonomy
-
     ${script_dir}/mothur.sh \
 	--step=taxaFilter \
         --idThreshold=${idThreshold} \

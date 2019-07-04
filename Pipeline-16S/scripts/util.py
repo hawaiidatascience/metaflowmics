@@ -3,9 +3,10 @@
 from Bio import SeqIO
 import pandas as pd
 
-def getSubsamplingThreshold(countFile,quantile,minValue):
-    table = pd.read_csv(countFile, index_col=0, sep="\t").drop("total",axis=1)
-    sample_sizes = table.sum(axis=0).sort_values(ascending=False) 
+def getSubsamplingThreshold(sharedFile,quantile,minValue):
+    table = pd.read_csv(sharedFile, index_col="Group", sep="\t").drop(["label","numOtus"],axis=1)
+    
+    sample_sizes = table.sum(axis=1).sort_values(ascending=False) 
     threshold = int(sample_sizes.quantile(quantile))
 
     if threshold > minValue:
