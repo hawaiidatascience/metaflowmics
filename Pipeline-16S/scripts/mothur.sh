@@ -193,7 +193,7 @@ echo $res
 
 # Execute
 set -o xtrace
-mothur "#${res}"
+[ -z $MOTHUR ] && mothur "#${res}" || $MOTHUR/mothur "#${res}"
 set +o xtrace
 
 # Rename output files

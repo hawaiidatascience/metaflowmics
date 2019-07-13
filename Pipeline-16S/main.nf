@@ -223,6 +223,7 @@ process ChimeraRemoval {
     
     script:
     """
+    export MOTHUR=\$HOME/.local/bin/mothur_1-41-3
     ${script_dir}/mothur.sh --step=chimera
     """
 }
