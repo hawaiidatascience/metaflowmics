@@ -180,7 +180,7 @@ elif [ $step == "postprocessing" ]; then
     cmd=("get.relabund(shared=${shared}.shared) ; "
 	 "clearcut(fasta=${fasta}.fasta, DNA=T) ; "
 	 "count.seqs(shared=${shared}.shared) ; "
-	 "unifrac.weighted(tree=current,count=current) ; "
+	 "unifrac.weighted(tree=current,count=current,distance=lt) ; "
 	 "summary.single(shared=${shared}.shared,calc=nseqs-sobs-chao-shannon-shannoneven) ; "
 	 "summary.shared(shared=${shared}.shared,calc=braycurtis-thetayc-sharedsobs-sharedchao)")
 fi;
