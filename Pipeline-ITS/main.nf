@@ -42,11 +42,20 @@ if (params.help){
     exit 0
 }
 
+// Add the step number
+output_dirs = params.results_folders.indexed().collect { idx,name -> "${params.outdir}/${1+idx}-${name}" }
+
 def clusteringThresholds = params.clusteringThresholds.split(',').collect{it as int}
 clusteringThresholds.removeAll{ it == 100}
 
+if ( !params.pairedEnd ) {
+    read_path = params.reads.replaceAll("\\{1,2\\}","1")
+} else {
+    read_path = params.reads
+}
+
 Channel
-    .fromFilePairs( params.reads, size: params.pairedEnd ? 2 : 1 )
+    .fromFilePairs( read_path, size: params.pairedEnd ? 2 : 1 )
     .ifEmpty { error "Cannot find any reads matching: ${params.reads}" }
     .set { INPUT_FASTQ }
 
@@ -76,7 +85,7 @@ log.info "========================================="
 process PreFiltering {
     tag { "pre_filter.${pairId}" }
     label "low_computation"
-    publishDir "${params.outdir}/1-preFiltering", mode: "copy", pattern: "{*.fastq*, *.txt}"
+    publishDir output_dirs[0], mode: "copy", pattern: "{*.fastq*, *.txt}"
     errorStrategy "${params.errorsHandling}"
 
     input:
@@ -89,11 +98,12 @@ process PreFiltering {
     #!/usr/bin/env bash
 
     read_pair=(${fastq})
+    fwd=\${read_pair[0]}
 
-    if [ "\${filename##*.}" == "gz"]; then
-        nlines=`zcat \${read_pair[0]} | wc -l`
+    if [ "\${fwd##*.}" == "gz" ]; then
+        nlines=`zcat \$fwd | wc -l`
     else
-        nlines=`cat \${read_pair[0]} | wc -l`
+        nlines=`cat \$fwd | wc -l`
     fi
 
     echo \$((\${nlines}/4))
@@ -115,7 +125,7 @@ INPUT_FASTQ_LEN
 process ExtractITS {
     tag { "ITSextraction.${pairId}" }
     label "low_computation"    
-    publishDir "${params.outdir}/2-ITSxpress", mode: "copy"
+    publishDir output_dirs[1], mode: "copy"
     errorStrategy "${params.errorsHandling}"
     
     input:
@@ -148,7 +158,7 @@ process ExtractITS {
 process RemoveSmallAndNseqs {
     tag { "removeN.${pairId}" }
     label "low_computation"        
-    publishDir "${params.outdir}/3-NandSmallSeqsFiltering", mode: "copy"
+    publishDir output_dirs[2], mode: "copy"
     errorStrategy "${params.errorsHandling}"
 
     input:
@@ -180,7 +190,7 @@ process RemoveSmallAndNseqs {
 process QcFilter {
     tag { "filteredITS.${pairId}" }
     label "low_computation"
-    publishDir "${params.outdir}/4-qualityFiltering", mode: "copy"
+    publishDir output_dirs[3], mode: "copy"
     errorStrategy "${params.errorsHandling}"
 
     input:
@@ -227,7 +237,7 @@ FILTERED_FASTQ_ALL
 process Dereplication {
     tag { "dereplication.${pairId}" }
     label "low_computation"        
-    publishDir "${params.outdir}/5-Dereplication", mode: "copy"
+    publishDir output_dirs[4], mode: "copy"
 
     errorStrategy "${params.errorsHandling}"
     
@@ -258,7 +268,7 @@ process Dereplication {
 process ChimeraRemoval {
     tag { "ChimeraRemoval.${pairId}" }
     label "low_computation"        
-    publishDir "${params.outdir}/6-ChimeraRemoval", mode: "copy"
+    publishDir output_dirs[5], mode: "copy"
     errorStrategy "${params.errorsHandling}"
 
     input:
@@ -302,7 +312,7 @@ DEREP_FASTA_NO_CHIMERA
 process LearnErrors {
     tag { "LearnErrors.${pairId}" }
     label "low_computation"
-    publishDir "${params.outdir}/7-Denoising", mode: "copy", pattern: "*{.RDS,.png}"
+    publishDir output_dirs[6], mode: "copy", pattern: "*{.RDS,.png}"
     errorStrategy "${params.errorsHandling}"
     
     input:
@@ -334,7 +344,7 @@ process LearnErrors {
 process Denoise {
     tag { "Denoising.${pairId}" }
     label "low_computation"        
-    publishDir "${params.outdir}/7-Denoising", mode: "copy"
+    publishDir output_dirs[6], mode: "copy"
     errorStrategy "${params.errorsHandling}"
 
     input:
@@ -361,7 +371,7 @@ process Denoise {
 process MakeEsvTable {
     tag { "esvTable" }
     label "high_computation"        
-    publishDir "${params.outdir}/8-Clustering", mode: "copy"
+    publishDir output_dirs[7], mode: "copy"
     errorStrategy "${params.errorsHandling}"
     
     input:
@@ -391,7 +401,7 @@ process MakeEsvTable {
 process MergeFastas {
     tag { "mergeFastas" }
     label "medium_computation"
-    publishDir "${params.outdir}/8-Clustering", mode: "copy"
+    publishDir output_dirs[7], mode: "copy"
     errorStrategy "${params.errorsHandling}"
     
     input:
@@ -402,8 +412,6 @@ process MergeFastas {
     """
     #!/usr/bin/env python3
 
-    import sys
-    sys.path.append("${workflow.projectDir}/scripts")
     from util import mergeSamplesFa
 
     mergeSamplesFa()
@@ -419,7 +427,7 @@ process MergeFastas {
 process Clustering {
     tag { "clustering.${idThreshold}" }
     label "high_computation"    
-    publishDir "${params.outdir}/8-Clustering", mode: "copy"
+    publishDir output_dirs[7], mode: "copy"
     errorStrategy "${params.errorsHandling}"
     
     input:
@@ -455,13 +463,13 @@ ALL_SAMPLES = OTU_ALL_SAMPLES.mix(ESV_ALL_SAMPLES)
 /*
  *
  * Preliminary step before LULU: blast each contig against the others to look for sequence similarities
- *
+1 *
  */
 
 process PreLulu {
     tag { "preLulus.${idThreshold}" }
     label "high_computation"    
-    publishDir "${params.outdir}/9-LULU_correction", mode: "copy"
+    publishDir output_dirs[8], mode: "copy"
     errorStrategy "${params.errorsHandling}"
 
     input:
@@ -493,8 +501,8 @@ process PreLulu {
 process Lulu {
     tag { "Lulu.${idThreshold}" }
     label "medium_computation"    
-    publishDir "${params.outdir}/9-LULU_correction", mode: "copy"
-    publishDir "${params.outdir}/11-Postprocessing", mode: "copy", pattern: "{*.fasta,abundance_table_*.csv}"
+    publishDir output_dirs[8], mode: "copy"
+    publishDir output_dirs[10], mode: "copy", pattern: "{abundance_table_*.csv}"
     errorStrategy "${params.errorsHandling}"
 
     input:
@@ -522,14 +530,14 @@ process Lulu {
 process ExtractFastaLulu {
     label "high_computation"
     tag { "extractFastaLulu.${idThreshold}" }
-    publishDir "${params.outdir}/10-taxonomy", mode: "copy", pattern: "*.fasta"
-    publishDir "${params.outdir}/11-Postprocessing", mode: "copy", pattern: "*.fasta"    
+    publishDir output_dirs[9], mode: "copy", pattern: "*.fasta"
+    publishDir output_dirs[10], mode: "copy", pattern: "*.fasta"    
     errorStrategy "${params.errorsHandling}"
     
     input:
 	set idThreshold,file(ids),file(fasta) from IDS_LULU.join(ALL_SAMPLES)
     output:
-	set idThreshold,file("sequences_${idThreshold}.fasta") into FASTA_LULU, FASTA_LULU_FOR_SUMMARY
+	set idThreshold,file("sequences_${idThreshold}.fasta") into FASTA_LULU //, FASTA_LULU_FOR_SUMMARY
     script:
 	
     """
@@ -547,8 +555,8 @@ process ExtractFastaLulu {
 process ClassificationSintax {
     tag { "classification.${idThreshold}" }
     label "high_computation"
-    publishDir "${params.outdir}/10-taxonomy", mode: "copy", pattern: "*.tsv"
-    publishDir "${params.outdir}/11-Postprocessing", mode: "copy", pattern: "annotations*.tsv"
+    publishDir output_dirs[9], mode: "copy", pattern: "*.tsv"
+    publishDir output_dirs[10], mode: "copy", pattern: "annotations*.tsv"
     errorStrategy "${params.errorsHandling}"
 
     input:
@@ -573,23 +581,22 @@ process ClassificationSintax {
 
 process SummaryFile {
     tag { "summary" }
-    publishDir "${params.outdir}/11-Postprocessing", mode: "copy", pattern: "*.{tsv,fasta}"
+    publishDir output_dirs[10], mode: "copy", pattern: "*.{tsv,fasta}"
     errorStrategy "${params.errorsHandling}"
     label "medium_computation"
     
     input:
-	file f from FASTA_LULU_FOR_SUMMARY.collect()
-        file i from DENOISING_SUMMARY
+        file f1 from DENOISING_SUMMARY
+        set val(idThreshold), file(f) from TAXONOMY
+        // set val(idThreshold), file(f2)) from FASTA_LULU_FOR_SUMMARY
     output:
-        file("sequences*.tsv")
+        file("sequences_per_sample_per_step*.tsv")
     script:
     """
     #!/usr/bin/env python3
-    import sys
-    sys.path.append("${workflow.projectDir}/scripts")
     from generate_step_summary import write_summary
 
-    write_summary("${params.outdir}","${params.reads}")
+    write_summary("${params.outdir}","${params.reads}","${idThreshold}")
     """
 }
 

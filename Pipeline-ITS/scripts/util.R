@@ -37,7 +37,7 @@ learnErrorRates <- function(noChimeraDerepFile,pairId)
                           nbases=1e8)
 
     fig <- plotErrors(errors, nominalQ=TRUE)
-    ggsave(paste0("R1_",pairId,"_err.png"), plot=fig, type="cairo-png")
+    ggsave(paste0(pairId,"_R1_err.png"), plot=fig, type="cairo-png")
 
     saveRDS(errors, paste0(pairId,"_errors.RDS"))
 }

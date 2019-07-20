@@ -34,8 +34,14 @@ def clusteringThresholds = params.clusteringThresholds.split(',').collect{it as 
  *
  */
 
+if ( params.singleEnd ) {
+    read_path = params.reads.replaceAll("\\{1,2\\}","1")
+} else {
+    read_path = params.reads
+}
+
 Channel
-    .fromFilePairs( params.reads, size: params.singleEnd ? 1 : 2 )
+    .fromFilePairs( read_path, size: params.singleEnd ? 1 : 2 )
     .ifEmpty { error "Cannot find any reads matching: ${params.reads}" }
     .map { it -> tuple(it[0].replaceAll("-","_"), it[1]) }
     .set { INPUT_FASTQ }
@@ -52,6 +58,7 @@ process FilterAndTrim {
     tag { "FilterAndTrim.${pairId}" }
     publishDir output_dirs[0], mode: "copy", pattern: "*.{fastq,png}"
     label "low_computation"
+    label "r_script"
     
     input:
         set val(pairId), file(fastq) from INPUT_FASTQ
@@ -96,7 +103,8 @@ process LearnErrors {
     tag { "LearnErrors.${pairId}" }
     publishDir output_dirs[1], mode: "copy", pattern: "*.{RDS,png}"
     label "medium_computation"
-
+    label "r_script"
+    
     input:
 	set val(pairId), file(fastq) from FASTQ_TRIMMED_FOR_MODEL
     output:
@@ -123,6 +131,7 @@ process Denoise {
     tag { "Denoising.${pairId}" }
     publishDir output_dirs[2], mode: "copy", pattern: "*.RDS"
     label "medium_computation"
+    label "r_script"
     
     input:
         set val(pairId), file(err), file(fastq) from ERROR_MODEL.join(FASTQ_TRIMMED)
@@ -157,6 +166,7 @@ process Esv {
     publishDir output_dirs[3], mode: "copy"
     
     label "high_computation"
+    label "r_script"
     
     input:
 	file dadas from DADA_RDS.collect()
@@ -185,7 +195,8 @@ process MultipleSequenceAlignment {
     tag { "MSA" }
     publishDir output_dirs[4], mode: "copy"
     label "high_computation"
-
+    label "mothur_script"
+    
     input:
         set file(count), file(fasta) from DEREP_CONTIGS
     output:
@@ -214,6 +225,7 @@ process ChimeraRemoval {
     tag { "chimeraRemoval" }
     publishDir output_dirs[5], mode: "copy", pattern: "*.{fasta,count_table}"
     label "high_computation"
+    label "mothur_script"
     
     input:
 	set file(fasta), file(count) from DEREP_CONTIGS_ALN
@@ -223,7 +235,6 @@ process ChimeraRemoval {
     
     script:
     """
-    export MOTHUR=\$HOME/.local/bin/mothur_1-41-3
     ${script_dir}/mothur.sh --step=chimera
     """
 }
@@ -232,6 +243,7 @@ process PreClassification {
     tag { "preClassification" }
     publishDir output_dirs[6], mode: "copy", pattern: "*.taxonomy"
     label "high_computation"
+    label "mothur_script"
     
     input:
 	set file(count), file(fasta) from NO_CHIMERA_FASTA
@@ -258,6 +270,7 @@ process Clustering {
     tag { "clustering.${idThreshold}" }
     publishDir output_dirs[7], mode: "copy", pattern: "all_clustering*.{fasta,shared,list}"
     label "high_computation"
+    label "mothur_script"
     
     input:
 	set file(count), file(fasta), file(tax) from PRE_CLASSIFIED_CONTIGS
@@ -281,6 +294,7 @@ process ConsensusClassification {
     tag { "consensusClassification.${idThreshold}" }
     publishDir output_dirs[8], mode: "copy", pattern: "all_consensusClassification*.{summary,taxonomy}"
     label "medium_computation"    
+    label "mothur_script"
     
     input:
 	set val(idThreshold), file(count), file(tax), file(list), file(shared) from CONTIGS_FOR_CLASSIFICATION
@@ -310,6 +324,7 @@ process TaxaFilterInterm {
     publishDir output_dirs[9], mode: "copy"
     errorStrategy "${params.errorsHandling}"
     label "medium_computation"    
+    label "mothur_script"
     
     input:
 	set val(idThreshold), file(tax), file(list), file(shared) from CLASSIFIED_CONTIGS_1
@@ -333,6 +348,7 @@ process OtuRepresentative {
     tag { "OtuRepresentative.${idThreshold}" }
     errorStrategy "${params.errorsHandling}"
     label "medium_computation"    
+    label "mothur_script"
     
     input:
 	set val(idThreshold), file(tax), file(list), file(shared), file(fasta), file(count) \
@@ -349,6 +365,7 @@ process OtuRepresentative {
 process GetSubsamlingValue {
     errorStrategy "${params.errorsHandling}"
     label "low_computation"    
+    label "python_script"
     
     input:
 	set val(idThreshold), file(shared) from SUBSAMPLING_EST
@@ -380,6 +397,7 @@ process Subsampling {
     tag { "subsampling" }
     publishDir output_dirs[10], mode: "copy"
     label "medium_computation"
+    label "mothur_script"
     
     input:
 	set val(idThreshold), file(fasta), file(tax), file(shared), val(subSampThresh) \
@@ -448,7 +466,8 @@ process Lulu {
     publishDir output_dirs[11], mode: "copy"
     errorStrategy "${params.errorsHandling}"
     label "high_computation"    
-
+    label "r_script"
+    
     input:
 	set val(idThreshold),file(matchlist),file(table) from MATCH_LISTS.join(ABUNDANCE_TABLES_FOR_LULU)
     output:
@@ -478,6 +497,7 @@ process SingletonFilter {
     publishDir output_dirs[12], mode: "copy"
     errorStrategy "${params.errorsHandling}"
     label "low_computation"    
+    label "python_script"
     
     input:
 	set idThreshold, file(fasta), file(abundance), file(tax) from FASTA_TO_FILTER.join(TABLE_TO_FILTER).join(SUBSAMPLED_TAX)
@@ -510,7 +530,8 @@ process TaxaFilterEnd {
     tag { "taxaFilter.${idThreshold}" }
     publishDir output_dirs[13], mode: "copy"
     errorStrategy "${params.errorsHandling}"
-    label "medium_computation"    
+    label "medium_computation"
+    label "mothur_script"
     
     input:
 	set val(idThreshold), file(f) from TAXA_FILT_IN
@@ -541,6 +562,7 @@ process SummaryFile {
     publishDir output_dirs[14], mode: "copy"
     errorStrategy "${params.errorsHandling}"
     label "low_computation"
+    label "python_script"
     
     input:
 	file f1 from COUNT_SUMMARIES
@@ -581,6 +603,7 @@ process Postprocessing {
     publishDir output_dirs[15], mode: "copy"
     errorStrategy "${params.errorsHandling}"
     label "medium_computation"
+    label "mothur_script"
     
     input:
 	set val(idThreshold), file(f) from MOTHUR_TO_PROCESS
