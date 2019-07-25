@@ -28,10 +28,10 @@ def filterAbundance(abundance,minAbundance=1):
 def filterIds(abundance,fasta,taxonomy,threshold):
     ids = pd.read_csv(abundance,index_col=0).index.tolist()
     fasta = [ seq for seq in SeqIO.parse(fasta,"fasta") if seq.id in ids ]
-    SeqIO.write(fasta,"singleton_filtered_{}.fasta".format(threshold),"fasta")
+    SeqIO.write(fasta,"sequences_{}.fasta".format(threshold),"fasta")
 
-    taxonomyTable = pd.read_table(taxonomy,index_col=0)
-    taxonomyTable.loc[ids].to_csv("singleton_filtered_{}.taxonomy".format(threshold),sep="\t")
+    taxonomyTable = pd.read_csv(taxonomy,index_col=0,sep='\t')
+    taxonomyTable.loc[ids].to_csv("annotations_{}.taxonomy".format(threshold),sep="\t")
 
 def csvToShared(csvAbundance, threshold):
     shared = pd.read_csv(csvAbundance, index_col=0).T
@@ -39,6 +39,6 @@ def csvToShared(csvAbundance, threshold):
     shared.insert(loc=0, column="numOtus", value=[shared.shape[1]]*shared.shape[0])
     shared.reset_index(inplace=True)
     shared.insert(loc=0, column="label", value=[threshold]*shared.shape[0])
-    shared.to_csv("singleton_filtered_{}.shared".format(threshold), sep="\t", index=False)
+    shared.to_csv("abundance_table_{}.shared".format(threshold), sep="\t", index=False)
 
 

@@ -42,9 +42,6 @@ if (params.help){
     exit 0
 }
 
-// Add the step number
-output_dirs = params.results_folders.indexed().collect { idx,name -> "${params.outdir}/${1+idx}-${name}" }
-
 def clusteringThresholds = params.clusteringThresholds.split(',').collect{it as int}
 clusteringThresholds.removeAll{ it == 100}
 
@@ -55,7 +52,7 @@ if ( !params.pairedEnd ) {
 }
 
 Channel
-    .fromFilePairs( read_path, size: params.pairedEnd ? 2 : 1 )
+    .fromFilePairs( read_path, size: params.pairedEnd ? 2 : 1, flat: true )
     .ifEmpty { error "Cannot find any reads matching: ${params.reads}" }
     .set { INPUT_FASTQ }
 
@@ -82,39 +79,10 @@ log.info "========================================="
  *
  */
 
-process PreFiltering {
-    tag { "pre_filter.${pairId}" }
-    label "low_computation"
-    publishDir output_dirs[0], mode: "copy", pattern: "{*.fastq*, *.txt}"
-    errorStrategy "${params.errorsHandling}"
 
-    input:
-        set val(pairId), file(fastq) from INPUT_FASTQ    
-    output:
-	set stdout, val(pairId), file(fastq) into INPUT_FASTQ_LEN
-
-    script:
-    """
-    #!/usr/bin/env bash
-
-    read_pair=(${fastq})
-    fwd=\${read_pair[0]}
-
-    if [ "\${fwd##*.}" == "gz" ]; then
-        nlines=`zcat \$fwd | wc -l`
-    else
-        nlines=`cat \$fwd | wc -l`
-    fi
-
-    echo \$((\${nlines}/4))
-    """    
-}
-
-// Filter out files with less than params.minReads
-INPUT_FASTQ_LEN
-    .filter{ (it[0] as int) > params.minReads }
-    .map{ nreads, pairId, filename -> tuple(pairId,filename) }
-    .set{ INPUT_FASTQ_OK }
+INPUT_FASTQ_OK = INPUT_FASTQ
+    .filter{ it[1].countFastq() > params.minReads }
+    .map{ it -> tuple(it[0],it[1..-1]) }
 
 /*
  *
@@ -124,8 +92,10 @@ INPUT_FASTQ_LEN
 
 process ExtractITS {
     tag { "ITSextraction.${pairId}" }
-    label "low_computation"    
-    publishDir output_dirs[1], mode: "copy"
+    label "low_computation"
+    label "python_script"
+    
+    publishDir params.outdir+"1-ITSxpress", mode: "copy"
     errorStrategy "${params.errorsHandling}"
     
     input:
@@ -158,7 +128,9 @@ process ExtractITS {
 process RemoveSmallAndNseqs {
     tag { "removeN.${pairId}" }
     label "low_computation"        
-    publishDir output_dirs[2], mode: "copy"
+    label "python_script"
+
+    publishDir params.outdir+"2-NandSmallSeqsFiltering", mode: "copy"
     errorStrategy "${params.errorsHandling}"
 
     input:
@@ -189,8 +161,11 @@ process RemoveSmallAndNseqs {
 
 process QcFilter {
     tag { "filteredITS.${pairId}" }
+    
     label "low_computation"
-    publishDir output_dirs[3], mode: "copy"
+    label "fastx_tk"
+
+    publishDir params.outdir+"3-QualityFiltering", mode: "copy"
     errorStrategy "${params.errorsHandling}"
 
     input:
@@ -237,7 +212,9 @@ FILTERED_FASTQ_ALL
 process Dereplication {
     tag { "dereplication.${pairId}" }
     label "low_computation"        
-    publishDir output_dirs[4], mode: "copy"
+    label "r_script"
+
+    publishDir params.outdir+"4-Dereplication", mode: "copy"
 
     errorStrategy "${params.errorsHandling}"
     
@@ -268,7 +245,9 @@ process Dereplication {
 process ChimeraRemoval {
     tag { "ChimeraRemoval.${pairId}" }
     label "low_computation"        
-    publishDir output_dirs[5], mode: "copy"
+    label "vsearch"
+
+    publishDir params.outdir+"5-ChimeraRemoval", mode: "copy"
     errorStrategy "${params.errorsHandling}"
 
     input:
@@ -312,7 +291,9 @@ DEREP_FASTA_NO_CHIMERA
 process LearnErrors {
     tag { "LearnErrors.${pairId}" }
     label "low_computation"
-    publishDir output_dirs[6], mode: "copy", pattern: "*{.RDS,.png}"
+    label "r_script"
+    
+    publishDir params.outdir+"6-Denoising", mode: "copy", pattern: "*{.RDS,.png}"
     errorStrategy "${params.errorsHandling}"
     
     input:
@@ -343,8 +324,10 @@ process LearnErrors {
 
 process Denoise {
     tag { "Denoising.${pairId}" }
-    label "low_computation"        
-    publishDir output_dirs[6], mode: "copy"
+    label "low_computation"
+    label "r_script"
+    
+    publishDir params.outdir+"6-Denoising", mode: "copy"
     errorStrategy "${params.errorsHandling}"
 
     input:
@@ -370,8 +353,10 @@ process Denoise {
 
 process MakeEsvTable {
     tag { "esvTable" }
-    label "high_computation"        
-    publishDir output_dirs[7], mode: "copy"
+    label "high_computation"
+    label "r_script"
+    
+    publishDir params.outdir+"7-Clustering", mode: "copy"
     errorStrategy "${params.errorsHandling}"
     
     input:
@@ -401,7 +386,9 @@ process MakeEsvTable {
 process MergeFastas {
     tag { "mergeFastas" }
     label "medium_computation"
-    publishDir output_dirs[7], mode: "copy"
+    label "python_script"
+    
+    publishDir params.outdir+"7-Clustering", mode: "copy"
     errorStrategy "${params.errorsHandling}"
     
     input:
@@ -426,8 +413,10 @@ process MergeFastas {
 
 process Clustering {
     tag { "clustering.${idThreshold}" }
-    label "high_computation"    
-    publishDir output_dirs[7], mode: "copy"
+    label "high_computation"
+    label "vsearch"
+    
+    publishDir params.outdir+"7-Clustering", mode: "copy"
     errorStrategy "${params.errorsHandling}"
     
     input:
@@ -468,8 +457,10 @@ ALL_SAMPLES = OTU_ALL_SAMPLES.mix(ESV_ALL_SAMPLES)
 
 process PreLulu {
     tag { "preLulus.${idThreshold}" }
-    label "high_computation"    
-    publishDir output_dirs[8], mode: "copy"
+    label "high_computation"
+    label "vsearch"
+    
+    publishDir params.outdir+"8-LULU_correction", mode: "copy"
     errorStrategy "${params.errorsHandling}"
 
     input:
@@ -500,9 +491,10 @@ process PreLulu {
 
 process Lulu {
     tag { "Lulu.${idThreshold}" }
-    label "medium_computation"    
-    publishDir output_dirs[8], mode: "copy"
-    publishDir output_dirs[10], mode: "copy", pattern: "{abundance_table_*.csv}"
+    label "medium_computation"
+    label "r_script"
+    
+    publishDir params.outdir+"8-LULU_correction", mode: "copy", pattern: "{abundance_table_*.csv}"
     errorStrategy "${params.errorsHandling}"
 
     input:
@@ -528,10 +520,11 @@ process Lulu {
  */
 
 process ExtractFastaLulu {
-    label "high_computation"
     tag { "extractFastaLulu.${idThreshold}" }
-    publishDir output_dirs[9], mode: "copy", pattern: "*.fasta"
-    publishDir output_dirs[10], mode: "copy", pattern: "*.fasta"    
+    label "high_computation"
+    label "python_script"
+
+    publishDir params.outdir+"9-Results", mode: "copy", pattern: "*.fasta"    
     errorStrategy "${params.errorsHandling}"
     
     input:
@@ -555,8 +548,9 @@ process ExtractFastaLulu {
 process ClassificationSintax {
     tag { "classification.${idThreshold}" }
     label "high_computation"
-    publishDir output_dirs[9], mode: "copy", pattern: "*.tsv"
-    publishDir output_dirs[10], mode: "copy", pattern: "annotations*.tsv"
+    label "vsearch"
+    
+    publishDir params.outdir+"9-Results", mode: "copy", pattern: "annotations*.tsv"
     errorStrategy "${params.errorsHandling}"
 
     input:
@@ -581,9 +575,11 @@ process ClassificationSintax {
 
 process SummaryFile {
     tag { "summary" }
-    publishDir output_dirs[10], mode: "copy", pattern: "*.{tsv,fasta}"
-    errorStrategy "${params.errorsHandling}"
     label "medium_computation"
+    label "python_script"
+
+    publishDir params.outdir+"9-Results", mode: "copy", pattern: "*.{tsv,fasta}"
+    errorStrategy "${params.errorsHandling}"
     
     input:
         file f1 from DENOISING_SUMMARY

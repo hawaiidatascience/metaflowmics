@@ -3,18 +3,18 @@ from counter import SequenceCounter
 
 def write_summary(root_dir,data_dir,id_threshold):
     
-    steps = [("0-rawData",data_dir),
-             ("*filterAndTrim","*R1*.fastq*"),
-             ("*errorModel","*R1*.RDS"),
-             ("*multipleSequenceAlignment","all_MSA.count_table"),
-             ("*chimeraRemoval","all_chimera.count_table"),
-             ("*preClassification","*.taxonomy"),
-             ("*consensusClassification","*.taxonomy"),             
-             ("*clustering","all_clustering_*.shared"),
-             ("*taxaFilter","all_taxaFilter*.*"),
-             ("*subsampling","all_subsampling*.shared"),
-             ("*lulu","lulu_table_*.csv"),
-             ("*singletonFilter","singleton_filtered_*.shared")
+    steps = [("0-RawData",data_dir),
+             ("*FilterAndTrim","*R1*.fastq*"),
+             ("*ErrorModel","*R1*.RDS"),
+             ("*MultipleSequenceAlignment","all_MSA.count_table"),
+             ("*ChimeraRemoval","all_chimera.count_table"),
+             ("*PreClassification","*.taxonomy"),
+             ("*ConsensusClassification","*.taxonomy"),             
+             ("*Clustering","all_clustering_*.shared"),
+             ("*TaxaFilter","all_taxaFilter*.*"),
+             ("*Subsampling","all_subsampling*.shared"),
+             ("*Lulu","lulu_table_*.csv"),
+             ("*SingletonFilter","abundance_table_*.shared")
     ]
     
     counters = sorted([ SequenceCounter(name=name,path=pattern.replace("{1,2}","1")) if i==0 else

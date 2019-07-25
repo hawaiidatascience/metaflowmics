@@ -3,8 +3,7 @@ MAINTAINER Cedric Arisdakessian <carisdak@hawaii.edu>
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-RUN apt-get update 
-RUN apt-get install -y nano vim emacs wget curl python3-pip openjdk-8-jre
+RUN apt-get update && apt-get install -y nano emacs wget curl python3-pip
 RUN apt-get install -y libcurl4-openssl-dev libxml2-dev libssl-dev libssh2-1-dev libcairo2-dev libgeos-dev libudunits2-0 libudunits2-dev libgdal-dev locales
 
 RUN locale-gen en_US.UTF-8
@@ -15,7 +14,7 @@ ENV LC_ALL en_US.UTF-8
 # Install libreadline6 for Mothur
 RUN echo "deb http://archive.ubuntu.com/ubuntu/ xenial main" >> /etc/apt/sources.list \
 	&& apt-get update \
-	&& apt-get install libreadline6
+	&& apt-get install -y libreadline6
 
 # Install R
 RUN echo "deb https://cloud.r-project.org/bin/linux/ubuntu bionic-cran35/" > /etc/apt/sources.list.d/cran.list
@@ -24,9 +23,9 @@ RUN apt-get update && apt-get install -y r-base
 
 # Install R libraries
 RUN Rscript -e "install.packages(c('BiocManager','stringr','seqinr','ggplot2'),dependencies=TRUE, repos='http://cran.rstudio.com/')"
-RUN Rscript -e "install.packages('devtools',dependencies=TRUE, repos='http://cran.rstudio.com/')"
 RUN Rscript -e "BiocManager::install('dada2')"
-RUN Rscript -e "devtools::install_github('tobiasgf/lulu')"
+RUN Rscript -e "install.packages('remotes')"
+RUN Rscript -e "remotes::install_github('tobiasgf/lulu')"
 
 # Install vll
 RUN wget -qO- "https://get.haskellstack.org" | sh
@@ -49,11 +48,6 @@ RUN cd hmmer-3.2 && ./configure && make && make install && cd .. && rm -rf hmmer
 # Install fastx toolkit
 RUN apt-get install -y fastx-toolkit
 
-# Install nextflow
-RUN wget "https://github.com/nextflow-io/nextflow/releases/download/v19.04.1/nextflow-19.04.1-all"\
-	&& chmod 777 nextflow-19.04.1-all\
-	&& mv nextflow-19.04.1-all /usr/local/bin/nextflow
-
 # Download databases
 RUN mkdir databases
 RUN curl -L "https://mothur.org/w/images/3/32/Silva.nr_v132.tgz" | tar xz -C databases
@@ -65,18 +59,27 @@ RUN sed -e 's/|SH.*//g' -e 's/;/,/g' -e 's/__/:/g' -e 's/|/;tax=d:Eukaryota,/g' 
 # Install VSEARCH
 RUN curl -L "https://github.com/torognes/vsearch/releases/download/v2.11.1/vsearch-2.11.1-linux-x86_64.tar.gz" | tar xz -C /usr/local/bin
 
-# Install mothur
+# Install mothur versions
 RUN wget "https://github.com/mothur/mothur/releases/download/v1.42.0/Mothur.linux_64.zip"
 RUN unzip Mothur.linux_64.zip \
 	&& rm -rf __MACOSX Mothur.linux_64.zip\
 	&& mv mothur /usr/local/bin
 
+RUN wget "https://github.com/mothur/mothur/releases/download/v1.41.3/Mothur.linux_64.zip"
+RUN unzip Mothur.linux_64.zip \
+	&& rm -rf __MACOSX Mothur.linux_64.zip\
+	&& mv mothur /usr/local/bin/mothur_1-41-3
+
 RUN pip3 install ipython biopython pandas itsxpress
+
+RUN apt-get install -y default-jre
+
+RUN wget "https://github.com/nextflow-io/nextflow/releases/download/v19.04.1/nextflow-19.04.1-all"\
+	&& chmod 777 nextflow-19.04.1-all\
+	&& mv nextflow-19.04.1-all /usr/local/bin/nextflow
 
 # Setup PATH
 ENV PATH /usr/local/bin/mothur:/usr/local/bin/vsearch-2.11.1-linux-x86_64/bin:/usr/local/bin/bbmap:$PATH
-
-# RUN chmod -R 777 *
 
 USER developer
 

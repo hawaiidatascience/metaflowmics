@@ -4,7 +4,6 @@ from counter import SequenceCounter
 def write_summary(root_dir,data_dir,id_threshold):
     
     steps = [("0-RawData", data_dir),
-             ("*PreFiltering","*R1*.fastq*"),
              ("*ITSxpress","*_ITS*.fastq"),
              ("*NandSmallSeqsFiltering","*noN.fastq"),
              ("*QualityFiltering","*_filtered.fastq.gz"),
