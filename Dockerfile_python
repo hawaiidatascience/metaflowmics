@@ -18,8 +18,10 @@ RUN curl -L "https://github.com/torognes/vsearch/releases/download/v2.11.1/vsear
 	| tar xz -C /usr/local/bin
 
 # Set PATH
-ENV PATH /usr/local/bin/vsearch-2.11.1-linux-x86_64/bin:/usr/local/bin/bbmap:PATH
+ENV PATH /usr/local/bin/vsearch-2.11.1-linux-x86_64/bin:/usr/local/bin/bbmap:$PATH
 
-COPY . .
+WORKDIR /workspace
+
+COPY . /workspace
 
 CMD /bin/bash

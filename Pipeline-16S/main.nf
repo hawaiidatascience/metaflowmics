@@ -22,6 +22,7 @@ if (params.help){
 }
 
 script_dir = workflow.projectDir+"/scripts"
+//script_dir = '/workspace'
 
 def clusteringThresholds = params.clusteringThresholds.split(',').collect{it as int}
 
@@ -67,7 +68,7 @@ process FilterAndTrim {
     """
     #!/usr/bin/env Rscript
 
-    source("${workflow.projectDir}/scripts/util.R")  
+    source("${script_dir}/util.R")  
 
     fastqs <- c("${fastq.join('","')}")
     rev <- NULL
@@ -111,7 +112,7 @@ process LearnErrors {
     script:
     """
     #!/usr/bin/env Rscript
-    source("${workflow.projectDir}/scripts/util.R") 
+    source("${script_dir}/util.R") 
 
     fastqs <- c("${fastq.join('","')}")
     learnErrorRates(fastqs,"${pairId}")
@@ -138,7 +139,7 @@ process Denoise {
     script:
     """
     #!/usr/bin/env Rscript
-    source("${workflow.projectDir}/scripts/util.R")
+    source("${script_dir}/util.R")
 
     errors <- c("${err.join('","')}")
     fastqs <- c("${fastq.join('","')}")
@@ -175,7 +176,7 @@ process Esv {
     script:
     """
     #!/usr/bin/env Rscript
-    source("${workflow.projectDir}/scripts/util.R")
+    source("${script_dir}/util.R")
 
     esvTable(${params.minOverlap},${params.maxMismatch},"${params.singleEnd}")       
     """
@@ -196,6 +197,7 @@ process MultipleSequenceAlignment {
     
     input:
         set file(count), file(fasta) from DEREP_CONTIGS
+        file refAln from Channel.fromPath(params.referenceAln)
     output:
         file("all_MSA.{count_table,fasta}") into DEREP_CONTIGS_ALN
         file("*.summary") optional true
@@ -206,7 +208,7 @@ process MultipleSequenceAlignment {
 
     ${script_dir}/mothur.sh \
        --step=MSA \
-       --refAln=${params.referenceAln} \
+       --refAln=${refAln} \
        --criteria=${params.criteria} \
        --optimize=start-end
     """
@@ -244,7 +246,8 @@ process PreClassification {
     
     input:
 	set file(count), file(fasta) from NO_CHIMERA_FASTA
-
+        file refAln from Channel.fromPath(params.referenceAln)
+        file refTax from Channel.fromPath(params.referenceTax)
     output:
         set file(count), file(fasta), file("all_preClassification.taxonomy") into PRE_CLASSIFIED_CONTIGS
     
@@ -252,8 +255,8 @@ process PreClassification {
     """
     ${script_dir}/mothur.sh \
         --step=preClassification \
- 	--refAln=${params.referenceAln} \
- 	--refTax=${params.referenceTax}
+ 	--refAln=${refAln} \
+ 	--refTax=${refTax}
     """
 }
 
@@ -300,10 +303,7 @@ process ConsensusClassification {
         set val(idThreshold), file("all_consensusClassification_*.taxonomy"), file(list), file(shared) into CONSTAXONOMY_CONTIGS
     script:
     """
-    ${script_dir}/mothur.sh --step=consensusClassification \
-        --idThreshold=${idThreshold} \
- 	--refAln=${params.referenceAln} \
- 	--refTax=${params.referenceTax}
+    ${script_dir}/mothur.sh --step=consensusClassification --idThreshold=${idThreshold}
     """
 }
 
@@ -469,7 +469,7 @@ process Lulu {
 	
     """
     #!/usr/bin/env Rscript
-    source("${workflow.projectDir}/scripts/util.R")
+    source("${script_dir}/util.R")
 
     luluCurate("${table}","${matchlist}","${idThreshold}","${params.min_ratio_type}","${params.min_ratio}","${params.min_match}","${params.min_rel_cooccurence}")
     """
@@ -521,6 +521,7 @@ process SummaryFile {
     input:
 	file f1 from COUNT_SUMMARIES
         set val(idThreshold), file(f2) from FINAL_SUMMARY
+        // file("${params.outdir}/*")
     output:
         file("sequences_per_sample_per_step_*.tsv") into STEPS_SUMMARY
     script:
@@ -530,9 +531,8 @@ process SummaryFile {
     from shutil import copyfile
     from generate_step_summary import write_summary
 
-    write_summary("${params.outdir}","${params.reads}","${idThreshold}")
+    write_summary("./","${params.reads}","${idThreshold}")
     """
-
 }
 
 /*
