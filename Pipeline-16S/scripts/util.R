@@ -140,9 +140,9 @@ esvTable <- function(minOverlap, maxMismatch, singleEnd)
     }
 
     summary <- data.frame("Sample" = sample.names,
-                          "3-dereplication" = summary.derepF,
-                          "3.5-denoising" = summary.denoisedF,
-                          "4-esv" = summary.merged,
+                          "3.1-Dereplication" = summary.derepF,
+                          "3.2-Denoising" = summary.denoisedF,
+                          "4-Esv" = summary.merged,
                           check.names=F)
         
     write.table(summary, "count_summary.tsv", row.names=F, sep="\t")                    

@@ -21,8 +21,8 @@ if (params.help){
     exit 0
 }
 
-script_dir = workflow.projectDir+"/scripts"
-//script_dir = '/workspace'
+//script_dir = workflow.projectDir+"/scripts"
+script_dir = '/workspace'
 
 def clusteringThresholds = params.clusteringThresholds.split(',').collect{it as int}
 
@@ -42,7 +42,9 @@ Channel
     .fromFilePairs( read_path, size: params.singleEnd ? 1 : 2 )
     .ifEmpty { error "Cannot find any reads matching: ${params.reads}" }
     .map { it -> tuple(it[0].replaceAll("-","_"), it[1]) }
-    .set { INPUT_FASTQ }
+    .into { INPUT_FASTQ ; INPUT_FASTQ_FOR_COUNT }
+
+RAW_COUNTS = INPUT_FASTQ_FOR_COUNT.collect{ ["'${it[0]}': ${it[1][0].countFastq()}"] }
 
 /*
  *
@@ -89,7 +91,9 @@ process FilterAndTrim {
 
 FASTQ_TRIMMED_RAW
     .filter{ (it[1].size() > 0)  }
-    .into{ FASTQ_TRIMMED ; FASTQ_TRIMMED_FOR_MODEL }
+    .into{ FASTQ_TRIMMED ; FASTQ_TRIMMED_FOR_MODEL ; FASTQ_TRIMMED_FOR_COUNT }
+
+FILTERED_COUNTS = FASTQ_TRIMMED_FOR_COUNT.collect{ ["'${it[0]}': ${it[1][0].countFastq()}"] }
 
 /*
  *
@@ -200,6 +204,7 @@ process MultipleSequenceAlignment {
         file refAln from Channel.fromPath(params.referenceAln)
     output:
         file("all_MSA.{count_table,fasta}") into DEREP_CONTIGS_ALN
+        file("all_MSA.count_table") into MSA_TO_COUNT
         file("*.summary") optional true
     
     script:
@@ -228,10 +233,9 @@ process ChimeraRemoval {
     
     input:
 	set file(fasta), file(count) from DEREP_CONTIGS_ALN
-
     output:
         file("all_chimera.{fasta,count_table}") into (NO_CHIMERA_FASTA, FASTA_FOR_REPR)
-    
+        file("all_chimera.count_table") into CHIMERA_TO_COUNT
     script:
     """
     ${script_dir}/mothur.sh --step=chimera
@@ -250,7 +254,7 @@ process PreClassification {
         file refTax from Channel.fromPath(params.referenceTax)
     output:
         set file(count), file(fasta), file("all_preClassification.taxonomy") into PRE_CLASSIFIED_CONTIGS
-    
+
     script:
     """
     ${script_dir}/mothur.sh \
@@ -276,8 +280,8 @@ process Clustering {
 	set file(count), file(fasta), file(tax) from PRE_CLASSIFIED_CONTIGS
         each idThreshold from clusteringThresholds
     output:
-        set val(idThreshold), file(count), file(tax), file("all_clustering_*.list"), file("all_clustering_*.shared") \
-    into CONTIGS_FOR_CLASSIFICATION
+        set val(idThreshold), file(count), file(tax), file("all_clustering_*.list"), file("all_clustering_*.shared") into CONTIGS_FOR_CLASSIFICATION
+        file("all_clustering_*.shared") into CLUSTERING_TO_COUNT
     script:
     """
     ${script_dir}/mothur.sh --step=clustering --idThreshold=${idThreshold}
@@ -322,7 +326,8 @@ process TaxaFilter {
 	set val(idThreshold), file(tax), file(list), file(shared) from CONSTAXONOMY_CONTIGS
     output:
         set val(idThreshold), file("all_taxaFilter*.taxonomy"), file("all_taxaFilter*.list"), file("all_taxaFilter*.shared") \
-        into TAXA_FILTERED
+    into TAXA_FILTERED
+        file("all_taxaFilter*.shared") into TAXA_FILTER_TO_COUNT
     script:
     """
     ${script_dir}/mothur.sh \
@@ -395,7 +400,8 @@ process Subsampling {
 
     output:
 	set val(idThreshold), file("all_subsampling*.fasta"), file("all_subsampling*.taxonomy"), file("all_subsampling*.shared") \
-        into SUBSAMPLED_OUT
+    into SUBSAMPLED_OUT
+        file("all_subsampling*.shared") into SUBSAMPLING_TO_COUNT
     
     script:
     """
@@ -465,6 +471,7 @@ process Lulu {
         set val(idThreshold), file("lulu_table_${idThreshold}.csv") into TABLE_TO_FILTER
         file("lulu_ids_${idThreshold}.csv") into IDS_LULU
         file("lulu*.log_*") optional true
+        file("lulu_table_${idThreshold}.csv") into LULU_TO_COUNT
     script:
 	
     """
@@ -494,7 +501,8 @@ process SingletonFilter {
     input:
 	set idThreshold, file(fasta), file(abundance), file(tax) from FASTA_TO_FILTER.join(TABLE_TO_FILTER).join(SUBSAMPLED_TAX)
     output:
-        set idThreshold, file("*.{fasta,shared,taxonomy}") into (FINAL_SUMMARY, MOTHUR_TO_PROCESS)
+        set idThreshold, file("*.{fasta,shared,taxonomy}") into MOTHUR_TO_PROCESS
+        file("*.shared") into SINGLETON_FILTER_TO_COUNT
     script:
     """
     #!/usr/bin/env python3
@@ -510,28 +518,54 @@ process SingletonFilter {
 /*
  * File summary (in scripts/generate_step_summary.py)
  */
-
+	 
 process SummaryFile {
-    tag { "SumaryFile" }
+    tag { "SummaryFile" }
     publishDir params.outdir+"14-Results", mode: "copy"
     errorStrategy "${params.errorsHandling}"
     label "low_computation"
     label "python_script"
     
     input:
-	file f1 from COUNT_SUMMARIES
-        set val(idThreshold), file(f2) from FINAL_SUMMARY
-        // file("${params.outdir}/*")
+        file f from COUNT_SUMMARIES
+        val(raw_counts) from RAW_COUNTS
+        val(filtered_counts) from FILTERED_COUNTS
+        file f1 from MSA_TO_COUNT.collect()
+        file f2 from CHIMERA_TO_COUNT.collect()
+	file f3 from CLUSTERING_TO_COUNT.collect()
+	file f4 from SUBSAMPLING_TO_COUNT.collect()
+	file f5 from TAXA_FILTER_TO_COUNT.collect()
+	file f6 from LULU_TO_COUNT.collect()
+	file f7 from SINGLETON_FILTER_TO_COUNT.collect()
     output:
         file("sequences_per_sample_per_step_*.tsv") into STEPS_SUMMARY
     script:
     """
     #!/usr/bin/env python3
-
-    from shutil import copyfile
     from generate_step_summary import write_summary
 
-    write_summary("./","${params.reads}","${idThreshold}")
+    clustering_threshold = ${clusteringThresholds}
+    counts = { '0-RawData': {${raw_counts.join(', ')}},
+               '1-FilterAndTrim': {${filtered_counts.join(', ')}} }
+
+    steps = [("0-RawData",-1),
+             ("1-FilterAndTrim",-1),
+             ("2-ErrorModel",None),
+             ("3.1-Dereplication",-1),
+             ("3.2-Denoising",-1),
+             ("4-ESV",-1),
+             ("5-MultipleSequenceAlignment","all_MSA.count_table"),
+             ("6-ChimeraRemoval","all_chimera.count_table"),
+             ("7-PreClassification",None),
+             ("8-ConsensusClassification",None),             
+             ("9-Clustering","all_clustering_*.shared"),
+             ("10-TaxaFilter","all_taxaFilter_*.shared"),
+             ("11-Subsampling","all_subsampling_*.shared"),
+             ("12-Lulu","lulu_table_*.csv"),
+             ("13-SingletonFilter","abundance_table_*.shared")
+    ]
+
+    write_summary(steps,counts,clustering_threshold)
     """
 }
 

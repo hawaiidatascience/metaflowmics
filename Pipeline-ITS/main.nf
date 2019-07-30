@@ -54,7 +54,9 @@ if ( !params.pairedEnd ) {
 Channel
     .fromFilePairs( read_path, size: params.pairedEnd ? 2 : 1, flat: true )
     .ifEmpty { error "Cannot find any reads matching: ${params.reads}" }
-    .set { INPUT_FASTQ }
+    .into { INPUT_FASTQ ; INPUT_FASTQ_FOR_COUNT }
+
+RAW_COUNTS = INPUT_FASTQ_FOR_COUNT.collect{ ["'${it[0]}': ${it[1].countFastq()}"] }
 
 // Header log info
 def summary = [:]
@@ -103,12 +105,13 @@ process ExtractITS {
     
     output:
         set val(pairId), file("${pairId}_${params.locus}.fastq") \
-          into ITS_FASTQ
+    into (ITS_FASTQ, ITS_FASTQ_FOR_COUNT)
     	
     script:
     """
-    read_pair=(${reads})
+    #!/usr/bin/env bash
 
+    read_pair=(${reads})
     
     rev_arg=\$([ ${params.pairedEnd} == true ] && echo "--fastq2 \${read_pair[1]}" || echo "--single_end")
 
@@ -118,12 +121,13 @@ process ExtractITS {
     """
 }
 
+ITS_FASTQ_COUNTS = ITS_FASTQ_FOR_COUNT.collect{ ["'${it[0]}': ${it[1].countFastq()}"] }
+
 /*
  *
  * Remove any sequence with a "N" nucleotide (for dada2) or with less than {params.minLen} nucleotides
  *
  */
-
 
 process RemoveSmallAndNseqs {
     tag { "removeN.${pairId}" }
@@ -137,7 +141,7 @@ process RemoveSmallAndNseqs {
         set val(pairId), file(itsFile) from ITS_FASTQ
     
     output:
-	set val(pairId), file("${pairId}_noN.fastq") into NO_N_FASTQ
+        set val(pairId), file("${pairId}_noN.fastq") into (NO_N_FASTQ,NO_N_FASTQ_FOR_COUNT)
 
     script:
     """
@@ -151,6 +155,8 @@ process RemoveSmallAndNseqs {
 
     """        
 }
+
+NO_N_COUNTS = NO_N_FASTQ_FOR_COUNT.collect{ ["'${it[0]}': ${it[1].countFastq()}"] }
 
 /*
  *
@@ -169,39 +175,27 @@ process QcFilter {
     errorStrategy "${params.errorsHandling}"
 
     input:
-        set val(pairId), file(itsFile) from NO_N_FASTQ
+        set val(pairId), file(itsFile) from NO_N_FASTQ.filter{ it[1].size() > 0 }
     
     output:
-	set stdout, val(pairId), file("${pairId}_filtered.fastq.gz") into FILTERED_FASTQ_ALL
+	set val(pairId), file("${pairId}_filtered.fastq.gz") into FILTERED_FASTQ_ALL
 
     script:
     """
-    #!/usr/bin/env bash
-
-    nreads=`cat ${itsFile} | wc -l`
-
-    if [ \$nreads -gt 0 ]; then
-        fastq_quality_filter -z -q ${params.minQuality} \
-                                -p ${params.minPercentHighQ} \
-                                -i ${itsFile} \
-                                -o ${pairId}_filtered.fastq.gz \
-        > /dev/null
-    
-        nreads=`zcat ${pairId}_filtered.fastq.gz | wc -l`
-        nreads=\$((\$nreads/4))        
-    else
-        touch "${pairId}_filtered.fastq.gz"
-    fi
-
-    echo \$nreads
+    fastq_quality_filter -z -q ${params.minQuality} \
+                            -p ${params.minPercentHighQ} \
+                            -i ${itsFile} \
+                            -o ${pairId}_filtered.fastq.gz \
     """    
 }
 
 // Remove files with less than params.minReads
-FILTERED_FASTQ_ALL
-    .filter{ (it[0] as int) > params.minReads }
-    .map{ nreads, pairId, filename -> tuple(pairId,filename) }
-    .set{ FILTERED_FASTQ }
+(FILTERED_SAMPLE_COUNTS, FILTERED_FASTQ) = FILTERED_FASTQ_ALL
+    .map { [it[1].countFastq(), it[0], it[1]] }
+    .filter{ it[0] > params.minReads }
+    .separate(2) { it -> [[it[1],it[0]], [it[1],it[2]]] }
+
+FILTERED_COUNTS = FILTERED_SAMPLE_COUNTS.collect{ ["'${it[0]}': ${it[1]}"] }
 
 /*
  *
@@ -251,35 +245,22 @@ process ChimeraRemoval {
     errorStrategy "${params.errorsHandling}"
 
     input:
-        set val(pairId),file(derepFa) from DEREP_FASTA
+        set val(pairId),file(derepFa) from DEREP_FASTA.filter{ it[1].size() > 0 }
     output:
-        set stdout,val(pairId),file("${pairId}_noChimeras.fasta") into DEREP_FASTA_NO_CHIMERA
+        set val(pairId),file("${pairId}_noChimeras.fasta") into DEREP_FASTA_NO_CHIMERA
     script:
         """
-        ncontigs=`grep -c ">" ${derepFa}`
-
-        if [ \$ncontigs -gt 0 ]; then
-	    vsearch --threads ${task.cpus} \
-		    --uchime3_denovo ${derepFa} \
-		    --sizein \
-		    --sizeout \
-		    --fasta_width 0 \
-		    --nonchimeras ${pairId}_noChimeras.fasta \
-            > /dev/null
-             
-        else
-            touch "${pairId}_noChimeras.fasta"
-        fi
-
-        echo \$ncontigs
-
+	vsearch --threads ${task.cpus} \
+		--uchime3_denovo ${derepFa} \
+		--sizein \
+		--sizeout \
+		--fasta_width 0 \
+		--nonchimeras ${pairId}_noChimeras.fasta \
         """
 }
 
-// Remove files with less than minDerep (unique) contigs
 DEREP_FASTA_NO_CHIMERA
-    .filter{ (it[0] as int) > params.minDerep }
-    .map{ ncontigs, pairId, filename -> tuple(pairId,filename) }
+    .filter{ it[1].countFasta() > params.minDerep }
     .set{ DEREP_FASTA_NO_CHIMERA_FILT }
 
 /*
@@ -423,8 +404,8 @@ process Clustering {
 	each idThreshold from clusteringThresholds
         set val(esvId),file(esvFasta) from ESV_ALL_SAMPLES_TO_CLUSTER
     output:
-	set val(idThreshold),file("otus${idThreshold}_seq.fasta") into OTU_ALL_SAMPLES,OTU_ALL_SAMPLES_LULU
-        set val(idThreshold),file("otus${idThreshold}_table.csv") into ABUNDANCE_TABLES_OTU
+	set val(idThreshold),file("OTUs_${idThreshold}.fasta") into OTU_ALL_SAMPLES,OTU_ALL_SAMPLES_LULU
+        set val(idThreshold),file("clustering_${idThreshold}.csv") into ABUNDANCE_TABLES_OTU
     
     script:
     """
@@ -437,15 +418,15 @@ process Clustering {
             --fasta_width 0 \
             --uc clusters${idThreshold}.uc \
             --relabel OTU${idThreshold}_ \
-            --centroids otus${idThreshold}_seq.fasta \
-            --otutabout otus${idThreshold}_table.tsv
+            --centroids OTUs_${idThreshold}.fasta \
+            --otutabout clustering_${idThreshold}.tsv
 
-    cat otus${idThreshold}_table.tsv | tr "\\t" "," > otus${idThreshold}_table.csv
+    cat clustering_${idThreshold}.tsv | tr "\\t" "," > clustering_${idThreshold}.csv
     """
 }
 
 // Mix channels with OTU and ESVs
-ABUNDANCE_TABLES = ABUNDANCE_TABLES_OTU.mix(ABUNDANCE_TABLES_ESV)
+(ABUNDANCE_TABLES,ABUNDANCE_TABLES_TO_COUNT) = ABUNDANCE_TABLES_OTU.mix(ABUNDANCE_TABLES_ESV).separate(2){ [it,it[1]] }
 LULU_ALL_SAMPLES = OTU_ALL_SAMPLES_LULU.mix(ESV_ALL_SAMPLES_LULU)
 ALL_SAMPLES = OTU_ALL_SAMPLES.mix(ESV_ALL_SAMPLES)
 
@@ -500,7 +481,8 @@ process Lulu {
     input:
 	set val(idThreshold),file(matchlist),file(table) from MATCH_LISTS.join(ABUNDANCE_TABLES)
     output:
-	set val(idThreshold),file("abundance_table_${idThreshold}.csv") into ABUNDANCE_LULU
+        set val(idThreshold),file("abundance_table_${idThreshold}.csv") into ABUNDANCE_LULU
+        file("abundance_table_${idThreshold}.csv") into ABUNDANCE_LULU_TO_COUNT
         set val(idThreshold),file("curated_ids_${idThreshold}.csv") into IDS_LULU
         file("lulu*.log_*") optional true
     script:
@@ -572,27 +554,47 @@ process ClassificationSintax {
  * Generates a summary file with the sequence count at each step for each sample (sample x step table) 
  *
  */
+// RAW_COUNTS,ITS_FASTQ_COUNTS,NO_N_COUNTS,FILTERED_COUNTS,NO_CHIMERA_COUNTS
 
 process SummaryFile {
     tag { "summary" }
     label "medium_computation"
     label "python_script"
 
-    publishDir params.outdir+"9-Results", mode: "copy", pattern: "*.{tsv,fasta}"
+    publishDir params.outdir+"9-Results", mode: "copy", pattern: "*.tsv"
     errorStrategy "${params.errorsHandling}"
     
     input:
         file f1 from DENOISING_SUMMARY
-        set val(idThreshold), file(f) from TAXONOMY
-        // set val(idThreshold), file(f2)) from FASTA_LULU_FOR_SUMMARY
+        val(raw_counts) from RAW_COUNTS
+	val(its_counts) from ITS_FASTQ_COUNTS
+	val(no_n_counts) from NO_N_COUNTS
+	val(filtered_counts) from FILTERED_COUNTS
+        file f1 from ABUNDANCE_TABLES_TO_COUNT.collect()
+	file f2 from ABUNDANCE_LULU_TO_COUNT.collect()    
     output:
-        file("sequences_per_sample_per_step*.tsv")
+        file("sequences_per_sample_per_step_*.tsv") into STEPS_SUMMARY
     script:
     """
     #!/usr/bin/env python3
     from generate_step_summary import write_summary
 
-    write_summary("${params.outdir}","${params.reads}","${idThreshold}")
+    clustering_threshold = ${clusteringThresholds}
+    counts = { '0-RawData': {${raw_counts.join(', ')}},
+               '1-ITSxpress': {${its_counts.join(', ')}},
+               '2-NandSmallSeqsFiltering': {${no_n_counts.join(', ')}},
+               '3-QualityFiltering': {${filtered_counts.join(', ')}}
+             }
+
+    steps = [("0-RawData", -1),
+             ("1-ITSxpress",-1),
+             ("2-NandSmallSeqsFiltering",-1),
+             ("3-QualityFiltering",-1),
+             ("7-Clustering","clustering_*.csv"),
+             ("8-LULU_correction","abundance_table_*.csv")                                         
+    ]
+    
+    write_summary(steps,counts,clustering_threshold)
     """
 }
 

@@ -68,18 +68,19 @@ if [ ! -z $idThreshold ]; then
 fi
 
 if [ $step == "MSA" ]; then
-    inputs_to_copy=("${fasta}.fasta" "${count}.count_table")
+    inputs_to_copy=(".fasta" ".count_table")
     
     # output_suffix=`echo ${optimize} | sed s/-/./g`
     # out="${out}_${output_suffix}"
     
     cmd=("align.seqs(fasta=${fasta}.fasta, reference=${refAln}) ; "
 	 "filter.seqs(fasta=${fasta}.align) ; "
-	 "screen.seqs(fasta=${fasta}.filter.fasta, count=${count}.count_table, optimize=${optimize}, criteria=${criteria}) ; "
-	 "summary.seqs(fasta=${fasta}.filter.good.fasta)")
+	 "screen.seqs(fasta=${fasta}.filter.fasta, count=${count}.count_table, minlength=50) ; "
+	 "screen.seqs(fasta=current, count=current, optimize=${optimize}, criteria=${criteria}) ; "
+	 "summary.seqs(fasta=current)")
     
-    outputs_mothur=("${fasta}.filter.good.fasta" 
-		    "${count}.good.count_table")
+    outputs_mothur=("${fasta}.filter.good.good.fasta" 
+		    "${count}.good.good.count_table")
     
     outputs_renamed=("${out}.fasta"
 		     "${out}.count_table")
@@ -206,8 +207,9 @@ do
 	mv ${outputs_mothur[$i]} ${outputs_renamed[$i]}
     # Special case when screen.seqs (sometime mothur doesnt produce an output file). In this case, just copy the input into the output
     elif [ $step = "MSA" ] || [ $step = "taxaFilter" ] || [ $step = "subsampling" ]; then
-	echo "WARNING: ${outputs_mothur[$i]} does not exist. Copying input (${inputs_to_copy[$i]})."
-	cp ${inputs_to_copy[$i]} ${outputs_renamed[$i]}
+	filename_to_copy=`ls -t *${inputs_to_copy[$i]} | head -1`
+	echo "WARNING: ${outputs_mothur[$i]} does not exist. Copying latest file with extension ${inputs_to_copy[$i]} (${filename_to_copy})."
+	cp ${filename_to_copy} ${outputs_renamed[$i]}
     # Otherwise, raise an error
     else
 	echo "ERROR: ${outputs_mothur[$i]} does not exist. Aborting."
