@@ -52,7 +52,7 @@ filterReads <- function(pairId,fwd,rev=NULL,
         saveRDS(readFastq(rev.out)@id, paste0( pairId, "_R2.ids") )
     }            
 }
-
+ 
 learnErrorRates <- function(fastq,pairId)
 {
     errorsF <- learnErrors(fastq[1],

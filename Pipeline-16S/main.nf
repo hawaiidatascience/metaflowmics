@@ -21,22 +21,25 @@ if (params.help){
     exit 0
 }
 
-//script_dir = workflow.projectDir+"/scripts"
-script_dir = '/workspace'
+if (['docker','gcp'].contains(workflow.profile)) {
+    script_dir = '/workspace'
+} else {
+    script_dir = workflow.projectDir+"/scripts"
+}
 
 def clusteringThresholds = params.clusteringThresholds.split(',').collect{it as int}
-
-/*
- *
- Beginning of the pipeline
- *
- */
 
 if ( params.singleEnd ) {
     read_path = params.reads.replaceAll("\\{1,2\\}","1")
 } else {
     read_path = params.reads
 }
+
+/*
+ *
+ Beginning of the pipeline
+ *
+ */
 
 Channel
     .fromFilePairs( read_path, size: params.singleEnd ? 1 : 2 )
@@ -70,7 +73,7 @@ process FilterAndTrim {
     """
     #!/usr/bin/env Rscript
 
-    source("${script_dir}/util.R")  
+    source("${params.script_dir}/util.R")  
 
     fastqs <- c("${fastq.join('","')}")
     rev <- NULL
@@ -110,13 +113,13 @@ process LearnErrors {
     input:
 	set val(pairId), file(fastq) from FASTQ_TRIMMED_FOR_MODEL
     output:
-	set val(pairId), file("${pairId}*.RDS") into ERROR_MODEL
+	set val(pairId), file("*.RDS") into ERROR_MODEL
         file "*.png"
     
     script:
     """
     #!/usr/bin/env Rscript
-    source("${script_dir}/util.R") 
+    source("${params.script_dir}/util.R") 
 
     fastqs <- c("${fastq.join('","')}")
     learnErrorRates(fastqs,"${pairId}")
@@ -143,7 +146,7 @@ process Denoise {
     script:
     """
     #!/usr/bin/env Rscript
-    source("${script_dir}/util.R")
+    source("${params.script_dir}/util.R")
 
     errors <- c("${err.join('","')}")
     fastqs <- c("${fastq.join('","')}")
@@ -173,16 +176,16 @@ process Esv {
     input:
 	file dadas from DADA_RDS.collect()
     output:
-        file("all.esv.{count_table,fasta}")  into DEREP_CONTIGS
+        file("all_esv.{count_table,fasta}")  into DEREP_CONTIGS
         file("*.RDS")
         file("count_summary.tsv") into COUNT_SUMMARIES
     
     script:
     """
     #!/usr/bin/env Rscript
-    source("${script_dir}/util.R")
+    source("${params.script_dir}/util.R")
 
-    esvTable(${params.minOverlap},${params.maxMismatch},"${params.singleEnd}")       
+    esvTable(${params.minOverlap},${params.maxMismatch},"${params.singleEnd}"=="false")
     """
 }
 
@@ -211,7 +214,7 @@ process MultipleSequenceAlignment {
     """
     #!/usr/bin/env bash
 
-    ${script_dir}/mothur.sh \
+    ${params.script_dir}/mothur.sh \
        --step=MSA \
        --refAln=${refAln} \
        --criteria=${params.criteria} \
@@ -238,7 +241,7 @@ process ChimeraRemoval {
         file("all_chimera.count_table") into CHIMERA_TO_COUNT
     script:
     """
-    ${script_dir}/mothur.sh --step=chimera
+    ${params.script_dir}/mothur.sh --step=chimera
     """
 }
 
@@ -257,7 +260,7 @@ process PreClassification {
 
     script:
     """
-    ${script_dir}/mothur.sh \
+    ${params.script_dir}/mothur.sh \
         --step=preClassification \
  	--refAln=${refAln} \
  	--refTax=${refTax}
@@ -284,7 +287,7 @@ process Clustering {
         file("all_clustering_*.shared") into CLUSTERING_TO_COUNT
     script:
     """
-    ${script_dir}/mothur.sh --step=clustering --idThreshold=${idThreshold}
+    ${params.script_dir}/mothur.sh --step=clustering --idThreshold=${idThreshold}
     """
 }
 
@@ -307,7 +310,7 @@ process ConsensusClassification {
         set val(idThreshold), file("all_consensusClassification_*.taxonomy"), file(list), file(shared) into CONSTAXONOMY_CONTIGS
     script:
     """
-    ${script_dir}/mothur.sh --step=consensusClassification --idThreshold=${idThreshold}
+    ${params.script_dir}/mothur.sh --step=consensusClassification --idThreshold=${idThreshold}
     """
 }
 
@@ -330,7 +333,7 @@ process TaxaFilter {
         file("all_taxaFilter*.shared") into TAXA_FILTER_TO_COUNT
     script:
     """
-    ${script_dir}/mothur.sh \
+    ${params.script_dir}/mothur.sh \
 	--step=taxaFilter \
         --idThreshold=${idThreshold} \
         --taxaToFilter='${params.taxaToFilter}' \
@@ -353,7 +356,7 @@ process OtuRepresentative {
         set val(idThreshold), file(shared) into SUBSAMPLING_EST    
     script:
     """
-    ${script_dir}/mothur.sh --step=otuRepr --idThreshold=${idThreshold}
+    ${params.script_dir}/mothur.sh --step=otuRepr --idThreshold=${idThreshold}
     """    
 }
 
@@ -407,7 +410,7 @@ process Subsampling {
     """
     #!/usr/bin/env bash
 
-    ${script_dir}/mothur.sh --step=subsampling --idThreshold=${idThreshold} --subsamplingNb=${subSampThresh} 
+    ${params.script_dir}/mothur.sh --step=subsampling --idThreshold=${idThreshold} --subsamplingNb=${subSampThresh} 
     """
 }
 
@@ -427,7 +430,7 @@ process PreLulu {
     tag { "preLulus.${idThreshold}" }
     publishDir params.outdir+"12-Lulu", mode: "copy"
     label "medium_computation"
-    label "vsearch"
+    label "require_vsearch"
     
     input:
 	set val(idThreshold),file(fasta) from CONTIGS_FOR_PRELULU
@@ -476,7 +479,7 @@ process Lulu {
 	
     """
     #!/usr/bin/env Rscript
-    source("${script_dir}/util.R")
+    source("${params.script_dir}/util.R")
 
     luluCurate("${table}","${matchlist}","${idThreshold}","${params.min_ratio_type}","${params.min_ratio}","${params.min_match}","${params.min_rel_cooccurence}")
     """
@@ -589,7 +592,7 @@ process Postprocessing {
 	set file("*.relabund"), file("*summary"), file("*.tre") into RESULTS
     script:
     """
-    ${script_dir}/mothur.sh --step=postprocessing --idThreshold=${idThreshold}
+    ${params.script_dir}/mothur.sh --step=postprocessing --idThreshold=${idThreshold}
     """    
 }
 

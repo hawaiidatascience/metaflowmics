@@ -42,6 +42,12 @@ if (params.help){
     exit 0
 }
 
+if (['docker','gcp'].contains(workflow.profile)) {
+    script_dir = '/workspace'
+} else {
+    script_dir = "${PWD}/scripts"
+}
+
 def clusteringThresholds = params.clusteringThresholds.split(',').collect{it as int}
 clusteringThresholds.removeAll{ it == 100}
 
@@ -51,29 +57,18 @@ if ( !params.pairedEnd ) {
     read_path = params.reads
 }
 
+/*
+ *
+ Beginning of the pipeline
+ *
+ */
+
 Channel
     .fromFilePairs( read_path, size: params.pairedEnd ? 2 : 1, flat: true )
     .ifEmpty { error "Cannot find any reads matching: ${params.reads}" }
     .into { INPUT_FASTQ ; INPUT_FASTQ_FOR_COUNT }
 
 RAW_COUNTS = INPUT_FASTQ_FOR_COUNT.collect{ ["'${it[0]}': ${it[1].countFastq()}"] }
-
-// Header log info
-def summary = [:]
-summary['Run Name'] = workflow.runName
-summary['Reads'] = params.reads
-summary['locus'] = params.locus
-summary['pairedEnd'] = params.pairedEnd
-summary['Output dir'] = params.outdir
-summary['Working dir'] = workflow.workDir
-summary['Current home'] = "$HOME"
-summary['Current path'] = "$PWD"
-summary['Config Profile'] = workflow.profile
-summary['Clustering thresholds'] = clusteringThresholds
-
-log.info summary.collect { k,v -> "${k.padRight(15)}: $v" }.join("\n")
-log.info "========================================="
-
 
 /*
  *
@@ -95,7 +90,6 @@ INPUT_FASTQ_OK = INPUT_FASTQ
 process ExtractITS {
     tag { "ITSextraction.${pairId}" }
     label "low_computation"
-    label "python_script"
     
     publishDir params.outdir+"1-ITSxpress", mode: "copy"
     errorStrategy "${params.errorsHandling}"
@@ -169,7 +163,6 @@ process QcFilter {
     tag { "filteredITS.${pairId}" }
     
     label "low_computation"
-    label "fastx_tk"
 
     publishDir params.outdir+"3-QualityFiltering", mode: "copy"
     errorStrategy "${params.errorsHandling}"
@@ -216,8 +209,8 @@ process Dereplication {
         set val(pairId), file(filtRead) from FILTERED_FASTQ
     
     output:
-	set val(pairId), file("${pairId}_derep.RDS") into DEREP_RDS
-        set val(pairId), file("${pairId}_derep.fasta") into DEREP_FASTA
+	set val(pairId), file("*_derep.RDS") into DEREP_RDS
+        set val(pairId), file("*_derep.fasta") into DEREP_FASTA
         file("*derep.RDS") into DEREP_FOR_COUNT_SUMMARY
     script:
 	"""
@@ -225,8 +218,8 @@ process Dereplication {
         library(dada2)
 
         derep <- derepFastq("${filtRead}")
-        saveRDS(derep,"${pairId}_derep.RDS")
-        uniquesToFasta(derep,"${pairId}_derep.fasta")
+        saveRDS(derep,"${pairId}_R12_derep.RDS")
+        uniquesToFasta(derep,"${pairId}_R12_derep.fasta")
         """
 }
 
@@ -239,7 +232,7 @@ process Dereplication {
 process ChimeraRemoval {
     tag { "ChimeraRemoval.${pairId}" }
     label "low_computation"        
-    label "vsearch"
+    label "require_vsearch"
 
     publishDir params.outdir+"5-ChimeraRemoval", mode: "copy"
     errorStrategy "${params.errorsHandling}"
@@ -247,7 +240,7 @@ process ChimeraRemoval {
     input:
         set val(pairId),file(derepFa) from DEREP_FASTA.filter{ it[1].size() > 0 }
     output:
-        set val(pairId),file("${pairId}_noChimeras.fasta") into DEREP_FASTA_NO_CHIMERA
+        set val(pairId),file("*_noChimeras.fasta") into DEREP_FASTA_NO_CHIMERA
     script:
         """
 	vsearch --threads ${task.cpus} \
@@ -255,7 +248,7 @@ process ChimeraRemoval {
 		--sizein \
 		--sizeout \
 		--fasta_width 0 \
-		--nonchimeras ${pairId}_noChimeras.fasta \
+		--nonchimeras ${pairId}_R12_noChimeras.fasta \
         """
 }
 
@@ -282,18 +275,18 @@ process LearnErrors {
     from DEREP_RDS.join(DEREP_FASTA_NO_CHIMERA_FILT)
     
     output:
-        set val(pairId), file("${pairId}_errors.RDS"), file("${pairId}_nochimera.RDS") into ERRORS_AND_DEREP
+        set val(pairId), file("*_errors.RDS"), file("*_nochimera.RDS") into ERRORS_AND_DEREP
 
     script:
     """
     #!/usr/bin/env Rscript
-    source("${workflow.projectDir}/scripts/util.R")
+    source("${params.script_dir}/util.R")
 
     # Extract no chimera sequences and store into an R object for dada2
     extractChimeras("${derepRDS}","${sample_nochim}","${pairId}")
 
     # Build error model
-    learnErrorRates("${pairId}_nochimera.RDS","${pairId}")
+    learnErrorRates("${pairId}_R12_nochimera.RDS","${pairId}",rds=TRUE)
     """
 }
 
@@ -313,16 +306,14 @@ process Denoise {
 
     input:
         set pairId, file(err), file(nochimera) from ERRORS_AND_DEREP
-
     output:
-        set pairId,file("${pairId}_dada.fasta") into DADA_FASTA
-        set pairId,file(nochimera),file("${pairId}_dada.RDS") into DADA_RDS
+        set file(nochimera),file("*_dada.RDS") into DADA_RDS
     script:
     """
     #!/usr/bin/env Rscript
-    source("${workflow.projectDir}/scripts/util.R")
+    source("${params.script_dir}/util.R")
 
-    dadaDenoise("${err}","${nochimera}","${pairId}")
+    dadaDenoise("${err}","${nochimera}","${pairId}_R12",derep.rds=TRUE,paired=FALSE)
     """
 }
 
@@ -344,45 +335,18 @@ process MakeEsvTable {
 	file denoised from DADA_RDS.collect()
         file derep from DEREP_FOR_COUNT_SUMMARY.collect()
     output:
-	file("sequence_table.RDS")
+	file("raw_sequence_table.csv") into ESV_TABLE_TO_CLUSTER
         file("count_summary.tsv") into DENOISING_SUMMARY
-        set val(100),file("otus100_table.csv") into ABUNDANCE_TABLES_ESV
-        set val(100),file("otus100_seq.fasta") into ESV_ALL_SAMPLES,ESV_ALL_SAMPLES_LULU
-        
+        set val(100),file("esv_table_100.csv") into ABUNDANCE_TABLES_ESV
+        set val(100),file("all_esv.fasta") into ESV_ALL_SAMPLES,ESV_ALL_SAMPLES_LULU
+        file("esv_merged_to_cluster.fasta") into ESV_ALL_SAMPLES_TO_CLUSTER
     script:
     """
     #!/usr/bin/env Rscript
-    source("${workflow.projectDir}/scripts/util.R")
+    source("${params.script_dir}/util.R")
 
-    esvTable()
-    """    
-}
-
-/*
- *
- * Merge fastas (and keep sample id and abundance in name) for clustering
- *
- */
-
-process MergeFastas {
-    tag { "mergeFastas" }
-    label "medium_computation"
-    label "python_script"
-    
-    publishDir params.outdir+"7-Clustering", mode: "copy"
-    errorStrategy "${params.errorsHandling}"
-    
-    input:
-	file fastas from DADA_FASTA.collect()
-    output:
-	set val(100), file("all_samples_merged.fasta") into ESV_ALL_SAMPLES_TO_CLUSTER
-    script:
-    """
-    #!/usr/bin/env python3
-
-    from util import mergeSamplesFa
-
-    mergeSamplesFa()
+    esvTable(paired=FALSE)
+    mergeFastaForVSEARCH("raw_sequence_table.csv")
     """    
 }
 
@@ -395,14 +359,14 @@ process MergeFastas {
 process Clustering {
     tag { "clustering.${idThreshold}" }
     label "high_computation"
-    label "vsearch"
+    label "require_vsearch"
     
     publishDir params.outdir+"7-Clustering", mode: "copy"
     errorStrategy "${params.errorsHandling}"
     
     input:
 	each idThreshold from clusteringThresholds
-        set val(esvId),file(esvFasta) from ESV_ALL_SAMPLES_TO_CLUSTER
+        file(esvFasta) from ESV_ALL_SAMPLES_TO_CLUSTER
     output:
 	set val(idThreshold),file("OTUs_${idThreshold}.fasta") into OTU_ALL_SAMPLES,OTU_ALL_SAMPLES_LULU
         set val(idThreshold),file("clustering_${idThreshold}.csv") into ABUNDANCE_TABLES_OTU
@@ -439,7 +403,7 @@ ALL_SAMPLES = OTU_ALL_SAMPLES.mix(ESV_ALL_SAMPLES)
 process PreLulu {
     tag { "preLulus.${idThreshold}" }
     label "high_computation"
-    label "vsearch"
+    label "require_vsearch"
     
     publishDir params.outdir+"8-LULU_correction", mode: "copy"
     errorStrategy "${params.errorsHandling}"
@@ -483,15 +447,15 @@ process Lulu {
     output:
         set val(idThreshold),file("abundance_table_${idThreshold}.csv") into ABUNDANCE_LULU
         file("abundance_table_${idThreshold}.csv") into ABUNDANCE_LULU_TO_COUNT
-        set val(idThreshold),file("curated_ids_${idThreshold}.csv") into IDS_LULU
+        set val(idThreshold),file("lulu_ids_${idThreshold}.csv") into IDS_LULU
         file("lulu*.log_*") optional true
     script:
 	
     """
     #!/usr/bin/env Rscript
-    source("${workflow.projectDir}/scripts/util.R")
+    source("${params.script_dir}/util.R")
 
-    luluCurate("${table}","${matchlist}","${idThreshold}")
+    luluCurate("${table}","${matchlist}","${idThreshold}","${params.min_ratio_type}","${params.min_ratio}","${params.min_match}","${params.min_rel_cooccurence}")
     """
 }
 
@@ -530,19 +494,20 @@ process ExtractFastaLulu {
 process ClassificationSintax {
     tag { "classification.${idThreshold}" }
     label "high_computation"
-    label "vsearch"
+    label "require_vsearch"
     
     publishDir params.outdir+"9-Results", mode: "copy", pattern: "annotations*.tsv"
     errorStrategy "${params.errorsHandling}"
 
     input:
-	set idThreshold,file(fasta) from FASTA_LULU
+        set idThreshold,file(fasta) from FASTA_LULU
+        file refAln from Channel.fromPath(params.uniteDB)
     output:
         set idThreshold,file("annotations_sintax_${idThreshold}.tsv") into TAXONOMY
     script:
 	
     """
-    vsearch --threads ${task.cpus} --db ${params.uniteDB} \
+    vsearch --threads ${task.cpus} --db ${refAln} \
             --sintax ${fasta} --sintax_cutoff ${params.confidenceThresh} \
             --tabbedout annotations_sintax_${idThreshold}.tsv
 

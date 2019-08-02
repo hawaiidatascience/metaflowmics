@@ -8,15 +8,15 @@ test16S:
 	nextflow run Pipeline-16S --reads "${PWD}/tests/16S/*_R{1,2}.fastq.gz" -profile $(CONF)
 
 python_container:
-	sudo docker build -f Dockerfile_python -t nakor/python_libs_pipeline Pipeline-16S/scripts/
+	sudo docker build -f Dockerfile_python -t nakor/python_libs_pipeline scripts/
 	sudo docker push nakor/python_libs_pipeline
 R_container:
-	sudo docker build -f Dockerfile_R -t nakor/r_libs_pipeline Pipeline-16S/scripts/
+	sudo docker build -f Dockerfile_R -t nakor/r_libs_pipeline scripts/
 	sudo docker push nakor/r_libs_pipeline
 mothur_container:
-	sudo docker build -f Dockerfile_mothur -t nakor/mothur_pipeline Pipeline-16S/scripts/
+	sudo docker build -f Dockerfile_mothur -t nakor/mothur_pipeline scripts/
 	sudo docker push nakor/mothur_pipeline
 gcp_wrapper:
 	@ make gcp16S NXF_VER=19.01.0 NXF_MODE=google GOOGLE_APPLICATION_CREDENTIALS="${HOME}/.gcp_credentials.json"
 gcp16S:
-	nextflow1901 run Pipeline-16S --reads "${PWD}/tests/16S/*_R{1,2}.fastq.gz" -profile gcp -work-dir 'gs://c-maiki-work-2/tmp'
+	nextflow1901 run Pipeline-16S --reads "${PWD}/tests/16S/*_R{1,2}.fastq.gz" -profile gcp -work-dir 'gs://c-maiki-work/tmp'
