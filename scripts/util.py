@@ -4,7 +4,9 @@ from Bio import SeqIO
 import pandas as pd
 
 def getSubsamplingThreshold(sharedFile,quantile,minValue):
-    table = pd.read_csv(sharedFile, index_col="Group", sep="\t").drop(["label","numOtus"],axis=1)
+    table = (pd.read_csv(sharedFile, sep="\t", dtype={'Group':str})
+             .set_index("Group")
+             .drop(["label","numOtus"],axis=1))
     
     sample_sizes = table.sum(axis=1).sort_values(ascending=False) 
     threshold = int(sample_sizes.quantile(quantile))
@@ -14,7 +16,7 @@ def getSubsamplingThreshold(sharedFile,quantile,minValue):
     else:
         if sample_sizes[1] > minValue:
             print(minValue)
-            ## print(minValue + " 1000") ==> for later
+            ## TODO: enable multiple space delimited thresholds
         elif sample_sizes[1] > 1000:
             print(1000)
         else:

@@ -328,9 +328,10 @@ process TaxaFilter {
     input:
 	set val(idThreshold), file(tax), file(list), file(shared) from CONSTAXONOMY_CONTIGS
     output:
-        set val(idThreshold), file("all_taxaFilter*.taxonomy"), file("all_taxaFilter*.list"), file("all_taxaFilter*.shared") \
-    into TAXA_FILTERED
+        set val(idThreshold), file("all_taxaFilter*.shared") into (SUBSAMPLING_EST,SUBSAMPLING_OFF_TO_COUNT)
         file("all_taxaFilter*.shared") into TAXA_FILTER_TO_COUNT
+        set val(idThreshold), file("all_taxaFilter*.taxonomy"), file("all_taxaFilter*.list"), file("all_taxaFilter*.shared") into TAXA_FILTERED
+    
     script:
     """
     ${params.script_dir}/mothur.sh \
@@ -353,7 +354,6 @@ process OtuRepresentative {
         from TAXA_FILTERED.combine(FASTA_FOR_REPR)
     output:
         set val(idThreshold), file("*.fasta"), file(tax), file(shared) into FOR_SUBSAMPLING
-        set val(idThreshold), file(shared) into SUBSAMPLING_EST    
     script:
     """
     ${params.script_dir}/mothur.sh --step=otuRepr --idThreshold=${idThreshold}
@@ -382,9 +382,8 @@ process GetSubsamlingValue {
 
 
 (SUBSAMPLING_IN, ALT_CHANNEL) = ( params.skipSubsampling
-				 ? [Channel.empty(), FOR_SUBSAMPLING]
-				 : [FOR_SUBSAMPLING, Channel.empty()] )
-
+				  ? [Channel.empty(), FOR_SUBSAMPLING ]
+				  : [FOR_SUBSAMPLING, Channel.empty()] )
 /*
  *
  * Subsampling the samples to the 10th percentile or 1k/sample if the 10th pct is below 1k (in scripts/mothur.sh)
@@ -400,11 +399,10 @@ process Subsampling {
     input:
 	set val(idThreshold), file(fasta), file(tax), file(shared), val(subSampThresh) \
         from SUBSAMPLING_IN.join(SUBSAMPLING_THRESHOLDS)
-
     output:
 	set val(idThreshold), file("all_subsampling*.fasta"), file("all_subsampling*.taxonomy"), file("all_subsampling*.shared") \
     into SUBSAMPLED_OUT
-        file("all_subsampling*.shared") into SUBSAMPLING_TO_COUNT
+        file("all_subsampling*.shared") into SUBSAMPLING_ON_TO_COUNT
     
     script:
     """
@@ -413,6 +411,10 @@ process Subsampling {
     ${params.script_dir}/mothur.sh --step=subsampling --idThreshold=${idThreshold} --subsamplingNb=${subSampThresh} 
     """
 }
+
+SUBSAMPLING_TO_COUNT = ( params.skipSubsampling
+			? SUBSAMPLING_OFF_TO_COUNT.map{ it -> it[1].copyTo("all_subsampling_${it[0]}.shared")}
+			: SUBSAMPLING_ON_TO_COUNT )
 
 (CONTIGS_FOR_PRELULU,FASTA_TO_FILTER,SUBSAMPLED_TAX,ABUNDANCE_TABLES_FOR_LULU) = SUBSAMPLED_OUT
     .mix(ALT_CHANNEL)
@@ -595,5 +597,3 @@ process Postprocessing {
     ${params.script_dir}/mothur.sh --step=postprocessing --idThreshold=${idThreshold}
     """    
 }
-
-
