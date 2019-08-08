@@ -55,8 +55,8 @@ class SequenceCounter:
             table = pd.read_csv(filename,index_col=0,sep='\t')
         else:
             print("Wrong extension (neither .shared or .count_table): {}".format(self.extension))
-
-        summary = table.agg(lambda x: "{} ({} uniques)".format(x.sum(),(x>0).sum()))
+            
+        summary = table.apply(lambda x: "{} ({} uniques)".format(x.sum(),(x>0).sum()))
         summary.index = summary.index.astype(str)
                 
         return summary.rename(name)

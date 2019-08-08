@@ -19,12 +19,16 @@ def write_summary(steps,prelim_counts,clustering_thresholds):
 
     # Loop over the remaining steps
     for name,pattern in steps:
+        print("Processing {} ({})".format(name,pattern))
         if pattern == -1:
+            # Already calculated
             continue
         if pattern is None:
+            # Step doesnt loose any reads/sample
             summary_i = [ pd.Series("N/A", index=sample_names,name=name) ]
         if type(pattern) is str:
             if "*" in pattern:
+                # Step with multiple identity thresholds
                 summary_i = [ SequenceCounter(name,pattern.replace("*",str(id_threshold)))
                               .run()
                               for id_threshold in clustering_thresholds ]
@@ -37,18 +41,20 @@ def write_summary(steps,prelim_counts,clustering_thresholds):
             res_all_samples[id_threshold].append(summary_i_thresh)
 
     for id_threshold in clustering_thresholds:
+        print("Merging for {}".format(id_threshold))
         summary = pd.concat(res_all_samples[id_threshold],axis=1)
 
         columns_order = sorted(summary.columns,key=lambda x: float(x.split('-')[0]))
 
         summary = summary.reindex(columns=columns_order)
 
+        # Fill steps that don't filter the data with the previous step count
         for i,col in enumerate(summary.columns):
             if summary[col][0] =='N/A':
                 summary[col] = summary[summary.columns[i-1]]
 
-        # summary = summary.fillna(0)
-        # import ipdb;ipdb.set_trace()
+        # If a sample is not in a step, it was discarded -> fill with 0
+        summary = summary.fillna(0)
         # Set to "-" if the value does not change from one step to the next
         summary_clean = summary[ (summary.shift(1,axis=1) != summary) | (summary == 0) ].fillna('-')
         # But we keep the last column
