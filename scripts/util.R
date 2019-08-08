@@ -223,7 +223,7 @@ luluCurate <- function(abundanceFile,matchListFile,threshold,min_ratio_type,min_
 {
     if(tools::file_ext(abundanceFile)=='shared'){
         otutab <- read.table(abundanceFile,
-                             header=TRUE,row.names=2,
+                             header=TRUE, row.names=2, colClasses=c("Group"="character"),
                              as.is=TRUE,check.names=F)[,-c(1,2)]
         otutab <- as.data.frame(t(otutab))
         abundance_table_name = sprintf("lulu_table_%s.csv",threshold)

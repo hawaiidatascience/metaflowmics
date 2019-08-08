@@ -47,6 +47,8 @@ def write_summary(steps,prelim_counts,clustering_thresholds):
             if summary[col][0] =='N/A':
                 summary[col] = summary[summary.columns[i-1]]
 
+        # summary = summary.fillna(0)
+        # import ipdb;ipdb.set_trace()
         # Set to "-" if the value does not change from one step to the next
         summary_clean = summary[ (summary.shift(1,axis=1) != summary) | (summary == 0) ].fillna('-')
         # But we keep the last column
