@@ -1,9 +1,12 @@
 work
 .nextflow*
-Results-*
+Results*
 *result*
 *packages
 database*
 report.html
 timeline.html
 trace.txt
+*.shared
+*.csv
+*.tsv
