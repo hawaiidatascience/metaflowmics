@@ -1,4 +1,6 @@
 import pandas as pd
+from glob import glob
+
 from counter import SequenceCounter
 
 def write_summary(steps,prelim_counts,clustering_thresholds):
@@ -23,8 +25,8 @@ def write_summary(steps,prelim_counts,clustering_thresholds):
         if pattern == -1:
             # Already calculated
             continue
-        if pattern is None:
-            # Step doesnt loose any reads/sample
+        if (pattern is None) or ('subsampling' in name.lower() and len(glob(pattern))==0):
+            # Step doesnt loose any reads/sample (special case when subsampling is deactivated)
             summary_i = [ pd.Series("N/A", index=sample_names,name=name) ]
         if type(pattern) is str:
             if "*" in pattern:

@@ -328,7 +328,7 @@ process TaxaFilter {
     input:
 	set val(idThreshold), file(tax), file(list), file(shared) from CONSTAXONOMY_CONTIGS
     output:
-        set val(idThreshold), file("all_taxaFilter*.shared") into (SUBSAMPLING_EST,SUBSAMPLING_OFF_TO_COUNT)
+        // set val(idThreshold), file("all_taxaFilter*.shared") into (SUBSAMPLING_EST,SUBSAMPLING_OFF_TO_COUNT)
         file("all_taxaFilter*.shared") into TAXA_FILTER_TO_COUNT
         set val(idThreshold), file("all_taxaFilter*.taxonomy"), file("all_taxaFilter*.list"), file("all_taxaFilter*.shared") into TAXA_FILTERED
     
@@ -343,6 +343,26 @@ process TaxaFilter {
     """
 }
 
+process MultipletonsFilter {
+    tag { "MultipletonsFilter.${idThreshold}" }
+    publishDir params.outdir+"11-MultipletonsFilter", mode: "copy"    
+    errorStrategy "${params.errorsHandling}"
+    label "medium_computation"    
+    label "mothur_script"
+    
+    input:
+	set val(idThreshold), file(tax), file(list), file(shared) from TAXA_FILTERED
+    output:
+        set val(idThreshold), file(tax), file(list), file("all_multipletonsFilter*.shared") into TAXA_MULTIPLETONS_FILTERED
+	set val(idThreshold), file("all_multipletonsFilter*.shared") into (SUBSAMPLING_EST,SUBSAMPLING_OFF_TO_COUNT)
+        file("all_multipletonsFilter*.shared") into MULTIPLETONS_FILTER_TO_COUNT
+    
+    script:
+    """
+    ${params.script_dir}/mothur.sh --step=multipletonsFilter --idThreshold=${idThreshold} --minAbundance=${params.minAbundance}
+    """    
+}
+
 process OtuRepresentative {
     tag { "OtuRepresentative.${idThreshold}" }
     errorStrategy "${params.errorsHandling}"
@@ -350,8 +370,7 @@ process OtuRepresentative {
     label "mothur_script"
     
     input:
-	set val(idThreshold), file(tax), file(list), file(shared), file(fasta), file(count) \
-        from TAXA_FILTERED.combine(FASTA_FOR_REPR)
+        set val(idThreshold), file(tax), file(list), file(shared), file(fasta), file(count) from TAXA_MULTIPLETONS_FILTERED.combine(FASTA_FOR_REPR)
     output:
         set val(idThreshold), file("*.fasta"), file(tax), file(shared) into FOR_SUBSAMPLING
     script:
@@ -392,7 +411,7 @@ process GetSubsamlingValue {
 
 process Subsampling {
     tag { "subsampling" }
-    publishDir params.outdir+"11-Subsampling", mode: "copy"
+    publishDir params.outdir+"12-Subsampling", mode: "copy"
     label "medium_computation"
     label "mothur_script"
     
@@ -413,7 +432,7 @@ process Subsampling {
 }
 
 SUBSAMPLING_TO_COUNT = ( params.skipSubsampling
-			? SUBSAMPLING_OFF_TO_COUNT.map{ it -> it[1].copyTo("all_subsampling_${it[0]}.shared")}
+			? SUBSAMPLING_OFF_TO_COUNT.map{ it -> it[1].copyTo("/tmp/all_subsampling_${it[0]}.shared")}
 			: SUBSAMPLING_ON_TO_COUNT )
 
 (CONTIGS_FOR_PRELULU,FASTA_TO_FILTER,SUBSAMPLED_TAX,ABUNDANCE_TABLES_FOR_LULU) = SUBSAMPLED_OUT
@@ -430,7 +449,7 @@ SUBSAMPLING_TO_COUNT = ( params.skipSubsampling
 
 process PreLulu {
     tag { "preLulus.${idThreshold}" }
-    publishDir params.outdir+"12-Lulu", mode: "copy"
+    publishDir params.outdir+"13-Lulu", mode: "copy"
     label "medium_computation"
     label "require_vsearch"
     
@@ -446,6 +465,7 @@ process PreLulu {
     sed '/^>/! s/[\\.-]//g' ${fasta} > \$fasta_noGap
 
     vsearch --usearch_global \$fasta_noGap \
+            --threads ${task.cpus} \
             --db \$fasta_noGap --self \
             --id 0.${params.min_match} \
             --iddef 1 \
@@ -465,7 +485,7 @@ process PreLulu {
 
 process Lulu {
     tag { "Lulu.${idThreshold}" }
-    publishDir params.outdir+"12-Lulu", mode: "copy"
+    publishDir params.outdir+"13-Lulu", mode: "copy"
     errorStrategy "${params.errorsHandling}"
     label "high_computation"    
     label "r_script"
@@ -495,10 +515,10 @@ process Lulu {
  *
  */
 
-process SingletonFilter {
-    tag { "SingletonFilter.${idThreshold}" }
-    publishDir params.outdir+"13-SingletonFilter", mode:"copy", pattern:"*.shared"    
-    publishDir params.outdir+"14-Results", mode:"copy", pattern:"*.{fasta,shared,taxonomy}"
+process RareSeqsFilter {
+    tag { "RareSeqsFilter.${idThreshold}" }
+    publishDir params.outdir+"14-RareSeqsFilter", mode:"copy", pattern:"*.shared"    
+    publishDir params.outdir+"15-Results", mode:"copy", pattern:"*.{fasta,shared,taxonomy}"
     errorStrategy "${params.errorsHandling}"
     label "low_computation"    
     label "python_script"
@@ -507,7 +527,7 @@ process SingletonFilter {
 	set idThreshold, file(fasta), file(abundance), file(tax) from FASTA_TO_FILTER.join(TABLE_TO_FILTER).join(SUBSAMPLED_TAX)
     output:
         set idThreshold, file("*.{fasta,shared,taxonomy}") into MOTHUR_TO_PROCESS
-        file("*.shared") into SINGLETON_FILTER_TO_COUNT
+        file("*.shared") into RARE_SEQS_FILTER_TO_COUNT
     script:
     """
     #!/usr/bin/env python3
@@ -526,7 +546,7 @@ process SingletonFilter {
 	 
 process SummaryFile {
     tag { "SummaryFile" }
-    publishDir params.outdir+"14-Results", mode: "copy"
+    publishDir params.outdir+"15-Results", mode: "copy"
     errorStrategy "${params.errorsHandling}"
     label "low_computation"
     label "python_script"
@@ -538,10 +558,11 @@ process SummaryFile {
         file f1 from MSA_TO_COUNT.collect()
         file f2 from CHIMERA_TO_COUNT.collect()
 	file f3 from CLUSTERING_TO_COUNT.collect()
-	file f4 from SUBSAMPLING_TO_COUNT.collect()
-	file f5 from TAXA_FILTER_TO_COUNT.collect()
-	file f6 from LULU_TO_COUNT.collect()
-	file f7 from SINGLETON_FILTER_TO_COUNT.collect()
+        file f4 from MULTIPLETONS_FILTER_TO_COUNT.collect()
+	file f5 from SUBSAMPLING_TO_COUNT.collect()
+	file f6 from TAXA_FILTER_TO_COUNT.collect()
+	file f7 from LULU_TO_COUNT.collect()
+	file f8 from RARE_SEQS_FILTER_TO_COUNT.collect()
     output:
         file("sequences_per_sample_per_step_*.tsv") into STEPS_SUMMARY
     script:
@@ -565,9 +586,10 @@ process SummaryFile {
              ("8-ConsensusClassification",None),             
              ("9-Clustering","all_clustering_*.shared"),
              ("10-TaxaFilter","all_taxaFilter_*.shared"),
-             ("11-Subsampling","all_subsampling_*.shared"),
-             ("12-Lulu","lulu_table_*.csv"),
-             ("13-SingletonFilter","abundance_table_*.shared")
+             ("11-MultipletonsFilter","all_multipletonsFilter_*.shared"),
+             ("12-Subsampling","all_subsampling_*.shared"),
+             ("13-Lulu","lulu_table_*.csv"),
+             ("14-RareSeqsFilter","abundance_table_*.shared")
     ]
 
     write_summary(steps,counts,clustering_threshold)
@@ -582,9 +604,9 @@ process SummaryFile {
 
 process Postprocessing {
     tag { "mothurResults" }
-    publishDir params.outdir+"15-Postprocessing", mode: "copy"
+    publishDir params.outdir+"16-Postprocessing", mode: "copy"
     errorStrategy "${params.errorsHandling}"
-    label "medium_computation"
+    label "high_computation"
     label "mothur_script"
     
     input:

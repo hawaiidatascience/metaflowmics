@@ -46,7 +46,7 @@ class SequenceCounter:
             id_threshold = ""
                     
         if self.extension == "shared":
-            table = pd.read_csv(filename, index_col="Group", sep='\t').drop(["label","numOtus"],axis=1).T
+            table = pd.read_csv(filename, sep='\t', dtype={'Group': str}).drop(["label","numOtus"],axis=1).set_index('Group').T
         elif self.extension == "count_table":
             table = pd.read_csv(filename, index_col=0, sep="\t").drop("total",axis=1)
         elif self.extension == "csv":
