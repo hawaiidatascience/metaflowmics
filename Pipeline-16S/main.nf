@@ -49,6 +49,8 @@ Channel
 
 RAW_COUNTS = INPUT_FASTQ_FOR_COUNT.collect{ ["'${it[0]}': ${it[1][0].countFastq()}"] }
 
+INPUT_FASTQ_PREFILT = INPUT_FASTQ.filter{it[1][0].countFastq()>params.minReads}
+
 /*
  *
  * Dada2's filterAndTrim function (in scripts/util.R)
@@ -59,12 +61,12 @@ RAW_COUNTS = INPUT_FASTQ_FOR_COUNT.collect{ ["'${it[0]}': ${it[1][0].countFastq(
 process FilterAndTrim {
     // Quality filter and trimming using dada2. 
     tag { "FilterAndTrim.${pairId}" }
-    publishDir params.outdir+"1-FilterAndTrim", mode: "copy", pattern: "*.{fastq,png}"
+    publishDir params.outdir+"Misc/1-FilterAndTrim", mode: "copy", pattern: "*.{fastq,png}"
     label "low_computation"
     label "r_script"
     
     input:
-        set val(pairId), file(fastq) from INPUT_FASTQ
+        set val(pairId), file(fastq) from INPUT_FASTQ_PREFILT
     output:
         set val(pairId), file("${pairId}*_trimmed.fastq") into FASTQ_TRIMMED_RAW
         file("*.png") optional true
@@ -93,7 +95,7 @@ process FilterAndTrim {
 }
 
 FASTQ_TRIMMED_RAW
-    .filter{ (it[1].size() > 0)  }
+    .filter{ (it[1][0].countFastq() > params.minReads)  }
     .into{ FASTQ_TRIMMED ; FASTQ_TRIMMED_FOR_MODEL ; FASTQ_TRIMMED_FOR_COUNT }
 
 FILTERED_COUNTS = FASTQ_TRIMMED_FOR_COUNT.collect{ ["'${it[0]}': ${it[1][0].countFastq()}"] }
@@ -106,7 +108,7 @@ FILTERED_COUNTS = FASTQ_TRIMMED_FOR_COUNT.collect{ ["'${it[0]}': ${it[1][0].coun
 
 process LearnErrors {
     tag { "LearnErrors.${pairId}" }
-    publishDir params.outdir+"2-ErrorModel", mode: "copy", pattern: "*.{RDS,png}"
+    publishDir params.outdir+"Misc/2-ErrorModel", mode: "copy", pattern: "*.{RDS,png}"
     label "medium_computation"
     label "r_script"
     
@@ -134,7 +136,7 @@ process LearnErrors {
 
 process Denoise {
     tag { "Denoising.${pairId}" }
-    publishDir params.outdir+"3-Denoising", mode: "copy", pattern: "*.RDS"
+    publishDir params.outdir+"Misc/3-Denoising", mode: "copy", pattern: "*.RDS"
     label "medium_computation"
     label "r_script"
     
@@ -168,7 +170,7 @@ process Denoise {
 process Esv {
     tag { "Esv" }
 
-    publishDir params.outdir+"4-ESV", mode: "copy"
+    publishDir params.outdir+"Misc/4-ESV", mode: "copy"
     
     label "high_computation"
     label "r_script"
@@ -198,7 +200,7 @@ process Esv {
 
 process MultipleSequenceAlignment {
     tag { "MSA" }
-    publishDir params.outdir+"5-MultipleSequenceAlignment", mode: "copy"
+    publishDir params.outdir+"Misc/5-MultipleSequenceAlignment", mode: "copy"
     label "high_computation"
     label "mothur_script"
     
@@ -230,7 +232,7 @@ process MultipleSequenceAlignment {
 
 process ChimeraRemoval {
     tag { "chimeraRemoval" }
-    publishDir params.outdir+"6-ChimeraRemoval", mode: "copy", pattern: "*.{fasta,count_table}"
+    publishDir params.outdir+"Misc/6-ChimeraRemoval", mode: "copy", pattern: "*.{fasta,count_table}"
     label "high_computation"
     label "mothur_script"
     
@@ -247,7 +249,7 @@ process ChimeraRemoval {
 
 process PreClassification {
     tag { "preClassification" }
-    publishDir params.outdir+"7-PreClassification", mode: "copy", pattern: "*.taxonomy"
+    publishDir params.outdir+"Misc/7-PreClassification", mode: "copy", pattern: "*.taxonomy"
     label "high_computation"
     label "mothur_script"
     
@@ -275,7 +277,8 @@ process PreClassification {
 
 process Clustering {
     tag { "clustering.${idThreshold}" }
-    publishDir params.outdir+"8-Clustering", mode: "copy", pattern: "all_clustering*.{fasta,shared,list}"
+    publishDir params.outdir+"Misc/8-Clustering", mode: "copy", pattern: "all_clustering*.{fasta,shared,list}"
+	publishDir params.outdir+"Results/raw", mode: "copy", pattern: "all_clustering*.{fasta,shared}"
     label "high_computation"
     label "mothur_script"
     
@@ -299,7 +302,8 @@ process Clustering {
 
 process ConsensusClassification {
     tag { "consensusClassification.${idThreshold}" }
-    publishDir params.outdir+"9-ConsensusClassification", mode: "copy", pattern: "all_consensusClassification*.{summary,taxonomy}"
+    publishDir params.outdir+"Misc/9-ConsensusClassification", mode: "copy", pattern: "all_consensusClassification*.{summary,taxonomy}"
+	publishDir params.outdir+"Misc/raw", mode: "copy", pattern: "all_consensusClassification*.summary"
     label "medium_computation"    
     label "mothur_script"
     
@@ -320,7 +324,7 @@ process ConsensusClassification {
 
 process TaxaFilter {
     tag { "convertToMothur.${idThreshold}" }
-    publishDir params.outdir+"10-TaxaFilter", mode: "copy"
+    publishDir params.outdir+"Misc/10-TaxaFilter", mode: "copy"
     errorStrategy "${params.errorsHandling}"
     label "medium_computation"    
     label "mothur_script"
@@ -345,7 +349,7 @@ process TaxaFilter {
 
 process MultipletonsFilter {
     tag { "MultipletonsFilter.${idThreshold}" }
-    publishDir params.outdir+"11-MultipletonsFilter", mode: "copy"    
+    publishDir params.outdir+"Misc/11-MultipletonsFilter", mode: "copy"    
     errorStrategy "${params.errorsHandling}"
     label "medium_computation"    
     label "mothur_script"
@@ -411,7 +415,7 @@ process GetSubsamlingValue {
 
 process Subsampling {
     tag { "subsampling" }
-    publishDir params.outdir+"12-Subsampling", mode: "copy"
+    publishDir params.outdir+"Misc/12-Subsampling", mode: "copy"
     label "medium_computation"
     label "mothur_script"
     
@@ -449,7 +453,7 @@ SUBSAMPLING_TO_COUNT = ( params.skipSubsampling
 
 process PreLulu {
     tag { "preLulus.${idThreshold}" }
-    publishDir params.outdir+"13-Lulu", mode: "copy"
+    publishDir params.outdir+"Misc/13-Lulu", mode: "copy"
     label "medium_computation"
     label "require_vsearch"
     
@@ -485,7 +489,7 @@ process PreLulu {
 
 process Lulu {
     tag { "Lulu.${idThreshold}" }
-    publishDir params.outdir+"13-Lulu", mode: "copy"
+    publishDir params.outdir+"Misc/13-Lulu", mode: "copy"
     errorStrategy "${params.errorsHandling}"
     label "high_computation"    
     label "r_script"
@@ -517,8 +521,8 @@ process Lulu {
 
 process RareSeqsFilter {
     tag { "RareSeqsFilter.${idThreshold}" }
-    publishDir params.outdir+"14-RareSeqsFilter", mode:"copy", pattern:"*.shared"    
-    publishDir params.outdir+"15-Results", mode:"copy", pattern:"*.{fasta,shared,taxonomy}"
+    publishDir params.outdir+"Misc/14-RareSeqsFilter", mode:"copy", pattern:"*.shared"    
+    publishDir params.outdir+"Results/main", mode:"copy", pattern:"*.{fasta,shared,taxonomy}"
     errorStrategy "${params.errorsHandling}"
     label "low_computation"    
     label "python_script"
@@ -546,7 +550,7 @@ process RareSeqsFilter {
 	 
 process SummaryFile {
     tag { "SummaryFile" }
-    publishDir params.outdir+"15-Results", mode: "copy"
+    publishDir params.outdir+"Results", mode: "copy"
     errorStrategy "${params.errorsHandling}"
     label "low_computation"
     label "python_script"
@@ -604,7 +608,7 @@ process SummaryFile {
 
 process Postprocessing {
     tag { "mothurResults" }
-    publishDir params.outdir+"16-Postprocessing", mode: "copy"
+    publishDir params.outdir+"Results/postprocessing", mode: "copy"
     errorStrategy "${params.errorsHandling}"
     label "high_computation"
     label "mothur_script"
