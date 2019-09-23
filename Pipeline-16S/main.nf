@@ -233,6 +233,7 @@ process MultipleSequenceAlignment {
 process ChimeraRemoval {
     tag { "chimeraRemoval" }
     publishDir params.outdir+"Misc/6-ChimeraRemoval", mode: "copy", pattern: "*.{fasta,count_table}"
+    publishDir params.outdir+"Results/raw", mode: "copy", pattern: "*.fasta"	
     label "high_computation"
     label "mothur_script"
     
@@ -277,13 +278,13 @@ process PreClassification {
 
 process Clustering {
     tag { "clustering.${idThreshold}" }
-    publishDir params.outdir+"Misc/8-Clustering", mode: "copy", pattern: "all_clustering*.{fasta,shared,list}"
-	publishDir params.outdir+"Results/raw", mode: "copy", pattern: "all_clustering*.{fasta,shared}"
+    publishDir params.outdir+"Misc/8-Clustering", mode: "copy", pattern: "all_clustering*.shared"
+	publishDir params.outdir+"Results/raw", mode: "copy", pattern: "all_clustering*.shared"
     label "high_computation"
     label "mothur_script"
     
     input:
-	set file(count), file(fasta), file(tax) from PRE_CLASSIFIED_CONTIGS
+    	set file(count), file(fasta), file(tax) from PRE_CLASSIFIED_CONTIGS
         each idThreshold from clusteringThresholds
     output:
         set val(idThreshold), file(count), file(tax), file("all_clustering_*.list"), file("all_clustering_*.shared") into CONTIGS_FOR_CLASSIFICATION
@@ -303,8 +304,8 @@ process Clustering {
 process ConsensusClassification {
     tag { "consensusClassification.${idThreshold}" }
     publishDir params.outdir+"Misc/9-ConsensusClassification", mode: "copy", pattern: "all_consensusClassification*.{summary,taxonomy}"
-	publishDir params.outdir+"Misc/raw", mode: "copy", pattern: "all_consensusClassification*.summary"
-    label "medium_computation"    
+	publishDir params.outdir+"Misc/raw", mode: "copy", pattern: "all_consensusClassification*.taxonomy"
+    label "medium_computation"
     label "mothur_script"
     
     input:
@@ -355,10 +356,10 @@ process MultipletonsFilter {
     label "mothur_script"
     
     input:
-	set val(idThreshold), file(tax), file(list), file(shared) from TAXA_FILTERED
+    	set val(idThreshold), file(tax), file(list), file(shared) from TAXA_FILTERED
     output:
         set val(idThreshold), file(tax), file(list), file("all_multipletonsFilter*.shared") into TAXA_MULTIPLETONS_FILTERED
-	set val(idThreshold), file("all_multipletonsFilter*.shared") into (SUBSAMPLING_EST,SUBSAMPLING_OFF_TO_COUNT)
+	    set val(idThreshold), file("all_multipletonsFilter*.shared") into (SUBSAMPLING_EST,SUBSAMPLING_OFF_TO_COUNT)
         file("all_multipletonsFilter*.shared") into MULTIPLETONS_FILTER_TO_COUNT
     
     script:
@@ -495,7 +496,7 @@ process Lulu {
     label "r_script"
     
     input:
-	set val(idThreshold),file(matchlist),file(table) from MATCH_LISTS.join(ABUNDANCE_TABLES_FOR_LULU)
+    	set val(idThreshold),file(matchlist),file(table) from MATCH_LISTS.join(ABUNDANCE_TABLES_FOR_LULU)
     output:
         set val(idThreshold), file("lulu_table_${idThreshold}.csv") into TABLE_TO_FILTER
         file("lulu_ids_${idThreshold}.csv") into IDS_LULU
@@ -528,9 +529,9 @@ process RareSeqsFilter {
     label "python_script"
     
     input:
-	set idThreshold, file(fasta), file(abundance), file(tax) from FASTA_TO_FILTER.join(TABLE_TO_FILTER).join(SUBSAMPLED_TAX)
+    	set idThreshold, file(fasta), file(abundance), file(tax) from FASTA_TO_FILTER.join(TABLE_TO_FILTER).join(SUBSAMPLED_TAX)
     output:
-        set idThreshold, file("*.{fasta,shared,taxonomy}") into MOTHUR_TO_PROCESS
+        set idThreshold, file("*.fasta"), file("*.shared"), file("*.taxonomy") into FOR_DATABASE
         file("*.shared") into RARE_SEQS_FILTER_TO_COUNT
     script:
     """
@@ -552,7 +553,7 @@ process SummaryFile {
     tag { "SummaryFile" }
     publishDir params.outdir+"Results", mode: "copy"
     errorStrategy "${params.errorsHandling}"
-    label "low_computation"
+    label "medium_computation"
     label "python_script"
     
     input:
@@ -561,12 +562,12 @@ process SummaryFile {
         val(filtered_counts) from FILTERED_COUNTS
         file f1 from MSA_TO_COUNT.collect()
         file f2 from CHIMERA_TO_COUNT.collect()
-	file f3 from CLUSTERING_TO_COUNT.collect()
+    	file f3 from CLUSTERING_TO_COUNT.collect()
         file f4 from MULTIPLETONS_FILTER_TO_COUNT.collect()
-	file f5 from SUBSAMPLING_TO_COUNT.collect()
-	file f6 from TAXA_FILTER_TO_COUNT.collect()
-	file f7 from LULU_TO_COUNT.collect()
-	file f8 from RARE_SEQS_FILTER_TO_COUNT.collect()
+		file f5 from SUBSAMPLING_TO_COUNT.collect()
+		file f6 from TAXA_FILTER_TO_COUNT.collect()
+		file f7 from LULU_TO_COUNT.collect()
+		file f8 from RARE_SEQS_FILTER_TO_COUNT.collect()
     output:
         file("sequences_per_sample_per_step_*.tsv") into STEPS_SUMMARY
     script:
@@ -574,7 +575,7 @@ process SummaryFile {
     #!/usr/bin/env python3
     from generate_step_summary import write_summary
 
-    clustering_threshold = ${clusteringThresholds}
+    clustering_thresholds = ${clusteringThresholds}
     counts = { '0-RawData': {${raw_counts.join(', ')}},
                '1-FilterAndTrim': {${filtered_counts.join(', ')}} }
 
@@ -596,9 +597,42 @@ process SummaryFile {
              ("14-RareSeqsFilter","abundance_table_*.shared")
     ]
 
-    write_summary(steps,counts,clustering_threshold)
+    write_summary(steps,counts,clustering_thresholds)
     """
 }
+
+/*
+ *
+ * Collect all results into mothur database before moving on
+ *
+ */
+
+process Database {
+    tag { "database" }
+    publishDir params.outdir+"Results/main", mode: "copy", pattern: "*.{db,relabund}"
+	publishDir params.outdir+"Results/postprocessing", mode: "copy", pattern: "*.relabund"
+    errorStrategy "${params.errorsHandling}"
+    label "medium_computation"
+    label "mothur_script"
+    
+    input:
+        set val(idThreshold), file(fasta), file(shared), file(taxa) from FOR_DATABASE
+	    file f from STEPS_SUMMARY
+    output:
+    	set val(idThreshold), file(fasta), file("*.count_table") into FOR_UNIFRAC
+        set val(idThreshold), file(shared) into FOR_ALPHADIV, FOR_BETADIV
+	    // file("*.db")
+    script:
+    """
+    ${params.script_dir}/mothur.sh --step=postprocessing --idThreshold=${idThreshold}
+    """
+}
+
+// FOR_POSTPROCESSING = MOTHUR_TO_PROCESS
+// 	.collect()
+//     .flatten()
+//     .collate(4)
+//     .map{ iter->[iter[0],[iter[1],iter[2],iter[3]]] }
 
 /*
  *
@@ -606,20 +640,53 @@ process SummaryFile {
  *
  */
 
-process Postprocessing {
-    tag { "mothurResults" }
-    publishDir params.outdir+"Results/postprocessing", mode: "copy"
+process UnifracDist {
+    tag { "Unifrac_${idThreshold}" }
+    publishDir params.outdir+"Results/postprocessing/unifrac", mode: "copy", pattern: "*.{summary,dist}"
     errorStrategy "${params.errorsHandling}"
     label "high_computation"
     label "mothur_script"
     
     input:
-	set val(idThreshold), file(f) from MOTHUR_TO_PROCESS
-	// set val(idThreshold), file(fasta), file(shared), file(tax) from MOTHUR_TO_PROCESS
+        set val(idThreshold), file(fasta), file(count) from FOR_UNIFRAC
     output:
-	set file("*.relabund"), file("*summary"), file("*.tre") into RESULTS
+        set file("*.summary"), file("*.dist")
     script:
     """
-    ${params.script_dir}/mothur.sh --step=postprocessing --idThreshold=${idThreshold}
-    """    
+    ${params.script_dir}/mothur.sh --step=unifrac --idThreshold=${idThreshold}
+    """    	
+}
+
+process AlphaDiv {
+    tag { "alphaDiv_${idThreshold}" }
+    publishDir params.outdir+"Results/postprocessing/alpha_diversity", mode: "copy", pattern: "*.summary"
+    errorStrategy "${params.errorsHandling}"
+    label "high_computation"
+    label "mothur_script"
+    
+    input:
+        set val(idThreshold), file(shared) from FOR_ALPHADIV
+    output:
+	    file("*.summary")
+    script:
+    """
+    ${params.script_dir}/mothur.sh --step=alphaDiversity --idThreshold=${idThreshold}
+    """    	
+}
+
+process BetaDiv {
+    tag { "betaDiv_${idThreshold}" }
+    publishDir params.outdir+"Results/postprocessing/beta_diversity", mode: "copy", pattern: "*.summary"
+    errorStrategy "${params.errorsHandling}"
+    label "high_computation"
+    label "mothur_script"
+    
+    input:
+        set val(idThreshold), file(shared) from FOR_BETADIV
+    output:
+	    file("*.summary")
+    script:
+    """
+    ${params.script_dir}/mothur.sh --step=betaDiversity --idThreshold=${idThreshold}
+    """    	
 }
