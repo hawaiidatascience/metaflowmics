@@ -1,6 +1,7 @@
 work
 .nextflow*
 Results*
+*outputs
 *result*
 *packages
 database*

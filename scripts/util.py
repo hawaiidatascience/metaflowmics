@@ -3,7 +3,11 @@
 from Bio import SeqIO
 import pandas as pd
 
-def getSubsamplingThreshold(sharedFile,quantile,minValue):
+def getSubsamplingThreshold(sharedFile, quantile, minValue, customValue):
+    if customValue > 0:
+        print(customValue)
+        return
+        
     table = (pd.read_csv(sharedFile, sep="\t", dtype={'Group':str})
              .set_index("Group")
              .drop(["label","numOtus"],axis=1))

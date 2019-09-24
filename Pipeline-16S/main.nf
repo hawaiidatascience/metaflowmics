@@ -27,7 +27,7 @@ if (['docker','gcp'].contains(workflow.profile)) {
     script_dir = workflow.projectDir+"/scripts"
 }
 
-def clusteringThresholds = params.clusteringThresholds.split(',').collect{it as int}
+def clusteringThresholds = params.clusteringThresholds.toString().split(',').collect{it as int}
 
 if ( params.singleEnd ) {
     read_path = params.reads.replaceAll("\\{1,2\\}","1")
@@ -217,10 +217,10 @@ process MultipleSequenceAlignment {
     #!/usr/bin/env bash
 
     ${params.script_dir}/mothur.sh \
-       --step=MSA \
-       --refAln=${refAln} \
-       --criteria=${params.criteria} \
-       --optimize=start-end
+    --step=MSA \
+	--refAln=${refAln} \
+	--criteria=${params.criteria} \
+	--optimize=start-end
     """
 }
 
@@ -264,7 +264,7 @@ process PreClassification {
     script:
     """
     ${params.script_dir}/mothur.sh \
-        --step=preClassification \
+    --step=preClassification \
  	--refAln=${refAln} \
  	--refTax=${refTax}
     """
@@ -291,7 +291,9 @@ process Clustering {
         file("all_clustering_*.shared") into CLUSTERING_TO_COUNT
     script:
     """
-    ${params.script_dir}/mothur.sh --step=clustering --idThreshold=${idThreshold}
+    ${params.script_dir}/mothur.sh \
+    --step=clustering \
+    --idThreshold=${idThreshold}
     """
 }
 
@@ -303,19 +305,21 @@ process Clustering {
 
 process ConsensusClassification {
     tag { "consensusClassification.${idThreshold}" }
-    publishDir params.outdir+"Misc/9-ConsensusClassification", mode: "copy", pattern: "all_consensusClassification*.{summary,taxonomy}"
-	publishDir params.outdir+"Misc/raw", mode: "copy", pattern: "all_consensusClassification*.taxonomy"
+    publishDir params.outdir+"Misc/9-ConsensusClassification", mode: "copy", pattern: "*.{summary,taxonomy}"
+	publishDir params.outdir+"Results/raw", mode: "copy", pattern: "*.taxonomy"
     label "medium_computation"
     label "mothur_script"
     
     input:
-	set val(idThreshold), file(count), file(tax), file(list), file(shared) from CONTIGS_FOR_CLASSIFICATION
+	    set val(idThreshold), file(count), file(tax), file(list), file(shared) from CONTIGS_FOR_CLASSIFICATION
     output:
-	file("all_consensusClassification_*.summary") into CLASSIFICATION_SUMMARY
-        set val(idThreshold), file("all_consensusClassification_*.taxonomy"), file(list), file(shared) into CONSTAXONOMY_CONTIGS
+	    file("*.summary") into CLASSIFICATION_SUMMARY
+        set val(idThreshold), file("*.taxonomy"), file(list), file(shared) into CONSTAXONOMY_CONTIGS
     script:
     """
-    ${params.script_dir}/mothur.sh --step=consensusClassification --idThreshold=${idThreshold}
+    ${params.script_dir}/mothur.sh \
+    --step=consensusClassification \
+    --idThreshold=${idThreshold}
     """
 }
 
@@ -333,7 +337,6 @@ process TaxaFilter {
     input:
 	set val(idThreshold), file(tax), file(list), file(shared) from CONSTAXONOMY_CONTIGS
     output:
-        // set val(idThreshold), file("all_taxaFilter*.shared") into (SUBSAMPLING_EST,SUBSAMPLING_OFF_TO_COUNT)
         file("all_taxaFilter*.shared") into TAXA_FILTER_TO_COUNT
         set val(idThreshold), file("all_taxaFilter*.taxonomy"), file("all_taxaFilter*.list"), file("all_taxaFilter*.shared") into TAXA_FILTERED
     
@@ -341,8 +344,8 @@ process TaxaFilter {
     """
     ${params.script_dir}/mothur.sh \
 	--step=taxaFilter \
-        --idThreshold=${idThreshold} \
-        --taxaToFilter='${params.taxaToFilter}' \
+    --idThreshold=${idThreshold} \
+    --taxaToFilter='${params.taxaToFilter}' \
 	--refAln=${params.referenceAln} \
 	--refTax=${params.referenceTax}
     """
@@ -352,7 +355,7 @@ process MultipletonsFilter {
     tag { "MultipletonsFilter.${idThreshold}" }
     publishDir params.outdir+"Misc/11-MultipletonsFilter", mode: "copy"    
     errorStrategy "${params.errorsHandling}"
-    label "medium_computation"    
+    label "medium_computation"
     label "mothur_script"
     
     input:
@@ -364,7 +367,10 @@ process MultipletonsFilter {
     
     script:
     """
-    ${params.script_dir}/mothur.sh --step=multipletonsFilter --idThreshold=${idThreshold} --minAbundance=${params.minAbundance}
+    ${params.script_dir}/mothur.sh \
+    --step=multipletonsFilter \
+    --idThreshold=${idThreshold} \
+    --minAbundance=${params.minAbundance}
     """    
 }
 
@@ -380,7 +386,9 @@ process OtuRepresentative {
         set val(idThreshold), file("*.fasta"), file(tax), file(shared) into FOR_SUBSAMPLING
     script:
     """
-    ${params.script_dir}/mothur.sh --step=otuRepr --idThreshold=${idThreshold}
+    ${params.script_dir}/mothur.sh \
+    --step=otuRepr \
+    --idThreshold=${idThreshold}
     """    
 }
 
@@ -400,8 +408,8 @@ process GetSubsamlingValue {
      
     from util import getSubsamplingThreshold
 
-    getSubsamplingThreshold("${shared}",${params.subsamplingQuantile},${params.minSubsampling})   
-    """    
+    getSubsamplingThreshold("${shared}", ${params.subsamplingQuantile}, ${params.minSubsamplingLevel}, ${params.customSubsamplingLevel})
+    """
 }
 
 
@@ -432,7 +440,10 @@ process Subsampling {
     """
     #!/usr/bin/env bash
 
-    ${params.script_dir}/mothur.sh --step=subsampling --idThreshold=${idThreshold} --subsamplingNb=${subSampThresh} 
+    ${params.script_dir}/mothur.sh \
+    --step=subsampling \
+    --idThreshold=${idThreshold} \
+    --subsamplingNb=${subSampThresh} 
     """
 }
 
@@ -609,7 +620,7 @@ process SummaryFile {
 
 process Database {
     tag { "database" }
-    publishDir params.outdir+"Results/main", mode: "copy", pattern: "*.{db,relabund}"
+    // publishDir params.outdir+"Results/main", mode: "copy", pattern: "*.db"
 	publishDir params.outdir+"Results/postprocessing", mode: "copy", pattern: "*.relabund"
     errorStrategy "${params.errorsHandling}"
     label "medium_computation"
@@ -621,18 +632,15 @@ process Database {
     output:
     	set val(idThreshold), file(fasta), file("*.count_table") into FOR_UNIFRAC
         set val(idThreshold), file(shared) into FOR_ALPHADIV, FOR_BETADIV
+    	file("*.relabund")
 	    // file("*.db")
     script:
     """
-    ${params.script_dir}/mothur.sh --step=postprocessing --idThreshold=${idThreshold}
+    ${params.script_dir}/mothur.sh \
+    --step=postprocessing \
+    --idThreshold=${idThreshold}
     """
 }
-
-// FOR_POSTPROCESSING = MOTHUR_TO_PROCESS
-// 	.collect()
-//     .flatten()
-//     .collate(4)
-//     .map{ iter->[iter[0],[iter[1],iter[2],iter[3]]] }
 
 /*
  *
@@ -653,7 +661,9 @@ process UnifracDist {
         set file("*.summary"), file("*.dist")
     script:
     """
-    ${params.script_dir}/mothur.sh --step=unifrac --idThreshold=${idThreshold}
+    ${params.script_dir}/mothur.sh \
+    --step=unifrac \
+    --idThreshold=${idThreshold}
     """    	
 }
 
@@ -670,7 +680,9 @@ process AlphaDiv {
 	    file("*.summary")
     script:
     """
-    ${params.script_dir}/mothur.sh --step=alphaDiversity --idThreshold=${idThreshold}
+    ${params.script_dir}/mothur.sh \
+    --step=alphaDiversity \
+    --idThreshold=${idThreshold}
     """    	
 }
 
@@ -687,6 +699,8 @@ process BetaDiv {
 	    file("*.summary")
     script:
     """
-    ${params.script_dir}/mothur.sh --step=betaDiversity --idThreshold=${idThreshold}
+    ${params.script_dir}/mothur.sh \
+    --step=betaDiversity \
+    --idThreshold=${idThreshold}
     """    	
 }

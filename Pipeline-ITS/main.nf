@@ -48,7 +48,7 @@ if (['docker','gcp'].contains(workflow.profile)) {
     script_dir = "${PWD}/scripts"
 }
 
-def clusteringThresholds = params.clusteringThresholds.split(',').collect{it as int}
+def clusteringThresholds = params.clusteringThresholds.split(',').toString().collect{it as int}
 clusteringThresholds.removeAll{ it == 100}
 
 if ( !params.pairedEnd ) {
@@ -335,7 +335,7 @@ process MakeEsvTable {
 	file denoised from DADA_RDS.collect()
         file derep from DEREP_FOR_COUNT_SUMMARY.collect()
     output:
-	file("raw_sequence_table.csv") into ESV_TABLE_TO_CLUSTER
+    	file("raw_sequence_table.csv") into ESV_TABLE_TO_CLUSTER
         file("count_summary.tsv") into DENOISING_SUMMARY
         set val(100),file("esv_table_100.csv") into ABUNDANCE_TABLES_ESV
         set val(100),file("all_esv.fasta") into ESV_ALL_SAMPLES,ESV_ALL_SAMPLES_LULU
