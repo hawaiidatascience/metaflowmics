@@ -330,7 +330,6 @@ process ConsensusClassification {
 process TaxaFilter {
     tag { "convertToMothur.${idThreshold}" }
     publishDir params.outdir+"Misc/10-TaxaFilter", mode: "copy"
-    errorStrategy "${params.errorsHandling}"
     label "medium_computation"    
     label "mothur_script"
     
@@ -354,7 +353,6 @@ process TaxaFilter {
 process MultipletonsFilter {
     tag { "MultipletonsFilter.${idThreshold}" }
     publishDir params.outdir+"Misc/11-MultipletonsFilter", mode: "copy"    
-    errorStrategy "${params.errorsHandling}"
     label "medium_computation"
     label "mothur_script"
     
@@ -376,7 +374,6 @@ process MultipletonsFilter {
 
 process OtuRepresentative {
     tag { "OtuRepresentative.${idThreshold}" }
-    errorStrategy "${params.errorsHandling}"
     label "medium_computation"    
     label "mothur_script"
     
@@ -393,7 +390,6 @@ process OtuRepresentative {
 }
 
 process GetSubsamlingValue {
-    errorStrategy "${params.errorsHandling}"
     label "low_computation"    
     label "python_script"
     
@@ -502,7 +498,6 @@ process PreLulu {
 process Lulu {
     tag { "Lulu.${idThreshold}" }
     publishDir params.outdir+"Misc/13-Lulu", mode: "copy"
-    errorStrategy "${params.errorsHandling}"
     label "high_computation"    
     label "r_script"
     
@@ -535,7 +530,6 @@ process RareSeqsFilter {
     tag { "RareSeqsFilter.${idThreshold}" }
     publishDir params.outdir+"Misc/14-RareSeqsFilter", mode:"copy", pattern:"*.shared"    
     publishDir params.outdir+"Results/main", mode:"copy", pattern:"*.{fasta,shared,taxonomy}"
-    errorStrategy "${params.errorsHandling}"
     label "low_computation"    
     label "python_script"
     
@@ -563,7 +557,6 @@ process RareSeqsFilter {
 process SummaryFile {
     tag { "SummaryFile" }
     publishDir params.outdir+"Results", mode: "copy"
-    errorStrategy "${params.errorsHandling}"
     label "medium_computation"
     label "python_script"
     
@@ -622,7 +615,6 @@ process Database {
     tag { "database" }
     // publishDir params.outdir+"Results/main", mode: "copy", pattern: "*.db"
 	publishDir params.outdir+"Results/postprocessing", mode: "copy", pattern: "*.relabund"
-    errorStrategy "${params.errorsHandling}"
     label "medium_computation"
     label "mothur_script"
     
@@ -651,7 +643,6 @@ process Database {
 process UnifracDist {
     tag { "Unifrac_${idThreshold}" }
     publishDir params.outdir+"Results/postprocessing/unifrac", mode: "copy", pattern: "*.{summary,dist}"
-    errorStrategy "${params.errorsHandling}"
     label "high_computation"
     label "mothur_script"
     
@@ -670,7 +661,6 @@ process UnifracDist {
 process AlphaDiv {
     tag { "alphaDiv_${idThreshold}" }
     publishDir params.outdir+"Results/postprocessing/alpha_diversity", mode: "copy", pattern: "*.summary"
-    errorStrategy "${params.errorsHandling}"
     label "high_computation"
     label "mothur_script"
     
@@ -689,7 +679,6 @@ process AlphaDiv {
 process BetaDiv {
     tag { "betaDiv_${idThreshold}" }
     publishDir params.outdir+"Results/postprocessing/beta_diversity", mode: "copy", pattern: "*.summary"
-    errorStrategy "${params.errorsHandling}"
     label "high_computation"
     label "mothur_script"
     

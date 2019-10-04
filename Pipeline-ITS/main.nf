@@ -43,13 +43,13 @@ if (params.help){
 }
 
 if (['docker','gcp'].contains(workflow.profile)) {
-    script_dir = '/workspace'
+    script_dir = "/workspace"
 } else {
     script_dir = "${PWD}/scripts"
 }
 
-def clusteringThresholds = params.clusteringThresholds.split(',').toString().collect{it as int}
-clusteringThresholds.removeAll{ it == 100}
+def clusteringThresholds = params.clusteringThresholds.toString().split(',').collect{it as int}
+clusteringThresholds.removeAll{it == 100}
 
 if ( !params.pairedEnd ) {
     read_path = params.reads.replaceAll("\\{1,2\\}","1")
@@ -91,12 +91,10 @@ process ExtractITS {
     tag { "ITSextraction.${pairId}" }
     label "low_computation"
     
-    publishDir params.outdir+"1-ITSxpress", mode: "copy"
-    errorStrategy "${params.errorsHandling}"
+    publishDir params.outdir+"Misc/1-ITSxpress", mode: "copy"
     
     input:
-        set val(pairId), file(reads) from INPUT_FASTQ_OK
-    
+        set val(pairId), file(reads) from INPUT_FASTQ_OK    
     output:
         set val(pairId), file("${pairId}_${params.locus}.fastq") \
     into (ITS_FASTQ, ITS_FASTQ_FOR_COUNT)
@@ -128,8 +126,7 @@ process RemoveSmallAndNseqs {
     label "low_computation"        
     label "python_script"
 
-    publishDir params.outdir+"2-NandSmallSeqsFiltering", mode: "copy"
-    errorStrategy "${params.errorsHandling}"
+    publishDir params.outdir+"Misc/2-NandSmallSeqsFiltering", mode: "copy"
 
     input:
         set val(pairId), file(itsFile) from ITS_FASTQ
@@ -164,8 +161,7 @@ process QcFilter {
     
     label "low_computation"
 
-    publishDir params.outdir+"3-QualityFiltering", mode: "copy"
-    errorStrategy "${params.errorsHandling}"
+    publishDir params.outdir+"Misc/3-QualityFiltering", mode: "copy"
 
     input:
         set val(pairId), file(itsFile) from NO_N_FASTQ.filter{ it[1].size() > 0 }
@@ -201,10 +197,8 @@ process Dereplication {
     label "low_computation"        
     label "r_script"
 
-    publishDir params.outdir+"4-Dereplication", mode: "copy"
+    publishDir params.outdir+"Misc/4-Dereplication", mode: "copy"
 
-    errorStrategy "${params.errorsHandling}"
-    
     input:
         set val(pairId), file(filtRead) from FILTERED_FASTQ
     
@@ -234,8 +228,7 @@ process ChimeraRemoval {
     label "low_computation"        
     label "require_vsearch"
 
-    publishDir params.outdir+"5-ChimeraRemoval", mode: "copy"
-    errorStrategy "${params.errorsHandling}"
+    publishDir params.outdir+"Misc/5-ChimeraRemoval", mode: "copy"
 
     input:
         set val(pairId),file(derepFa) from DEREP_FASTA.filter{ it[1].size() > 0 }
@@ -267,8 +260,7 @@ process LearnErrors {
     label "low_computation"
     label "r_script"
     
-    publishDir params.outdir+"6-Denoising", mode: "copy", pattern: "*{.RDS,.png}"
-    errorStrategy "${params.errorsHandling}"
+    publishDir params.outdir+"Misc/6-Denoising", mode: "copy", pattern: "*{.RDS,.png}"
     
     input:
         set val(pairId), file(derepRDS), file(sample_nochim) \
@@ -301,8 +293,7 @@ process Denoise {
     label "low_computation"
     label "r_script"
     
-    publishDir params.outdir+"6-Denoising", mode: "copy"
-    errorStrategy "${params.errorsHandling}"
+    publishDir params.outdir+"Misc/6-Denoising", mode: "copy"
 
     input:
         set pairId, file(err), file(nochimera) from ERRORS_AND_DEREP
@@ -328,8 +319,7 @@ process MakeEsvTable {
     label "high_computation"
     label "r_script"
     
-    publishDir params.outdir+"7-Clustering", mode: "copy"
-    errorStrategy "${params.errorsHandling}"
+    publishDir params.outdir+"Misc/7-Clustering", mode: "copy"
     
     input:
 	file denoised from DADA_RDS.collect()
@@ -361,8 +351,7 @@ process Clustering {
     label "high_computation"
     label "require_vsearch"
     
-    publishDir params.outdir+"7-Clustering", mode: "copy"
-    errorStrategy "${params.errorsHandling}"
+    publishDir params.outdir+"Misc/7-Clustering", mode: "copy"
     
     input:
 	each idThreshold from clusteringThresholds
@@ -405,8 +394,7 @@ process PreLulu {
     label "high_computation"
     label "require_vsearch"
     
-    publishDir params.outdir+"8-LULU_correction", mode: "copy"
-    errorStrategy "${params.errorsHandling}"
+    publishDir params.outdir+"Misc/8-LULU_correction", mode: "copy"
 
     input:
 	set val(idThreshold),file(fasta) from LULU_ALL_SAMPLES
@@ -439,8 +427,7 @@ process Lulu {
     label "medium_computation"
     label "r_script"
     
-    publishDir params.outdir+"8-LULU_correction", mode: "copy", pattern: "{abundance_table_*.csv}"
-    errorStrategy "${params.errorsHandling}"
+    publishDir params.outdir+"Misc/8-LULU_correction", mode: "copy", pattern: "{abundance_table_*.csv}"
 
     input:
 	set val(idThreshold),file(matchlist),file(table) from MATCH_LISTS.join(ABUNDANCE_TABLES)
@@ -470,8 +457,7 @@ process ExtractFastaLulu {
     label "high_computation"
     label "python_script"
 
-    publishDir params.outdir+"9-Results", mode: "copy", pattern: "*.fasta"    
-    errorStrategy "${params.errorsHandling}"
+    publishDir params.outdir+"Results", mode: "copy", pattern: "*.fasta"    
     
     input:
 	set idThreshold,file(ids),file(fasta) from IDS_LULU.join(ALL_SAMPLES)
@@ -496,8 +482,7 @@ process ClassificationSintax {
     label "high_computation"
     label "require_vsearch"
     
-    publishDir params.outdir+"9-Results", mode: "copy", pattern: "annotations*.tsv"
-    errorStrategy "${params.errorsHandling}"
+    publishDir params.outdir+"Results", mode: "copy", pattern: "annotations*.tsv"
 
     input:
         set idThreshold,file(fasta) from FASTA_LULU
@@ -526,8 +511,7 @@ process SummaryFile {
     label "medium_computation"
     label "python_script"
 
-    publishDir params.outdir+"9-Results", mode: "copy", pattern: "*.tsv"
-    errorStrategy "${params.errorsHandling}"
+    publishDir params.outdir+"Results", mode: "copy", pattern: "*.tsv"
     
     input:
         file f1 from DENOISING_SUMMARY
