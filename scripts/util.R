@@ -18,10 +18,10 @@ filterReads <- function(pairId,fwd,rev=NULL,
                         truncQ=c(2,2)
                         )
 {
-    fwd.out <- sprintf("%s_R1_trimmed.fastq",pairId)
-    rev.out <- sprintf("%s_R2_trimmed.fastq",pairId)
+    fwd.out <- sprintf("%s_R1_trimmed.fastq.gz",pairId)
+    rev.out <- sprintf("%s_R2_trimmed.fastq.gz",pairId)
 
-    params <- list(truncQ=truncQ, truncLen=truncLen, minLen=minLen, maxEE=maxEE,rm.phix=rm.phix,compress=FALSE)
+    params <- list(truncQ=truncQ, truncLen=truncLen, minLen=minLen, maxEE=maxEE,rm.phix=rm.phix,compress=TRUE)
     
     if (is.null(rev)) {
         files.io <- list(fwd=fwd, filt=fwd.out)

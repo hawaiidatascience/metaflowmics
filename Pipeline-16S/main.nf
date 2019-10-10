@@ -61,14 +61,14 @@ INPUT_FASTQ_PREFILT = INPUT_FASTQ.filter{it[1][0].countFastq()>params.minReads}
 process FilterAndTrim {
     // Quality filter and trimming using dada2. 
     tag { "FilterAndTrim.${pairId}" }
-    publishDir params.outdir+"Misc/1-FilterAndTrim", mode: "copy", pattern: "*.{fastq,png}"
+    publishDir params.outdir+"Misc/1-FilterAndTrim", mode: "copy", pattern: "*.{fastq.gz,png}"
     label "low_computation"
     label "r_script"
     
     input:
         set val(pairId), file(fastq) from INPUT_FASTQ_PREFILT
     output:
-        set val(pairId), file("${pairId}*_trimmed.fastq") into FASTQ_TRIMMED_RAW
+        set val(pairId), file("${pairId}*_trimmed.fastq.gz") into FASTQ_TRIMMED_RAW
         file("*.png") optional true
 
     script:
@@ -89,7 +89,7 @@ process FilterAndTrim {
         filterReads("${pairId}", fastqs[1], rev=rev, minLen=${params.minLength},maxEE=${params.maxEE},truncLen=${params.truncLen},rm.phix=${params.rmphix}, truncQ=${params.truncQ})
     },
     error=function(cond) {
-        file.create("${pairId}_R1_trimmed.fastq")
+        file.create("${pairId}_R1_trimmed.fastq.gz")
     })
     """
 }
@@ -113,9 +113,9 @@ process LearnErrors {
     label "r_script"
     
     input:
-	set val(pairId), file(fastq) from FASTQ_TRIMMED_FOR_MODEL
+	    set val(pairId), file(fastq) from FASTQ_TRIMMED_FOR_MODEL
     output:
-	set val(pairId), file("*.RDS") into ERROR_MODEL
+	    set val(pairId), file("*.RDS") into ERROR_MODEL
         file "*.png"
     
     script:
@@ -176,7 +176,7 @@ process Esv {
     label "r_script"
     
     input:
-	file dadas from DADA_RDS.collect()
+	    file dadas from DADA_RDS.collect()
     output:
         file("all_esv.{count_table,fasta}")  into DEREP_CONTIGS
         file("*.RDS")
@@ -238,7 +238,7 @@ process ChimeraRemoval {
     label "mothur_script"
     
     input:
-	set file(fasta), file(count) from DEREP_CONTIGS_ALN
+	    set file(fasta), file(count) from DEREP_CONTIGS_ALN
     output:
         file("all_chimera.{fasta,count_table}") into (NO_CHIMERA_FASTA, FASTA_FOR_REPR)
         file("all_chimera.count_table") into CHIMERA_TO_COUNT
@@ -255,7 +255,7 @@ process PreClassification {
     label "mothur_script"
     
     input:
-	set file(count), file(fasta) from NO_CHIMERA_FASTA
+    	set file(count), file(fasta) from NO_CHIMERA_FASTA
         file refAln from Channel.fromPath(params.referenceAln)
         file refTax from Channel.fromPath(params.referenceTax)
     output:
@@ -328,7 +328,7 @@ process ConsensusClassification {
 */
 
 process TaxaFilter {
-    tag { "convertToMothur.${idThreshold}" }
+    tag { "taxaFilter.${idThreshold}" }
     publishDir params.outdir+"Misc/10-TaxaFilter", mode: "copy"
     label "medium_computation"    
     label "mothur_script"
@@ -360,7 +360,7 @@ process MultipletonsFilter {
     	set val(idThreshold), file(tax), file(list), file(shared) from TAXA_FILTERED
     output:
         set val(idThreshold), file(tax), file(list), file("all_multipletonsFilter*.shared") into TAXA_MULTIPLETONS_FILTERED
-	    set val(idThreshold), file("all_multipletonsFilter*.shared") into (SUBSAMPLING_EST,SUBSAMPLING_OFF_TO_COUNT)
+	    set val(idThreshold), file("all_multipletonsFilter*.shared") into (SUBSAMPLING_EST, SUBSAMPLING_OFF_TO_COUNT)
         file("all_multipletonsFilter*.shared") into MULTIPLETONS_FILTER_TO_COUNT
     
     script:
@@ -425,10 +425,10 @@ process Subsampling {
     label "mothur_script"
     
     input:
-	set val(idThreshold), file(fasta), file(tax), file(shared), val(subSampThresh) \
+    	set val(idThreshold), file(fasta), file(tax), file(shared), val(subSampThresh) \
         from SUBSAMPLING_IN.join(SUBSAMPLING_THRESHOLDS)
     output:
-	set val(idThreshold), file("all_subsampling*.fasta"), file("all_subsampling*.taxonomy"), file("all_subsampling*.shared") \
+	    set val(idThreshold), file("all_subsampling*.fasta"), file("all_subsampling*.taxonomy"), file("all_subsampling*.shared") \
     into SUBSAMPLED_OUT
         file("all_subsampling*.shared") into SUBSAMPLING_ON_TO_COUNT
     
@@ -443,13 +443,13 @@ process Subsampling {
     """
 }
 
-SUBSAMPLING_TO_COUNT = ( params.skipSubsampling
-			? SUBSAMPLING_OFF_TO_COUNT.map{ it -> it[1].copyTo("/tmp/all_subsampling_${it[0]}.shared")}
-			: SUBSAMPLING_ON_TO_COUNT )
+SUBSAMPLING_TO_COUNT = (params.skipSubsampling
+			? SUBSAMPLING_OFF_TO_COUNT.map{it -> it[1].copyTo("/tmp/all_subsampling_${it[0]}.shared")}
+			: SUBSAMPLING_ON_TO_COUNT)
 
 (CONTIGS_FOR_PRELULU,FASTA_TO_FILTER,SUBSAMPLED_TAX,ABUNDANCE_TABLES_FOR_LULU) = SUBSAMPLED_OUT
     .mix(ALT_CHANNEL)
-    .separate(4) { x -> [ tuple(x[0],x[1]), tuple(x[0],x[1]), tuple(x[0],x[2]), tuple(x[0],x[3]) ] }
+    .separate(4) { x -> [tuple(x[0],x[1]), tuple(x[0],x[1]), tuple(x[0],x[2]), tuple(x[0],x[3])] }
 
 /*
  *

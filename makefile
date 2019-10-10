@@ -5,8 +5,8 @@ testITS:
 	nextflow run Pipeline-ITS --reads "${PWD}/tests/ITS/*R1.fastq.gz" -profile $(CONF)
 	nextflow run Pipeline-ITS --reads "${PWD}/tests/ITS/*_R{1,2}.fastq.gz" --pairedEnd -profile $(CONF)
 test16S:
-	nextflow run Pipeline-16S --reads "${PWD}/tests/16S/*_R{1,2}.fastq.gz" -profile $(CONF)
-	nextflow run Pipeline-16S --reads "${PWD}/tests/16S/*_R{1,2}.fastq.gz" --skipSubsampling -profile $(CONF)
+	nextflow run Pipeline-16S --reads "${PWD}/tests/16S/*_R{1,2}.fastq.gz" -profile $(CONF)  --referenceAln databases/silva.seed_v132.align --referenceTax databases/silva.seed_v132.tax 
+	nextflow run Pipeline-16S --reads "${PWD}/tests/16S/*_R{1,2}.fastq.gz" --skipSubsampling -profile $(CONF) --referenceAln databases/silva.seed_v132.align --referenceTax databases/silva.seed_v132.tax
 
 python_container:
 	sudo docker build -f Dockerfile_python -t nakor/python_libs_pipeline scripts/
