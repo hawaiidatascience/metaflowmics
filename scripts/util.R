@@ -172,13 +172,15 @@ esvTable <- function(minOverlap=20, maxMismatch=1, paired=TRUE)
 
     ## Make summary file
     if( length(list.files(pattern="*_nochimera.RDS")) > 0 ) {
+        ## ITS pipeline
         steps = c("4-Dereplication","5-ChimeraRemoval","6-Denoising")
         patterns = c("*_R1.*_derep.RDS","*_R1.*_nochimera.RDS","*_R1.*_dada.RDS")
         attributes = c("uniques","uniques","denoised")
         summary <- makeSummary(steps,patterns,attributes)
 
-        write.csv(t(esvTable),"esv_table_100.csv",quote=F)
+        write.csv(t(esvTable),"clustering_100.csv",quote=F)
     } else {
+        ## 16S pipeline
         steps = c("3.1-Dereplication","3.2-Denoising")
         patterns = c("*_R1.*_derep.RDS","*_R1.*_dada.RDS")
         attributes = c("uniques","denoised")        

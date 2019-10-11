@@ -49,7 +49,6 @@ if (['docker','gcp'].contains(workflow.profile)) {
 }
 
 def clusteringThresholds = params.clusteringThresholds.toString().split(',').collect{it as int}
-clusteringThresholds.removeAll{it == 100}
 
 if ( !params.pairedEnd ) {
     read_path = params.reads.replaceAll("\\{1,2\\}","1")
@@ -327,7 +326,7 @@ process MakeEsvTable {
     output:
     	file("raw_sequence_table.csv") into ESV_TABLE_TO_CLUSTER
         file("count_summary.tsv") into DENOISING_SUMMARY
-        set val(100),file("esv_table_100.csv") into ABUNDANCE_TABLES_ESV
+        set val(100),file("clustering_100.csv") into ABUNDANCE_TABLES_ESV
         set val(100),file("all_esv.fasta") into ESV_ALL_SAMPLES,ESV_ALL_SAMPLES_LULU
         file("esv_merged_to_cluster.fasta") into ESV_ALL_SAMPLES_TO_CLUSTER
     script:
@@ -354,10 +353,10 @@ process Clustering {
     publishDir params.outdir+"Misc/7-Clustering", mode: "copy"
     
     input:
-	each idThreshold from clusteringThresholds
+        each idThreshold from clusteringThresholds.findAll{ it != 100}
         file(esvFasta) from ESV_ALL_SAMPLES_TO_CLUSTER
     output:
-	set val(idThreshold),file("OTUs_${idThreshold}.fasta") into OTU_ALL_SAMPLES,OTU_ALL_SAMPLES_LULU
+    	set val(idThreshold),file("OTUs_${idThreshold}.fasta") into OTU_ALL_SAMPLES,OTU_ALL_SAMPLES_LULU
         set val(idThreshold),file("clustering_${idThreshold}.csv") into ABUNDANCE_TABLES_OTU
     
     script:
