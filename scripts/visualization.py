@@ -1,0 +1,147 @@
+import argparse
+
+import pandas as pd
+import numpy as np
+from Bio import SeqIO
+
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+sns.set_style("white")
+
+def parse_args():
+    '''
+    '''
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--root', type=str, default='/tmp/cedric/16S_plots')
+    parser.add_argument('--thresh', type=int, default=97)
+    args = parser.parse_args()
+
+    return args
+
+class Loader:
+
+    def __init__(self, args):
+        self.root = args.root
+        self.path = {
+            'fasta': f'{args.root}/sequences_{args.thresh}.fasta',
+            'shared': f'{args.root}/abundance_table_{args.thresh}.shared',
+            'tax': f'{args.root}/annotations_{args.thresh}.taxonomy'
+        }
+        self.loaded = {'fasta': False, 'shared': False, 'tax': False}
+
+    def load(self, key):
+        if self.loaded[key]:
+            return
+        else:
+            print('Loading {}'.format(key))
+            if key == 'fasta':
+                self.load_fasta()
+            elif key == 'shared':
+                self.load_shared()
+            elif key == 'tax':
+                self.load_tax()
+            else:
+                print(f'Cannot load {key} (unknown format)')
+                return
+            self.loaded[key] = True
+            
+        
+    def load_shared(self):
+        shared = (pd.read_csv(self.path['shared'], sep='\t', dtype={'Group': str})
+                  .set_index('Group')
+                  .drop(['label', 'numOtus'], axis=1))
+        
+        self.shared = shared
+
+    def load_tax(self):
+        tax = pd.read_csv(self.path['tax'], index_col=0, sep='\t')
+        tax = tax.Taxonomy.str.split(';', expand=True)
+        tax.columns = ['Kingdom', 'Phylum', 'Class', 'Order', 'Family', 'Genus', 'Species']
+        tax = tax.replace('', np.nan).dropna(axis=1, how='all')
+
+        self.tax = tax
+
+    def load_fasta(self):
+        sequences = {seq.id: str(seq.seq) for seq in SeqIO.parse(self.path['fasta'], 'fasta')}
+        
+        self.fasta = sequences
+
+    def set_prevalence(self, min_abund=0):
+        self.load_shared()
+        self.prevalence = (self.shared > min_abund).mean(axis=0)
+
+    def set_abundance(self):
+        self.load_shared()
+        self.abundance = self.shared.sum(axis=0)
+        
+
+def phylum_scatter(loader, rank='Phylum', select=None, min_group_size=5):
+    summaries = pd.DataFrame(
+        {'Prevalence': loader.prevalence,
+         'Abundance': loader.abundance,
+         rank: loader.tax.loc[loader.abundance.index, rank]})
+
+    if select is not None:
+        rank_s, label = select
+        summaries = summaries[loader.tax[rank_s] == label]
+
+    # Filter out Phyla that are not well represented
+    others = summaries.reset_index().groupby(rank).filter(lambda x: len(set(x['index'])) <= min_group_size)[rank].unique()
+    summaries.loc[np.isin(summaries[rank], others), rank] = '_Other(<={} OTUs)'.format(min_group_size)
+
+    col_wrap = int(2+np.sqrt(len(summaries[rank].unique())))
+    
+    g = sns.FacetGrid(data=summaries, col=rank, col_wrap=col_wrap, sharex=False, hue=rank,
+                      palette='Set1', col_order=sorted(summaries[rank].unique()))
+    g.map(plt.scatter, 'Abundance', 'Prevalence', alpha=0.5, s=40)
+    g.despine(left=True)
+    g.set_titles("{col_name}", fontweight='bold', fontsize=14)
+    plt.tight_layout()
+    plt.subplots_adjust(hspace=0.5, wspace=0.05)
+    plt.show()
+
+def biclustering(loader, top=100, cols=['Phylum', 'Class', 'Order']):
+    selected_otus = (loader.abundance * loader.prevalence).sort_values(ascending=False).index[:top]
+
+    matrix = loader.shared.T.loc[selected_otus]
+    taxa = loader.tax.loc[selected_otus, cols]
+    slen = taxa.applymap(len).max()
+
+    for i, col in enumerate(cols):
+        taxa[col] = taxa[col].str.pad(slen[col]+2, side='right', fillchar=' ')
+        formatter = '{:' + str(slen[col]) + '}'
+        cols[i] = formatter.format(col)
+
+    matrix.index = np.sum(taxa, axis=1)
+
+    sns.set(font_scale=0.4)
+    g = sns.clustermap(matrix, figsize=(20, 15), row_colors=None, z_score=0)
+    plt.subplots_adjust(bottom=0.2, right=0.7)
+
+    ax = g.ax_heatmap
+    right_clabel_pos = ax.get_xmajorticklabels()[-1]._x
+
+    ax.text(5 + right_clabel_pos, 0, '  '.join(cols), fontsize=5, fontweight='bold')
+
+    plt.show()
+
+def main():
+    '''
+    '''
+
+    args = parse_args()
+    data_loader = Loader(args)
+
+    data_loader.load('shared')
+    data_loader.load('tax')
+    data_loader.set_prevalence()
+    data_loader.set_abundance()
+
+    biclustering(data_loader)
+    # phylum_scatter(data_loader)
+    # phylum_scatter(data_loader, rank='Class', select=('Phylum', 'Proteobacteria'))
+
+if __name__ == '__main__':
+    main()

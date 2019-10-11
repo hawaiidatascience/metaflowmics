@@ -215,6 +215,7 @@ process MultipleSequenceAlignment {
     script:
     """
     #!/usr/bin/env bash
+    echo "${PATH}"
 
     ${params.script_dir}/mothur.sh \
     --step=MSA \
@@ -390,7 +391,8 @@ process OtuRepresentative {
 }
 
 process GetSubsamlingValue {
-    label "low_computation"    
+	tag "getSubsamplingValue_${idThreshold}"
+	label "low_computation"    
     label "python_script"
     
     input:
