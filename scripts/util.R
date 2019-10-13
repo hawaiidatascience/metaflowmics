@@ -33,7 +33,11 @@ filterReads <- function(pairId,fwd,rev=NULL,
         
     ## Apply dada2's filterAndTrim
     do.call(filterAndTrim, append(files.io,params))
-    
+
+    if(!file.exists(files.io$filt)) {
+        plotQualityProfile(files.io[c(1,2)])
+        return()
+    }
     ## Plot error profiles
     fig <- plotQualityProfile(files.io)
     ggsave( sprintf("qualityProfile_%s.png",pairId), plot=fig, type = "cairo-png" )

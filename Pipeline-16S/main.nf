@@ -68,7 +68,7 @@ process FilterAndTrim {
     input:
         set val(pairId), file(fastq) from INPUT_FASTQ_PREFILT
     output:
-        set val(pairId), file("${pairId}*_trimmed.fastq.gz") into FASTQ_TRIMMED_RAW
+        set val(pairId), file("${pairId}*_trimmed.fastq.gz") optional true into FASTQ_TRIMMED_RAW
         file("*.png") optional true
 
     script:
@@ -84,18 +84,13 @@ process FilterAndTrim {
         rev <- fastqs[2]
     }
 
-    tryCatch(
-    {
-        filterReads("${pairId}", fastqs[1], rev=rev, minLen=${params.minLength},maxEE=${params.maxEE},truncLen=${params.truncLen},rm.phix=${params.rmphix}, truncQ=${params.truncQ})
-    },
-    error=function(cond) {
-        file.create("${pairId}_R1_trimmed.fastq.gz")
-    })
+    filterReads("${pairId}", fastqs[1], rev=rev, minLen=${params.minLength},maxEE=${params.maxEE},truncLen=${params.truncLen},rm.phix=${params.rmphix}, truncQ=${params.truncQ})
     """
 }
 
 FASTQ_TRIMMED_RAW
     .filter{ (it[1][0].countFastq() > params.minReads)  }
+	.ifEmpty { error "All reads were filtered out. Consider relaxing your filtering parameters" }
     .into{ FASTQ_TRIMMED ; FASTQ_TRIMMED_FOR_MODEL ; FASTQ_TRIMMED_FOR_COUNT }
 
 FILTERED_COUNTS = FASTQ_TRIMMED_FOR_COUNT.collect{ ["'${it[0]}': ${it[1][0].countFastq()}"] }
