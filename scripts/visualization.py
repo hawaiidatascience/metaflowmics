@@ -93,6 +93,7 @@ def phylum_scatter(loader, rank='Phylum', select=None, min_group_size=5):
 
     col_wrap = int(2+np.sqrt(len(summaries[rank].unique())))
     
+    sns.set(font_scale=0.8)
     g = sns.FacetGrid(data=summaries, col=rank, col_wrap=col_wrap, sharex=False, hue=rank,
                       palette='Set1', col_order=sorted(summaries[rank].unique()))
     g.map(plt.scatter, 'Abundance', 'Prevalence', alpha=0.5, s=40)
@@ -140,8 +141,8 @@ def main():
     data_loader.set_abundance()
 
     biclustering(data_loader)
-    # phylum_scatter(data_loader)
-    # phylum_scatter(data_loader, rank='Class', select=('Phylum', 'Proteobacteria'))
+    phylum_scatter(data_loader)
+    phylum_scatter(data_loader, rank='Class', select=('Phylum', 'Proteobacteria'))
 
 if __name__ == '__main__':
     main()

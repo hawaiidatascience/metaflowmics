@@ -440,9 +440,10 @@ process Subsampling {
     """
 }
 
-SUBSAMPLING_TO_COUNT = (params.skipSubsampling
-			? SUBSAMPLING_OFF_TO_COUNT.map{it -> it[1].copyTo("/tmp/all_subsampling_${it[0]}.shared")}
-			: SUBSAMPLING_ON_TO_COUNT)
+SUBSAMPLING_TO_COUNT = SUBSAMPLING_ON_TO_COUNT
+// SUBSAMPLING_TO_COUNT = (params.skipSubsampling
+// 			? SUBSAMPLING_OFF_TO_COUNT.map{it -> it[1].copyTo("/tmp/all_subsampling_${it[0]}.shared")}
+// 			: SUBSAMPLING_ON_TO_COUNT)
 
 (CONTIGS_FOR_PRELULU,FASTA_TO_FILTER,SUBSAMPLED_TAX,ABUNDANCE_TABLES_FOR_LULU) = SUBSAMPLED_OUT
     .mix(ALT_CHANNEL)
@@ -561,14 +562,15 @@ process SummaryFile {
         file f from COUNT_SUMMARIES
         val(raw_counts) from RAW_COUNTS
         val(filtered_counts) from FILTERED_COUNTS
-        file f1 from MSA_TO_COUNT.collect()
-        file f2 from CHIMERA_TO_COUNT.collect()
-    	file f3 from CLUSTERING_TO_COUNT.collect()
-        file f4 from MULTIPLETONS_FILTER_TO_COUNT.collect()
-		file f5 from SUBSAMPLING_TO_COUNT.collect()
-		file f6 from TAXA_FILTER_TO_COUNT.collect()
-		file f7 from LULU_TO_COUNT.collect()
-		file f8 from RARE_SEQS_FILTER_TO_COUNT.collect()
+	    file f from MSA_TO_COUNT
+		  .mix(CHIMERA_TO_COUNT)
+		  .mix(CLUSTERING_TO_COUNT)
+		  .mix(MULTIPLETONS_FILTER_TO_COUNT)
+		  .mix(SUBSAMPLING_TO_COUNT)
+		  .mix(TAXA_FILTER_TO_COUNT)
+		  .mix(LULU_TO_COUNT)
+		  .mix(RARE_SEQS_FILTER_TO_COUNT)
+		  .collect()
     output:
         file("sequences_per_sample_per_step_*.tsv") into STEPS_SUMMARY
     script:

@@ -2,28 +2,11 @@ import pandas as pd
 from os.path import basename,splitext
 import re
 
-def guess_file_extension(files):
-    extensions = { f.split(".")[-1] for f in files }
-
-    if 'shared' in extensions:
-        return ".shared"
-    else:
-        return ".count_table"
-    
-def get_file_extension(filename):
-    splits = filename.split(".")
-
-    if splits[-1]=='gz':
-        return "{}.{}".format(*splits[-2:])
-    return splits[-1]
-
 class SequenceCounter:
 
     def __init__(self, name=None, path=None):
         self.name = name
         self.path = path
-        self.extension = None
-        self.step_nb = float(self.name.split('-')[0])
         self.extension = path.split('.')[-1]
         
     def run(self,sample_names=None):

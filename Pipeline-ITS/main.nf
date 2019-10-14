@@ -515,11 +515,12 @@ process SummaryFile {
     input:
         file f1 from DENOISING_SUMMARY
         val(raw_counts) from RAW_COUNTS
-	val(its_counts) from ITS_FASTQ_COUNTS
-	val(no_n_counts) from NO_N_COUNTS
-	val(filtered_counts) from FILTERED_COUNTS
-        file f1 from ABUNDANCE_TABLES_TO_COUNT.collect()
-	file f2 from ABUNDANCE_LULU_TO_COUNT.collect()    
+	    val(its_counts) from ITS_FASTQ_COUNTS
+	    val(no_n_counts) from NO_N_COUNTS
+	    val(filtered_counts) from FILTERED_COUNTS
+        file f1 from ABUNDANCE_TABLES_TO_COUNT
+		  .mix(ABUNDANCE_LULU_TO_COUNT)
+		  .collect()
     output:
         file("sequences_per_sample_per_step_*.tsv") into STEPS_SUMMARY
     script:

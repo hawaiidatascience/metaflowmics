@@ -20,33 +20,33 @@ def write_summary(steps,prelim_counts,clustering_thresholds):
                         for id_threshold in clustering_thresholds }
 
     # Loop over the remaining steps
-    for name,pattern in steps:
+    for name, pattern in steps:
         print("Processing {} ({})".format(name,pattern))
         if pattern == -1:
             # Already calculated
             continue
         if (pattern is None) or ('subsampling' in name.lower() and len(glob(pattern))==0):
             # Step doesnt loose any reads/sample (special case when subsampling is deactivated)
-            summary_i = [ pd.Series("N/A", index=sample_names,name=name) ]
-        if type(pattern) is str:
+            summary_i = [ pd.Series("N/A", index=sample_names, name=name) ]
+        elif type(pattern) is str:
             if "*" in pattern:
                 # Step with multiple identity thresholds
-                summary_i = [ SequenceCounter(name,pattern.replace("*",str(id_threshold)))
+                summary_i = [ SequenceCounter(name,pattern.replace("*", str(id_threshold)))
                               .run()
                               for id_threshold in clustering_thresholds ]
             else:
-                summary_i = [ SequenceCounter(name,pattern).run() ]
+                summary_i = [ SequenceCounter(name, pattern).run() ]
         if len(summary_i) == 1:
             summary_i *= len(clustering_thresholds)
             
-        for id_threshold,summary_i_thresh in zip(clustering_thresholds,summary_i):
+        for id_threshold, summary_i_thresh in zip(clustering_thresholds, summary_i):
             res_all_samples[id_threshold].append(summary_i_thresh)
 
     for id_threshold in clustering_thresholds:
         print("Merging for {}".format(id_threshold))
         summary = pd.concat(res_all_samples[id_threshold],axis=1,sort=True)
 
-        columns_order = sorted(summary.columns,key=lambda x: float(x.split('-')[0]))
+        columns_order = sorted(summary.columns, key=lambda x: float(x.split('-')[0]))
 
         summary = summary.reindex(columns=columns_order)
 
@@ -57,8 +57,4 @@ def write_summary(steps,prelim_counts,clustering_thresholds):
 
         # If a sample is not in a step, it was discarded -> fill with 0
         summary = summary.fillna('/')
-        # Set to "-" if the value does not change from one step to the next
-        summary_clean = summary#[ (summary.shift(1,axis=1) != summary) | (summary == 0) ].fillna('-')
-        # But we keep the last column
-        summary_clean.iloc[:,-1] = summary.iloc[:,-1]
-        summary_clean.to_csv("sequences_per_sample_per_step_{}.tsv".format(id_threshold),sep="\t")
+        summary.to_csv("sequences_per_sample_per_step_{}.tsv".format(id_threshold), sep="\t")
