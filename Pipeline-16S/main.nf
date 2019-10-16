@@ -426,8 +426,8 @@ process Subsampling {
         from SUBSAMPLING_IN.join(SUBSAMPLING_THRESHOLDS)
     output:
 	    set val(idThreshold), file("all_subsampling*.fasta"), file("all_subsampling*.taxonomy"), file("all_subsampling*.shared") \
-    into SUBSAMPLED_OUT
-        file("all_subsampling*.shared") into SUBSAMPLING_ON_TO_COUNT
+        into SUBSAMPLED_OUT
+        file("all_subsampling*.shared") into SUBSAMPLING_TO_COUNT
     
     script:
     """
@@ -439,11 +439,6 @@ process Subsampling {
     --subsamplingNb=${subSampThresh} 
     """
 }
-
-SUBSAMPLING_TO_COUNT = SUBSAMPLING_ON_TO_COUNT
-// SUBSAMPLING_TO_COUNT = (params.skipSubsampling
-// 			? SUBSAMPLING_OFF_TO_COUNT.map{it -> it[1].copyTo("/tmp/all_subsampling_${it[0]}.shared")}
-// 			: SUBSAMPLING_ON_TO_COUNT)
 
 (CONTIGS_FOR_PRELULU,FASTA_TO_FILTER,SUBSAMPLED_TAX,ABUNDANCE_TABLES_FOR_LULU) = SUBSAMPLED_OUT
     .mix(ALT_CHANNEL)
