@@ -14,7 +14,7 @@ def parse_args():
     '''
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--root', type=str, default='/tmp/cedric/16S_plots')
+    parser.add_argument('--root', type=str, default='.')
     parser.add_argument('--thresh', type=int, default=97)
     args = parser.parse_args()
 
@@ -24,6 +24,7 @@ class Loader:
 
     def __init__(self, args):
         self.root = args.root
+        self.thresh = args.thresh
         self.path = {
             'fasta': f'{args.root}/sequences_{args.thresh}.fasta',
             'shared': f'{args.root}/abundance_table_{args.thresh}.shared',
@@ -101,7 +102,8 @@ def phylum_scatter(loader, rank='Phylum', select=None, min_group_size=5):
     g.set_titles("{col_name}", fontweight='bold', fontsize=14)
     plt.tight_layout()
     plt.subplots_adjust(hspace=0.5, wspace=0.05)
-    plt.show()
+
+    plt.savefig("scatterplot_{}_abd-prev_{}.png".format(rank, loader.thresh), dpi=300)
 
 def biclustering(loader, top=100, cols=['Phylum', 'Class', 'Order']):
     selected_otus = (loader.abundance * loader.prevalence).sort_values(ascending=False).index[:top]
@@ -126,7 +128,7 @@ def biclustering(loader, top=100, cols=['Phylum', 'Class', 'Order']):
 
     ax.text(5 + right_clabel_pos, 0, '  '.join(cols), fontsize=5, fontweight='bold')
 
-    plt.show()
+    plt.savefig("biclustering_{}.png".format(loader.thresh), dpi=300)    
 
 def main():
     '''
