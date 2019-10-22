@@ -16,6 +16,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--root', type=str, default='.')
     parser.add_argument('--thresh', type=int, default=97)
+    parser.add_argument('--show', action='store_true', default=False)    
     args = parser.parse_args()
 
     return args
@@ -70,15 +71,15 @@ class Loader:
         self.fasta = sequences
 
     def set_prevalence(self, min_abund=0):
-        self.load_shared()
+        self.load('shared')
         self.prevalence = (self.shared > min_abund).mean(axis=0)
 
     def set_abundance(self):
-        self.load_shared()
+        self.load('shared')
         self.abundance = self.shared.sum(axis=0)
         
 
-def phylum_scatter(loader, rank='Phylum', select=None, min_group_size=5):
+def phylum_scatter(loader, rank='Phylum', select=None, min_group_size=5, show=False):
     summaries = pd.DataFrame(
         {'Prevalence': loader.prevalence,
          'Abundance': loader.abundance,
@@ -105,8 +106,13 @@ def phylum_scatter(loader, rank='Phylum', select=None, min_group_size=5):
 
     plt.savefig("scatterplot_{}_abd-prev_{}.png".format(rank, loader.thresh), dpi=300)
 
-def biclustering(loader, top=100, cols=['Phylum', 'Class', 'Order']):
-    selected_otus = (loader.abundance * loader.prevalence).sort_values(ascending=False).index[:top]
+    if show:
+        plt.show()
+
+def biclustering(loader, top=100, cols=['Phylum', 'Class', 'Order'], show=False):
+
+    sorted_otus = (loader.abundance * loader.prevalence).sort_values(ascending=False).index
+    selected_otus = sorted_otus[loader.shared.std() > 0][:top]
 
     matrix = loader.shared.T.loc[selected_otus]
     taxa = loader.tax.loc[selected_otus, cols]
@@ -119,7 +125,7 @@ def biclustering(loader, top=100, cols=['Phylum', 'Class', 'Order']):
 
     matrix.index = np.sum(taxa, axis=1)
 
-    sns.set(font_scale=0.4)
+    sns.set(font_scale=0.5)
     g = sns.clustermap(matrix, figsize=(20, 15), row_colors=None, z_score=0)
     plt.subplots_adjust(bottom=0.2, right=0.7)
 
@@ -128,7 +134,10 @@ def biclustering(loader, top=100, cols=['Phylum', 'Class', 'Order']):
 
     ax.text(5 + right_clabel_pos, 0, '  '.join(cols), fontsize=5, fontweight='bold')
 
-    plt.savefig("biclustering_{}.png".format(loader.thresh), dpi=300)    
+    plt.savefig("biclustering_{}.png".format(loader.thresh), dpi=300)
+
+    if show:
+        plt.show()
 
 def main():
     '''
@@ -139,12 +148,13 @@ def main():
 
     data_loader.load('shared')
     data_loader.load('tax')
+
     data_loader.set_prevalence()
     data_loader.set_abundance()
-
-    biclustering(data_loader)
-    phylum_scatter(data_loader)
-    phylum_scatter(data_loader, rank='Class', select=('Phylum', 'Proteobacteria'))
+    
+    biclustering(data_loader, show=args.show)
+    phylum_scatter(data_loader, show=args.show)
+    phylum_scatter(data_loader, rank='Class', select=('Phylum', 'Proteobacteria'), show=args.show)
 
 if __name__ == '__main__':
     main()
