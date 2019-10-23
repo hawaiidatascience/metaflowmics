@@ -36,48 +36,63 @@ Pipeline parameters can be set either:
 Then, you can run the pipeline by running:
 `nextflow run 16S-pipeline -profile manoa_hpc --reads 'PATH_TO_READS/GLOB_PATTERN'`
 
+To run the pipeline using Docker, you need to first create the docker container:
+```
+> make python_container
+> make R_container
+> mothur_container
+``
+
+Then, you can run the pipeline using the docker profile
+
 ## Pipeline summary
 
-The 16S analysis pipeline is summarized below and includes, for each step, the tunable parameters and their default values.
+The 16S analysis pipeline is summarized below. Values correspond to default values of tunable parameters.
 
-**dada2**
-- filterAndTrim > Parameters: 
-  - minimum read length=20
-  - maximum expected errors=3
-  - read length truncation=(fwd: 220, rev: 190)
-- learnErrors
-- mergePairs > Parameters: 
-  - minimum overlap=20
-  - maximum mismatches=1
+**Inputs**
+- Reads need to be demultiplexed and gzipped
 
-**Mothur**
---> alignment against reference for further filtering
-- align.seqs; filter.seqs; screen.seqs > Parameters: 
-  - criteria=95 (remove any sequence that starts after the position that [CRITERIA]% of the sequences do, or ends before the position that [CRITERIA]% of the sequences do)
-- chimera.vsearch; remove.seqs
-- sub.sample (if skipSubSampling=false) > Parameters: 
-  - subsamplingQuantile=0.10 (subsample at the 10th percentile of the sample sizes)
-  - minSubsampling=5000 (subsample at 5k if the 10th percentile is below 5k)
-- cluster (at 95,97,99 and 100% identity)
-- classify.seqs ; classify.otu 
+**Read filtering (Dada2)**
+`filterAndTrim()`: Reads are truncated at positions {220} / {190} (fwd/rev) or at the first occurrence of a base of quality {2} or lower. Reads matching the phiX genome are {discarded}, as well as reads with an expected number of errrors above {maxEE}. Reads shorter than {20} bp are filtered out. Finally, samples with less than 50 reads are discarded.
 
-**Lulu** (see https://rdrr.io/github/tobiasgf/lulu/man/lulu.html) for more details)
-- preLulu (create matchlists for LULU)
-- LULU > Parameters: 
-  - min\_ratio\_type="min" (function to aggregate the daughter/parent abundance ratios across samples where the parent OTU is present)
-  - min\_ratio=1 (a daughter is merged with the parent if the daughter is at most [min\_ratio] times less abundant than the parent)
-  - min\_match=97
-  - min\_rel\_cooccurence=1 (the daughter must be present each time the parent is present)
+**Denoising (Dada2)**
+`learnErrors()`, `dada()`: Error models and denoising are performed on each sample independently.
 
-In summary, a daughter OTU is merged with its parent if:
-* they share at least [min\_match]% similarity
-* min(daughter\_abundance\_sample/parent\_abundance\_sample) < [min\_ratio]
-* the relative co-occurence (proportion of time the daughter is present when the parent is present) must be at least [min\_rel\_cooccurence] 
+**Read merging (Dada2)**
+`mergePairs()`: Paired reads are merged if they overlap by at least {20} bp with {1} mismatch at most
 
-**Python**
-- OutputFilter (remove LULU flagged sequences from FASTA and taxonomy file; remove low abundant OTUs (<=2))
+**Contig filtering (Mothur)**
+Contigs are aligned against the silva reference database. Discard any sequence with an alignment shorter than {50} bp, as well as sequences starting after where {95}% of the sequences start, or end before {95}% of the sequences end.
+
+**Chimera filtering (Mothur / VSEARCH)**
+Chimeric contigs are removed using Mothur's implementation of VSEARCH
+
+**OTU clustering (Mothur)**
+OTU are clustered at similarity levels [100, 97]% (100% means no clustering). 
+
+**Consensus classification and taxa filter**
+Lineages are assigned to each individual sequence using the SILVA reference database. Consensus taxonomy is done for each OTU and taxa matching [mitochondria, chloroplasts, unknown] are removed.
+
+**Multipletons filter**
+OTU with a total abundance of [2] or below are discarded.
+
+**Subsampling**
+We perform sample normalization by subsampling each sample to the same level. Samples with a size below this level are discarded. By default, the subsampling level is defined as the [10th] percentile of the sample sizes, and a hard threshold is set if this value goes below [5000]. The recommended approach is to determine this value before the analysis and a custom subsampling level can be set. This step can be skipped.
+
+**Co-occurrence pattern correction**
+A daughter OTU is merged with its parent if:
+* they share at least {97}% similarity
+* {min}(daughter\_abundance\_sample/parent\_abundance\_sample) < {1}
+* the relative co-occurence (proportion of time the daughter is present when the parent is present) must be at least {1}
+
+**Rare sequences filter**
+OTU with a total abundance of [2] or below are discarded.
+
+**Summaries**
+- (samples x pipeline steps) table with the number of remaining sequences in each sample at each step
+- Figures
 
 **Postprocessing**
-- ConvertToMothur: Convert output file to .shared file
-- Results: Mothur postprocessing with get.relabund, clearcut and unifrac.weighted
-- SummaryFile: Generates summary of reads per sample per step
+For each clustering thresho, we compute alpha and beta diversity metrics (see [mothur calculators](https://www.mothur.org/wiki/Calculators) for a full description of these acronyms)
+- Alpha diversity: `nseqs`, `sobs`, `chao`, `shannon`, `shannoneven`
+- Beta diversity: `braycurtis`, `thetayc`, `sharedsobs`, `sharedchao`

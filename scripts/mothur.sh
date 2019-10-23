@@ -34,6 +34,9 @@ do
     --criteria=*)
 	criteria="${arg#*=}" ;;
 
+    --minAlnLen=*)
+	minAlnLen="${arg#*=}" ;;
+
     --refAln=*)
 	refAln="${arg#*=}" ;;
     
@@ -74,7 +77,7 @@ if [ $step == "MSA" ]; then
     
     cmd=("align.seqs(fasta=${fasta}.fasta, reference=${refAln})"
 		 "filter.seqs(fasta=${fasta}.align)"
-		 "screen.seqs(fasta=${fasta}.filter.fasta, count=${count}.count_table, minlength=50)"
+		 "screen.seqs(fasta=${fasta}.filter.fasta, count=${count}.count_table, minlength=${minAlnLen})"
 		 "screen.seqs(fasta=current, count=current, optimize=${optimize}, criteria=${criteria})"
 		 "summary.seqs(fasta=current)")
     

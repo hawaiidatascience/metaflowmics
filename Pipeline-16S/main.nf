@@ -18,7 +18,7 @@ def helpMessage() {
     --singleEnd   If your data is single end
 
     [Quality filtering]
-    --minReads    Sample with less than [minRead] are discarded
+    --minReads    Sample with less than [minRead] are discarded. Default: 50
     --truncLen    Where to truncate the forward and reverse reads. Default: "220,190"
     --minLength   Reads short than [minLength] are discarded. Default: 20
     --maxEE       Reads with an expected number of errrors above [maxEE] are discarded. Default: 3
@@ -31,6 +31,9 @@ def helpMessage() {
 
     [Contig filtering]
     --criteria      Optimization criteria when aligning sequences against reference database. Discard any sequence starting after where [criteria]% of the sequences start, or end before [criteria]% of the sequences end. Default: 95
+    --minAlnLen     Minimum alignment length in MSA. Default: 50
+    --referenceAln  Path to the SILVA reference database (fasta format)
+    --referenceTax  Path to the SILVA reference database (taxonomy file)
     --taxaToFilter  Set of taxa to exclude from the analysis. Default: "Bacteria;Proteobacteria;Alphaproteobacteria;Rickettsiales;Mitochondria;-Bacteria;Cyanobacteria;Oxyphotobacteria;Chloroplast;-unknown;"
     
     [Subsampling]
@@ -48,7 +51,7 @@ def helpMessage() {
     --min_rel_cooccurence    Proportion of the parent samples where daughter occurs (max=1)
    
     [Other]
-    --minAbundance    Remove OTUs with a total abundance equal or below [minAbundance]
+    --minAbundance    Remove OTUs with a total abundance equal or below [minAbundance]. Default: 2
     """.stripIndent()
 }
 
@@ -258,6 +261,7 @@ process MultipleSequenceAlignment {
     --step=MSA \
     --refAln=${refAln} \
     --criteria=${params.criteria} \
+    --minAlnLen=${params.minAlnLen} \
     --optimize=start-end
     """
 }
