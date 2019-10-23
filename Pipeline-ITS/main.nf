@@ -485,13 +485,12 @@ process ClassificationSintax {
 
     input:
         set idThreshold,file(fasta) from FASTA_LULU
-        file refAln from Channel.fromPath(params.uniteDB)
     output:
         set idThreshold,file("annotations_sintax_${idThreshold}.tsv") into TAXONOMY
     script:
 	
     """
-    vsearch --threads ${task.cpus} --db ${refAln} \
+    vsearch --threads ${task.cpus} --db ${params.uniteDB} \
             --sintax ${fasta} --sintax_cutoff ${params.confidenceThresh} \
             --tabbedout annotations_sintax_${idThreshold}.tsv
 
