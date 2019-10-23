@@ -41,7 +41,7 @@ To run the pipeline using Docker, you need to first create the docker container:
 > make python_container
 > make R_container
 > mothur_container
-``
+```
 
 Then, you can run the pipeline using the docker profile
 
