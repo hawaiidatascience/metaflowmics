@@ -6,7 +6,49 @@ def helpMessage() {
     16S-rDNA-pipeline
     ===================================
     Usage:
-    nextflow run 16S-pipeline --reads '*_R{1,2}.fastq.gz' -profile manoa_hpc
+    nextflow run 16S-pipeline --reads "*_R{1,2}.fastq.gz" -profile manoa_hpc
+    
+    --------------- Mandatory arguments ---------------
+    --reads       Path to input data (glob pattern)
+
+    ---------------- Optional arguments ---------------
+    -profile      Select a configuration from the conf/ folder. Default is "local"
+    --outdir      Path to output directory. Default: "./16S-pipeline_outputs"
+    
+    --singleEnd   If your data is single end
+
+    [Quality filtering]
+    --minReads    Sample with less than [minRead] are discarded
+    --truncLen    Where to truncate the forward and reverse reads. Default: "220,190"
+    --minLength   Reads short than [minLength] are discarded. Default: 20
+    --maxEE       Reads with an expected number of errrors above [maxEE] are discarded. Default: 3
+    --truncQ      Read truncation at the first occurence of a base of quality below [truncQ]. Default: 2
+    --keepPhix    Keep reads matching phiX genome.
+
+    [Read merging]
+    --minOverlap  Minimum overlap between forward and reverse read. Default: 20
+    --maxMismatch Maximum number of mismatches in the overlap between forward and reverse read. Default: 1
+
+    [Contig filtering]
+    --criteria      Optimization criteria when aligning sequences against reference database. Discard any sequence starting after where [criteria]% of the sequences start, or end before [criteria]% of the sequences end. Default: 95
+    --taxaToFilter  Set of taxa to exclude from the analysis. Default: "Bacteria;Proteobacteria;Alphaproteobacteria;Rickettsiales;Mitochondria;-Bacteria;Cyanobacteria;Oxyphotobacteria;Chloroplast;-unknown;"
+    
+    [Subsampling]
+    --customSubsamplingLevel  User defined subsampling level. Ignored if <= 0
+    --subsamplingQuantile     Automatic subsampling level is at quantile [subsamplingQuantile] of the sample sizes. Ignored if customSubsamplingLevel or skipSubsampling are set. Default: 0.1
+    --minSubsamplingLevel     Minimum subsampling level used if the automatic level falls below [minSubsamplingLevel]. Default: 5000
+    --skipSubsampling         Skip the subssampling step
+
+    [OTU clustering]
+    --clusteringThresholds   Percent similarity threshold for OTU clustering (100 is no clustering). Default: 100,97
+
+    [Co-occurence pattern correction]
+    --min_ratio_type         Function to compare the abundance of a parent OTU and its daughter (default: min)
+    --min_ratio              Minimum abundance ratio between parent and daughter (across all samples). Default: 1
+    --min_rel_cooccurence    Proportion of the parent samples where daughter occurs (max=1)
+   
+    [Other]
+    --minAbundance    Remove OTUs with a total abundance equal or below [minAbundance]
     """.stripIndent()
 }
 
@@ -73,13 +115,16 @@ process FilterAndTrim {
     source("${params.script_dir}/util.R")
 
     fastqs <- c("${fastq.join('","')}")
+    fwd <- fastqs[1]
     rev <- NULL
 
     if ( "${params.singleEnd}" == "false" ) {
         rev <- fastqs[2]
     }
 
-    filterReads("${pairId}", fastqs[1], rev=rev, minLen=${params.minLength},maxEE=${params.maxEE},truncLen=${params.truncLen},rm.phix=${params.rmphix}, truncQ=${params.truncQ})
+    rmphix <- !("${params.keepPhix}" == "true")
+
+    filterReads("${pairId}", fwd, rev=rev, minLen=${params.minLength}, maxEE=${params.maxEE}, truncLen=c(${params.truncLen}),rm.phix=rmphix, truncQ=${params.truncQ})
     """
 }
 

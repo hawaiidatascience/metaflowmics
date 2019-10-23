@@ -11,11 +11,11 @@ library(lulu)
 library(ggplot2)
 
 filterReads <- function(pairId,fwd,rev=NULL,
-                        minLen=c(30,30),
+                        minLen=30,
                         maxEE=c(Inf,Inf),
                         truncLen=c(220,190),
                         rm.phix=TRUE,
-                        truncQ=c(2,2)
+                        truncQ=2
                         )
 {
     fwd.out <- sprintf("%s_R1_trimmed.fastq.gz",pairId)

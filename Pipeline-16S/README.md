@@ -9,9 +9,9 @@ Follow these instructions to get the pipeline started on your machine
 To run the pipeline, you will need to satisfy the following dependencies:
 
 - [Nextflow](https://www.nextflow.io/docs/latest/getstarted.html)
-- python3 + libraries: Biopython, pandas
-- R + libraries: ggplot2, lulu, dada2, seqinr, stringr
-- [Mothur](https://github.com/mothur/mothur) (tested with v1.41.2) 
+- python3 + libraries: Biopython, pandas, matplotlib, seaborn
+- R + libraries: ggplot2, lulu, dada2, seqinr, stringr, ShortRead
+- [Mothur](https://github.com/mothur/mothur) (tested with v1.43) 
 
 ### Usage
 
@@ -22,14 +22,8 @@ cd Pipeline-16S
 ```
 
 #### Make your own configuration file
-To run the pipeline locally, you need to set up a configuration file. An example is available in `conf/poire.config`.
-Once the configuration file is set, you can add the entry in the `nextflow.config file` the following way:
-Under "profiles", add the lines
-``` 
-[MY_CONFIG_NAME]{
-    includeConfig 'conf/[PATH_TO_MY_CONFIG]'
-}
-```
+To run the pipeline locally, you need to set up a configuration file. An example is available in `conf/local.config`.
+You can modify this configuration to fit the specs of your machine.
 
 #### Changing the default pipeline parameters
 
