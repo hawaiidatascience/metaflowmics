@@ -98,7 +98,7 @@ FILTERED_COUNTS = FASTQ_TRIMMED_FOR_COUNT.collect{ ["'${it[0]}': ${it[1][0].coun
 
 process LearnErrors {
     tag { "LearnErrors.${pairId}" }
-    label "medium_computation"
+    label "low_computation"
     label "r_script"
     publishDir params.outdir+"Misc/2-ErrorModel", mode: "copy", pattern: "*.{RDS,png}"
 
@@ -127,7 +127,7 @@ process LearnErrors {
 
 process Denoise {
     tag { "Denoising.${pairId}" }
-    label "medium_computation"
+    label "low_computation"
     label "r_script"
     publishDir params.outdir+"Misc/3-Denoising", mode: "copy", pattern: "*.RDS"
 
