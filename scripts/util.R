@@ -136,7 +136,7 @@ mergeReads <- function(minOverlap, maxMismatch)
     return(merged)
 }
 
-makeSummary <- function(steps,patterns,attributes) {
+makeSummary <- function(steps, patterns, attributes) {
     sample.names <- as.character(sapply(
         list.files(pattern=patterns[1]),
         function(x) unlist(strsplit(x,"_R1",fixed=T))[1]
@@ -168,10 +168,16 @@ esvTable <- function(minOverlap=20, maxMismatch=1, paired=TRUE)
     }
 
     esvTable <- makeSequenceTable(merged)
+
+    ## Remove samples with no sequences after merging
+    print("Removing empty samples")
+    not_empty_samples <- rowSums(esvTable)>0
+    esvTable <- esvTable[not_empty_samples, ]
+    
     write.csv(esvTable,"raw_sequence_table.csv")
     
-    esv_ids <- sprintf("esv_%s",c(1:dim(esvTable)[2]))
-    uniquesToFasta(esvTable,"all_esv.fasta",ids=esv_ids)
+    esv_ids <- sprintf("esv_%s", c(1:dim(esvTable)[2]))
+    uniquesToFasta(esvTable, "all_esv.fasta", ids=esv_ids)
     colnames(esvTable) <- esv_ids
 
     ## Make summary file
@@ -180,21 +186,22 @@ esvTable <- function(minOverlap=20, maxMismatch=1, paired=TRUE)
         steps = c("4-Dereplication","5-ChimeraRemoval","6-Denoising")
         patterns = c("*_R1.*_derep.RDS","*_R1.*_nochimera.RDS","*_R1.*_dada.RDS")
         attributes = c("uniques","uniques","denoised")
-        summary <- makeSummary(steps,patterns,attributes)
+        summary <- makeSummary(steps, patterns, attributes)
 
-        write.csv(t(esvTable),"clustering_100.csv",quote=F)
+        write.csv(t(esvTable),"clustering_100.csv", quote=F)
     } else {
         ## 16S pipeline
         steps = c("3.1-Dereplication","3.2-Denoising")
         patterns = c("*_R1.*_derep.RDS","*_R1.*_dada.RDS")
         attributes = c("uniques","denoised")        
-        summary <- makeSummary(steps,patterns,attributes)
+        summary <- makeSummary(steps, patterns, attributes)
 
         if(paired) {
             summary['4-ESV'] = sapply(merged, getCounts('abundance'))
         } else {
             summary['4-ESV'] = summary['3.2-Denoising']
         }
+        summary <- summary[not_empty_samples, ]
         
         ## write in .count_table format for Mothur
         esvTable <- cbind(esv_ids, colSums(esvTable), t(esvTable) )

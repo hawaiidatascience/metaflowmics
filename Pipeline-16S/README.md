@@ -47,7 +47,7 @@ Then, you can run the pipeline using the docker profile
 
 ## Pipeline summary
 
-The 16S analysis pipeline is summarized below. Values correspond to default values of tunable parameters.
+The 16S analysis pipeline is summarized below. Values in curly braces ({}) correspond to default values of tunable parameters.
 
 **Inputs**
 - Reads need to be demultiplexed and gzipped
@@ -68,16 +68,16 @@ Contigs are aligned against the silva reference database. Discard any sequence w
 Chimeric contigs are removed using Mothur's implementation of VSEARCH
 
 **OTU clustering (Mothur)**
-OTU are clustered at similarity levels [100, 97]% (100% means no clustering). 
+OTU are clustered at similarity levels {100, 97}% (100% means no clustering). 
 
 **Consensus classification and taxa filter**
-Lineages are assigned to each individual sequence using the SILVA reference database. Consensus taxonomy is done for each OTU and taxa matching [mitochondria, chloroplasts, unknown] are removed.
+Lineages are assigned to each individual sequence using the SILVA reference database. Consensus taxonomy is done for each OTU and taxa matching {mitochondria, chloroplasts, unknown} are removed.
 
 **Multipletons filter**
-OTU with a total abundance of [2] or below are discarded.
+OTU with a total abundance of {2} or below are discarded.
 
 **Subsampling**
-We perform sample normalization by subsampling each sample to the same level. Samples with a size below this level are discarded. By default, the subsampling level is defined as the [10th] percentile of the sample sizes, and a hard threshold is set if this value goes below [5000]. The recommended approach is to determine this value before the analysis and a custom subsampling level can be set. This step can be skipped.
+We perform sample normalization by subsampling each sample to the same level. Samples with a size below this level are discarded. By default, the subsampling level is defined as the {10th} percentile of the sample sizes, and a hard threshold is set if this value goes below {5000}. The recommended approach is to determine this value before the analysis and a custom subsampling level can be set. This step can be skipped.
 
 **Co-occurrence pattern correction**
 A daughter OTU is merged with its parent if:
@@ -86,7 +86,7 @@ A daughter OTU is merged with its parent if:
 * the relative co-occurence (proportion of time the daughter is present when the parent is present) must be at least {1}
 
 **Rare sequences filter**
-OTU with a total abundance of [2] or below are discarded.
+OTU with a total abundance of {2} or below are discarded.
 
 **Summaries**
 - (samples x pipeline steps) table with the number of remaining sequences in each sample at each step
