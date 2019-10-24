@@ -36,11 +36,9 @@ Pipeline parameters can be set either:
 Then, you can run the pipeline by running:
 `nextflow run 16S-pipeline -profile manoa_hpc --reads 'PATH_TO_READS/GLOB_PATTERN'`
 
-To run the pipeline using Docker, you need to first create the docker container:
+You can also run the pipeline using the available docker instances. For that, you'll just need to select the correct profile "docker"
 ```
-> make python_container
-> make R_container
-> mothur_container
+nextflow run 16S-pipeline -profile docker --reads 'PATH_TO_READS/GLOB_PATTERN'
 ```
 
 Then, you can run the pipeline using the docker profile

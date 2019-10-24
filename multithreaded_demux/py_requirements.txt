@@ -1,0 +1,6 @@
+matplotlib
+seaborn
+argparse
+Biopython
+pandas
+numpy

@@ -59,10 +59,6 @@ def helpMessage() {
     """.stripIndent()
 }
 
-/*
- * SET UP CONFIGURATION VARIABLES
- */
-
 // Show help message
 params.help = false
 if (params.help){

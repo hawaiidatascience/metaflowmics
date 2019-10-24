@@ -32,10 +32,6 @@ def helpMessage() {
     """.stripIndent()
 }
 
-/*
- * SET UP CONFIGURATION VARIABLES
- */
-
 // Show help message
 params.help = false
 if (params.help){
@@ -251,7 +247,7 @@ DEREP_FASTA_NO_CHIMERA
 
 process LearnErrors {
     tag { "LearnErrors.${pairId}" }
-    label "low_computation"
+    label "medium_computation"
     label "r_script"
     
     publishDir params.outdir+"Misc/6-Denoising", mode: "copy", pattern: "*{.RDS,.png}"
@@ -284,7 +280,7 @@ process LearnErrors {
 
 process Denoise {
     tag { "Denoising.${pairId}" }
-    label "low_computation"
+    label "medium_computation"
     label "r_script"
     
     publishDir params.outdir+"Misc/6-Denoising", mode: "copy"
