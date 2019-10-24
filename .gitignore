@@ -11,3 +11,4 @@ trace.txt
 *.shared
 *.csv
 *.tsv
+!barcodes.csv
