@@ -42,12 +42,6 @@ if (params.help){
     exit 0
 }
 
-if (['docker','gcp'].contains(workflow.profile)) {
-    script_dir = "/workspace"
-} else {
-    script_dir = "${PWD}/scripts"
-}
-
 def clusteringThresholds = params.clusteringThresholds.toString().split(',').collect{it as int}
 
 if ( !params.pairedEnd ) {
