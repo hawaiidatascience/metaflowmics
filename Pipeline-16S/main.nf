@@ -14,8 +14,8 @@ def helpMessage() {
     --referenceTax  Path to the SILVA reference database (taxonomy file)
 
     ---------------- Optional arguments ---------------
-    -profile      Select a configuration from the conf/ folder. Default is "local"
-    --outdir      Path to output directory. Default: "./16S-pipeline_outputs"
+    -profile        Select a configuration from the conf/ folder. Default is "local"
+    --outdir        Path to output directory. Default: "./16S-pipeline_outputs"
     
     --singleEnd   If your data is single end
 
@@ -28,17 +28,21 @@ def helpMessage() {
     --keepPhix    Keep reads matching phiX genome.
 
     [Read merging]
-    --minOverlap  Minimum overlap between forward and reverse read. Default: 20
-    --maxMismatch Maximum number of mismatches in the overlap between forward and reverse read. Default: 1
+    --minOverlap    Minimum overlap between forward and reverse read. Default: 20
+    --maxMismatch   Maximum number of mismatches in the overlap between forward and reverse read. Default: 1
 
     [Contig filtering]
-    --criteria      Optimization criteria when aligning sequences against reference database. Discard any sequence starting after where [criteria]% of the sequences start, or end before [criteria]% of the sequences end. Default: 95
+    --criteria      Optimization criteria when aligning sequences against reference database. 
+                    Discard any sequence starting after where [criteria]% of the sequences start, or end before [criteria]% of the sequences end. 
+                    Default: 95
     --minAlnLen     Minimum alignment length in MSA. Default: 50
-    --taxaToFilter  Set of taxa to exclude from the analysis. Default: "Bacteria;Proteobacteria;Alphaproteobacteria;Rickettsiales;Mitochondria;-Bacteria;Cyanobacteria;Oxyphotobacteria;Chloroplast;-unknown;"
+    --taxaToFilter  Set of taxa to exclude from the analysis. 
+                    Default: "Bacteria;Proteobacteria;Alphaproteobacteria;Rickettsiales;Mitochondria;-Bacteria;Cyanobacteria;Oxyphotobacteria;Chloroplast;-unknown;"
     
     [Subsampling]
     --customSubsamplingLevel  User defined subsampling level. Ignored if <= 0
-    --subsamplingQuantile     Automatic subsampling level is at quantile [subsamplingQuantile] of the sample sizes. Ignored if customSubsamplingLevel or skipSubsampling are set. Default: 0.1
+    --subsamplingQuantile     Automatic subsampling level is at quantile [subsamplingQuantile] of the sample sizes. 
+                              Ignored if customSubsamplingLevel or skipSubsampling are set. Default: 0.1
     --minSubsamplingLevel     Minimum subsampling level used if the automatic level falls below [minSubsamplingLevel]. Default: 5000
     --skipSubsampling         Skip the subssampling step
 
