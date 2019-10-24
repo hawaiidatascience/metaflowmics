@@ -6,10 +6,12 @@ def helpMessage() {
     16S-rDNA-pipeline
     ===================================
     Usage:
-    nextflow run 16S-pipeline --reads "*_R{1,2}.fastq.gz" -profile manoa_hpc
+    nextflow run 16S-pipeline --reads "*_R{1,2}.fastq.gz" -profile local
     
     --------------- Mandatory arguments ---------------
-    --reads       Path to input data (glob pattern)
+    --reads         Path to input data (glob pattern)
+    --referenceAln  Path to the SILVA reference database (fasta format)
+    --referenceTax  Path to the SILVA reference database (taxonomy file)
 
     ---------------- Optional arguments ---------------
     -profile      Select a configuration from the conf/ folder. Default is "local"
@@ -32,8 +34,6 @@ def helpMessage() {
     [Contig filtering]
     --criteria      Optimization criteria when aligning sequences against reference database. Discard any sequence starting after where [criteria]% of the sequences start, or end before [criteria]% of the sequences end. Default: 95
     --minAlnLen     Minimum alignment length in MSA. Default: 50
-    --referenceAln  Path to the SILVA reference database (fasta format)
-    --referenceTax  Path to the SILVA reference database (taxonomy file)
     --taxaToFilter  Set of taxa to exclude from the analysis. Default: "Bacteria;Proteobacteria;Alphaproteobacteria;Rickettsiales;Mitochondria;-Bacteria;Cyanobacteria;Oxyphotobacteria;Chloroplast;-unknown;"
     
     [Subsampling]
