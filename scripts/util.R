@@ -25,6 +25,10 @@ filterReads <- function(pairId,fwd,rev=NULL,
     
     if (is.null(rev)) {
         files.io <- list(fwd=fwd, filt=fwd.out)
+
+        for (name in c('minLen', 'maxEE', 'truncLen', 'truncQ')) {
+            params[[name]] <- params[[name]][1]
+        }
     } else {
         files.io <- list(fwd=fwd, rev=rev, filt=fwd.out, filt.rev=rev.out)
     }
@@ -34,8 +38,12 @@ filterReads <- function(pairId,fwd,rev=NULL,
     ## Apply dada2's filterAndTrim
     do.call(filterAndTrim, append(files.io,params))
 
-    if(!file.exists(files.io$filt)) {
-        plotQualityProfile(files.io[c(1,2)])
+    if (!file.exists(files.io$filt)) {
+        if (is.null(rev)) {
+            plotQualityProfile(files.io[[1]])
+        } else {
+            plotQualityProfile(files.io[c(1,2)])
+        }
         return()
     }
     ## Plot error profiles
@@ -165,6 +173,7 @@ esvTable <- function(minOverlap=20, maxMismatch=1, paired=TRUE)
                                        function(x) unlist(strsplit(basename(x),"_"))[1]))
         merged <- lapply(denoisedFiles, function (x) readRDS(x))
         names(merged) <- pairIds
+        saveRDS(merged, "fwd_reads_all.RDS")
     }
 
     esvTable <- makeSequenceTable(merged)

@@ -1,15 +1,24 @@
 test:
 	nextflow run multithreaded_demux --inputdir "${PWD}/tests/demux" -profile $(CONF)
 	nextflow run Pipeline-ITS --reads "${PWD}/tests/ITS/*R1.fastq.gz" -profile $(CONF)
-	nextflow run Pipeline-16S --reads "${PWD}/tests/16S/*_R{1,2}.fastq.gz" -profile $(CONF) --referenceAln databases/silva.seed_v132.align --referenceTax databases/silva.seed_v132.tax
+	nextflow run Pipeline-16S --reads "${PWD}/tests/16S/*_R{1,2}.fastq.gz" --referenceAln databases/silva.seed_v132.align --referenceTax databases/silva.seed_v132.tax -profile $(CONF)
+
 testITS:
 	nextflow run Pipeline-ITS --reads "${PWD}/tests/ITS/*R1.fastq.gz" -profile $(CONF)
 	nextflow run Pipeline-ITS --reads "${PWD}/tests/ITS/*_R{1,2}.fastq.gz" --pairedEnd -profile $(CONF)
+
 test16S:
-	nextflow run Pipeline-16S --reads "${PWD}/tests/16S/*_R{1,2}.fastq.gz" -profile $(CONF)  --referenceAln databases/silva.seed_v132.align --referenceTax databases/silva.seed_v132.tax 
-	nextflow run Pipeline-16S --reads "${PWD}/tests/16S/*_R{1,2}.fastq.gz" --skipSubsampling -profile $(CONF) --referenceAln databases/silva.seed_v132.align --referenceTax databases/silva.seed_v132.tax
+	nextflow run Pipeline-16S --reads "${PWD}/tests/16S/*_R{1,2}.fastq.gz" --referenceAln databases/silva.seed_v132.align --referenceTax databases/silva.seed_v132.tax -profile $(CONF)
+	nextflow run Pipeline-16S --reads "${PWD}/tests/16S/*_R{1,2}.fastq.gz" --referenceAln databases/silva.seed_v132.align --referenceTax databases/silva.seed_v132.tax --singleEnd --truncLen 260 -profile $(CONF)
+
 testdemux:
 	nextflow run multithreaded_demux --inputdir "${PWD}/tests/demux" -profile $(CONF)
+
+clean:
+	rm -rf work .nextflow*
+	rm -rf demultiplexed
+	rm -rf ITS-pipeline_outputs
+	rm -rf ITS-pipeline_outputs
 
 python_container:
 	sudo docker build -f Dockerfile_python -t nakor/python_libs_pipeline scripts/

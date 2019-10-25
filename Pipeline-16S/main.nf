@@ -132,6 +132,7 @@ process FilterAndTrim {
 }
 
 FASTQ_TRIMMED_RAW
+	.groupTuple() // For single-end, to convert singleton to list for file
     .filter{ (it[1][0].countFastq() > params.minReads)  }
     .ifEmpty { error "All reads were filtered out. Consider relaxing your filtering parameters" }
     .into{ FASTQ_TRIMMED ; FASTQ_TRIMMED_FOR_MODEL ; FASTQ_TRIMMED_FOR_COUNT }
@@ -241,6 +242,7 @@ process MultipleSequenceAlignment {
     tag { "MSA" }
     label "high_computation"
     label "mothur_script"
+	label "python_script"
     publishDir params.outdir+"Misc/5-MultipleSequenceAlignment", mode: "copy"
 
     input:
@@ -262,6 +264,8 @@ process MultipleSequenceAlignment {
     --criteria=${params.criteria} \
     --minAlnLen=${params.minAlnLen} \
     --optimize=start-end
+
+    python ${params.script_dir}/patch_mothur.py all_MSA.count_table
     """
 }
 
