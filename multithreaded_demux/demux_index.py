@@ -113,7 +113,7 @@ def main():
 
         if id_fwd == id_rev:
             for sample_name in sample_names:
-                print("\t".join([id_fwd, seq_fwd, seq_rev, sample_name]), end="\n\r")
+                print("\t".join([id_fwd, seq_fwd, seq_rev, sample_name]))
         else:
             print("error: forward and reverse index don't match")
             exit(1)

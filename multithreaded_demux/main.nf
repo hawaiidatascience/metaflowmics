@@ -127,7 +127,7 @@ process IndexMapping {
 
     script:
     """
-    python ${workflow.projectDir}/demux_index.py --fwd ${fwd} --rev ${rev} --meta ${meta} --max_mismatches ${params.max_mismatches} ${guess} --strategy ${params.multimap} > demux_info_${split}.tsv
+    python3 ${workflow.projectDir}/demux_index.py --fwd ${fwd} --rev ${rev} --meta ${meta} --max_mismatches ${params.max_mismatches} ${guess} --strategy ${params.multimap} > demux_info_${split}.tsv
 	"""
 }
 
@@ -145,7 +145,7 @@ process WriteSampleFastq {
     
     script:
     """
-    python ${workflow.projectDir}/demux_fastq.py --fwd ${fwd} --rev ${rev} --mapping ${demux_info}
+    python3 ${workflow.projectDir}/demux_fastq.py --fwd ${fwd} --rev ${rev} --mapping ${demux_info}
     """
 	
 }
@@ -167,7 +167,7 @@ process SampleSizeDistribution {
 
     script:
     """
-    python ${workflow.projectDir}/plot_sample_size_distribution.py ${params.outputdir}/reads
+    python3 ${workflow.projectDir}/plot_sample_size_distribution.py ${params.outputdir}/reads
     ls ${params.outputdir}/reads/*.fastq | xargs -P ${task.cpus} gzip
     """
 }
