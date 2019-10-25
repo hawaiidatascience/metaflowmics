@@ -23,7 +23,7 @@ def parse_args():
     parser.add_argument('--meta', type=str, help='Path to metadata')
     parser.add_argument('--max_mismatches', type=int, default=1)
     parser.add_argument('--revMapping', action='store_true', default='false')
-    parser.add_argument('--strategy', type=str, help='Strategy to handle multimappers')    
+    parser.add_argument('--strategy', type=str, choices=['best', 'min_all', 'discard'], default='best', help='Strategy to handle multimappers')    
     args = parser.parse_args()
 
     args.strategy = args.strategy.lower()
@@ -107,9 +107,6 @@ def main():
                         sample_names = mapping[best_matches]
             elif args.strategy == 'discard':
                 pass
-            else:
-                print('ERROR: Unknown strategy {}. Aborting.'.format(args.strategy))
-                exit(1)
                 
         id_fwd = hdr_fwd.split(" ")[0]
         id_rev = hdr_rev.split(" ")[0]

@@ -22,7 +22,7 @@ def helpMessage() {
     --max_mismatches  Maximum number of allowed mismatches between index and barcode. Default: 1
     --nsplits         Number of file chunks to create for multithreading. Default: 10
     --matching        By default, the order in which the barcodes pair match the index pair is inferred from the data.
-                      To change this behavior, set this parameter to either "ordered" or "reversed". Default: "guess"    
+                      To change this behavior, set this parameter to either "ordered" or "reversed". Default: "auto"
     --multimap        Strategy for handling index pairs matching multiple samples. 
                       Default consists in assigning to the sample with the least mismatches and discarding the pair if 
                       multiple sample achieve the minimum score. To change this behavior, set this parameter to:
@@ -90,7 +90,7 @@ process GuessMatchOrder {
     """
     #!/usr/bin/env bash
 
-    if [ ${params.matching} == "guess" ]; then
+    if [ ${params.matching} == "auto" ]; then
 		symbol=\$(zcat ${fwd} | head -c 2)
 
 		paste --delimiters=' ' <(\
