@@ -116,7 +116,7 @@ process GuessMatchOrder {
 process IndexMapping {
     tag { "IndexMapping_${split}" }
     publishDir "${params.outputdir}/other", mode: "copy", pattern: "*.tsv"
-    label "python"
+    label "python_script"
     label "low_computation"
     
     input:
@@ -134,7 +134,7 @@ process IndexMapping {
 process WriteSampleFastq {
     tag { "WriteSampleFastq_${split}" }
     stageOutMode "move"
-    label "python"
+    label "python_script"
     label "low_computation"
     
     input:
@@ -156,7 +156,7 @@ process SampleSizeDistribution {
     tag { "SampleSizeDistribution" }
     publishDir params.outputdir, mode: "copy", pattern: "*.png"
 
-    label "python"
+    label "python_script"
     label "high_computation"
 
     input:
