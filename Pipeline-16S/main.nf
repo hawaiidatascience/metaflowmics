@@ -132,7 +132,7 @@ process FilterAndTrim {
 }
 
 FASTQ_TRIMMED_RAW
-	.groupTuple() // For single-end, to convert singleton to list for file
+	.map{ params.singleEnd ? [it[0], [it[1]]] : it }
     .filter{ (it[1][0].countFastq() > params.minReads)  }
     .ifEmpty { error "All reads were filtered out. Consider relaxing your filtering parameters" }
     .into{ FASTQ_TRIMMED ; FASTQ_TRIMMED_FOR_MODEL ; FASTQ_TRIMMED_FOR_COUNT }
