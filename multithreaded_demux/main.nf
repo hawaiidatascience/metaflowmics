@@ -13,7 +13,7 @@ def helpMessage() {
     --inputdir    Path to data folder. It should include:
                       - 2 index fastq files (unzipped) matching the glob pattern "*_I{1,2}*.fastq.gz"
                       - 2 read fastq files (unzipped) matching the glob pattern "*_R{1,2}*.fastq.gz"
-                      - 1 barcode file named "barcodes.csv", comma separated, with no header and 3 columns: 
+                      - 1 barcode file (extension: ".csv"), comma separated, with no header and 3 columns: 
                          (sample name, forward barcode, reverse complement of reverse barcode)
 
     ---------------- Optional arguments ---------------
@@ -41,18 +41,18 @@ if (params.help){
 }
 
 Channel
-    .fromFilePairs("${params.inputdir}/*_R{1,2}*.fastq.gz", flat: true)
+    .fromFilePairs("${params.inputdir}/*_R{1,2}*.fastq*", flat: true)
     .ifEmpty { error "Cannot find any sequencing read matching in ${params.inputdir}" }
     .into { INPUT_SEQ ; INPUT_SEQ_FOR_QC }
 
 Channel
-    .fromFilePairs("${params.inputdir}/*_I{1,2}*.fastq.gz", flat: true)
+    .fromFilePairs("${params.inputdir}/*_I{1,2}*.fastq*", flat: true)
     .ifEmpty { error "Cannot find any indexing read matching in ${params.inputdir}" }
     .into { INPUT_INDEX ; INPUT_INDEX_FOR_GUESS }
 
-meta = "${params.inputdir}/barcodes.csv"
+meta = file("${params.inputdir}/*.csv").get(0)
 
-n_per_file = (file("${params.inputdir}/*_I1*.fastq.gz").get(0).countFastq() / params.nsplits).toInteger()
+n_per_file = (file("${params.inputdir}/*_I1*.fastq*").get(0).countFastq() / params.nsplits).toInteger()
 
 Channel.from(1..params.nsplits).into{COUNTER_IDX ; COUNTER_SEQ}
 
@@ -90,12 +90,14 @@ process GuessMatchOrder {
     """
     #!/usr/bin/env bash
 
+    [ ${fwd.getExtension()} == 'gz' ] && z='z' || z=''
+
     if [ ${params.matching} == "auto" ]; then
-		symbol=\$(zcat ${fwd} | head -c 2)
+		symbol=\$(\${z}cat ${fwd} | head -c 2)
 
 		paste --delimiters=' ' <(\
-                zgrep --no-group-separator "^\${symbol}" ${fwd} -A1 | grep -v \${symbol}) <( \
-                grep --no-group-separator "^\${symbol}" ${rev} -A1 | grep -v \${symbol}) \
+                \${z}grep --no-group-separator "^\${symbol}" ${fwd} -A1 | grep -v \${symbol}) <( \
+                \${z}grep --no-group-separator "^\${symbol}" ${rev} -A1 | grep -v \${symbol}) \
 			   | grep -v N \
 			   | sort | uniq -c | sort -rnk1 | head -n20 \
 			   | sed 's/^[[:space:]]*//g' | sed 's/ /,/g' | cut -d, -f2,3 \
@@ -117,7 +119,7 @@ process IndexMapping {
     tag { "IndexMapping_${split}" }
     publishDir "${params.outputdir}/other", mode: "copy", pattern: "*.tsv"
     label "python_script"
-    label "low_computation"
+    label "medium_computation"
     
     input:
     set (val(split), val(v), file(fwd), file(rev), val(guess)) from INPUT_IDX_SPLIT.combine(GUESS)

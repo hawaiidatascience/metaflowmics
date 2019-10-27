@@ -37,7 +37,7 @@ The demultiplexing algorithm is summarized below. Values in curly braces ({}) co
 This algorithm is expecting 5 input files for demultiplexing:
 - 2 index fastq files (unzipped) matching the glob pattern "\*_I{1,2}\*.fastq.gz"
 - 2 read fastq files (unzipped) matching the glob pattern "\*_R{1,2}\*.fastq.gz"
-- 1 barcode file named "barcodes.csv", comma separated, with no header and 3 columns: 
+- 1 barcode file (extension: .csv), comma separated, with no header and 3 columns: 
    (sample name, forward barcode, reverse complement of reverse barcode)
 
 **Guessing the mapping order**: 

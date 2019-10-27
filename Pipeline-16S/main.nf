@@ -100,7 +100,7 @@ INPUT_FASTQ_PREFILT = INPUT_FASTQ.filter{it[1][0].countFastq()>params.minReads}
 process FilterAndTrim {
     // Quality filter and trimming using dada2
     tag { "FilterAndTrim.${pairId}" }
-    label "low_computation"
+    label "medium_computation"
     label "r_script"
     publishDir params.outdir+"Misc/1-FilterAndTrim", mode: "copy", pattern: "*.{fastq.gz,png}"
 
