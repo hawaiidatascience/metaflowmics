@@ -147,7 +147,7 @@ mergeReads <- function(minOverlap, maxMismatch)
 makeSummary <- function(steps, patterns, attributes) {
     sample.names <- as.character(sapply(
         list.files(pattern=patterns[1]),
-        function(x) unlist(strsplit(x,"_R1",fixed=T))[1]
+        function(x) unlist(strsplit(x, gsub('\\*', '', patterns[1]),fixed=T))[1]
     ))
     summary <- data.frame(matrix(ncol=1+length(steps), nrow=length(sample.names)))
     colnames(summary) <- c("Sample",steps)
@@ -201,7 +201,7 @@ esvTable <- function(minOverlap=20, maxMismatch=1, paired=TRUE)
     } else {
         ## 16S pipeline
         steps = c("3.1-Dereplication","3.2-Denoising")
-        patterns = c("*_R1.*_derep.RDS","*_R1.*_dada.RDS")
+        patterns = c("*_R1_derep.RDS","*_R1_dada.RDS")
         attributes = c("uniques","denoised")        
         summary <- makeSummary(steps, patterns, attributes)
 

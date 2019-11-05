@@ -265,7 +265,7 @@ process MultipleSequenceAlignment {
     --minAlnLen=${params.minAlnLen} \
     --optimize=start-end
 
-    python ${params.script_dir}/patch_mothur.py all_MSA.count_table
+    # python ${params.script_dir}/patch_mothur.py all_MSA.count_table
     """
 }
 
