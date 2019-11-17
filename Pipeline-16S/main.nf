@@ -329,7 +329,7 @@ process Clustering {
     label "high_computation"
     label "mothur_script"
     publishDir params.outdir+"Misc/8-Clustering", mode: "copy", pattern: "all_clustering*.shared"
-    publishDir params.outdir+"Results/raw", mode: "copy", pattern: "all_clustering*.shared"
+    publishDir params.outdir+"Results/raw", mode: "copy", pattern: "all_clustering*.{shared,list}"
 
     input:
     set file(count), file(fasta), file(tax) from PRE_CLASSIFIED_CONTIGS
