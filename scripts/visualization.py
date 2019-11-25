@@ -16,11 +16,11 @@ def parse_args():
     '''
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--root', type=str, default='.', descr='Directory with all pipeline outputs (.shared, .taxonomy or .database)')
-    parser.add_argument('--meta', type=str, default='', descr='Path to metadata (optional)')
-    parser.add_argument('--thresh', type=int, default=100, descr='OTU threshold')
-    parser.add_argument('--show', action='store_true', default=False, descr='Display the figure. If not set, saves it as PDF')
-    parser.add_argument('--skip-meta', action='store_true', default=False, descr='Skip plots including metadata information')
+    parser.add_argument('--root', type=str, default='.', help='Directory with all pipeline outputs (.shared, .taxonomy or .database)')
+    parser.add_argument('--meta', type=str, default='', help='Path to metadata (optional)')
+    parser.add_argument('--thresh', type=int, default=100, help='OTU threshold')
+    parser.add_argument('--show', action='store_true', default=False, help='Display the figure. If not set, saves it as PDF')
+    parser.add_argument('--skip-meta', action='store_true', default=False, help='Skip plots including metadata information')
     args = parser.parse_args()
 
     return args
