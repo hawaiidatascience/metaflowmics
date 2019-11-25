@@ -1,4 +1,5 @@
 import argparse
+from collections import defaultdict
 
 import pandas as pd
 import numpy as np
@@ -15,7 +16,8 @@ def parse_args():
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--root', type=str, default='.')
-    parser.add_argument('--thresh', type=int, default=97)
+    parser.add_argument('--meta', type=str, default='')
+    parser.add_argument('--thresh', type=int, default=100)
     parser.add_argument('--show', action='store_true', default=False)    
     args = parser.parse_args()
 
@@ -30,9 +32,10 @@ class Loader:
             'fasta': f'{args.root}/sequences_{args.thresh}.fasta',
             'shared': f'{args.root}/abundance_table_{args.thresh}.shared',
             'tax': f'{args.root}/annotations_{args.thresh}.taxonomy',
-            'db': f'{args.root}/abundance_table_{args.thresh}.database'
+            'db': f'{args.root}/abundance_table_{args.thresh}.database',
+            'meta': args.meta
         }
-        self.loaded = {'fasta': False, 'shared': False, 'tax': False, 'db': False}
+        self.loaded = defaultdict(bool)
 
     def load(self, key):
         if self.loaded[key]:
@@ -45,6 +48,8 @@ class Loader:
                 self.load_shared()
             elif key == 'tax':
                 self.load_tax()
+            elif key == 'meta':
+                self.load_meta()
             elif key == 'db':
                 self.load_db()
                 self.loaded['shared'] = True
@@ -59,7 +64,8 @@ class Loader:
         shared = (pd.read_csv(self.path['shared'], sep='\t', dtype={'Group': str})
                   .set_index('Group')
                   .drop(['label', 'numOtus'], axis=1))
-        shared.columns.name = 'OTU'        
+        shared.columns.name = 'OTU'
+        shared.index.name = 'SampleID'
         self.shared = shared
 
     def load_tax(self):
@@ -76,12 +82,20 @@ class Loader:
                           usecols=lambda x: x not in ['repSeq', 'repSeqName'])
               .rename(columns={'OTUConTaxonomy': 'tax'}))
         db.index.name = 'OTU'
+
         self.shared = db.drop('tax', axis=1).astype(int).T
+        self.shared.index.name = 'SampleID'        
 
         ranks = ['Kingdom', 'Phylum', 'Class', 'Order', 'Family', 'Genus']
         self.tax = (db.tax
                     .str.strip(';').str.split(';', expand=True)
                     .rename(columns={i: rank for (i, rank) in enumerate(ranks)}))
+
+    def load_meta(self, path=None):
+        if not self.path['meta']:
+            return
+
+        self.meta = pd.read_csv(self.path['meta'], dtype=str)
         
     def load_fasta(self):
         sequences = {seq.id: str(seq.seq) for seq in SeqIO.parse(self.path['fasta'], 'fasta')}
@@ -157,6 +171,66 @@ def biclustering(loader, top=100, cols=['Phylum', 'Class', 'Order'], show=False)
     if show:
         plt.show()
 
+def stacked_bars(loader, level='Phylum', factors=None, norm=True, n_top=-1, out_prefix='bars'):
+    shared = loader.shared.T.copy()
+    shared[level] = loader.tax[level]
+    shared_by_tax = shared.groupby(level).agg(sum).T
+
+    if n_top > 0: 
+        topn_list = shared_by_tax.sum().sort_values(ascending=False).index
+        shared_by_tax = shared_by_tax[topn_list]
+
+    if norm:
+        shared_by_tax = shared_by_tax / shared_by_tax.sum(axis=1)[:, None]
+        out_prefix += '_norm'
+
+    if factors is not None:
+        meta = loader.meta[factors].reindex(shared_by_tax.index)
+
+        shared_by_tax = pd.concat([shared_by_tax, meta], sort=True, axis=1)
+        shared_by_tax = shared_by_tax.dropna().groupby(factors).agg(np.mean)
+
+    else:
+        factors = ['SampleID']
+
+    if shared_by_tax.size == 0:
+        print('No samples with all metadata. Aborting')
+        return
+
+    plot_prms = {}
+    if len(factors) >= 2:
+        plot_prms['row'] = factors[1]
+    if len(factors) == 3:
+        plot_prms['col'] = factors[2]
+
+    all_colors = sns.hls_palette(shared_by_tax.shape[1], l=.4, s=.7)
+    palette = {tax: color for color, tax in zip(all_colors, shared_by_tax.columns)}
+
+    shared_by_tax = shared_by_tax.reset_index().melt(id_vars=factors)
+
+    g = sns.FacetGrid(data=shared_by_tax, sharey=False, **plot_prms)
+    g.map(stacked_single, factors[0], 'value', level,
+          palette=palette, x_values=sorted(shared_by_tax[factors[0]].unique()))
+
+    plt.savefig(f'{out_prefix}_stacked_bars.pdf', transparent=True)    
+
+def stacked_single(x, y, hue, palette=None, x_values=None, **kwargs):
+
+    ax = plt.gca()
+    df = pd.DataFrame({'x': x, 'y': y, 'hue': hue}).pivot('x', 'hue')
+    df = df.reindex(index=x_values).fillna(0)
+    df.columns = df.columns.get_level_values('hue')
+
+    prev_bars = np.zeros(df.shape[0])
+    width = 5 / len(x_values)
+
+    for (label, bar) in df.T.iterrows():
+        ax.bar(bar.index, bar.values, color=palette[label],
+               edgecolor='k', width=width, linewidth=0.2,
+               bottom=prev_bars, label=label)
+        prev_bars += bar.values
+    
+    
 def main():
     '''
     '''
@@ -164,12 +238,13 @@ def main():
     args = parse_args()
     data_loader = Loader(args)
 
-    # data_loader.load('shared')
-    # data_loader.load('tax')
-    data_loader.load('db')    
+    data_loader.load('db')
+    data_loader.load('meta')
     
     data_loader.set_prevalence()
     data_loader.set_abundance()
+
+    stacked_bars(data_loader, level='Phylum', norm=True, n_top=-1, out_prefix='bars')
     
     biclustering(data_loader, show=args.show)
     phylum_scatter(data_loader, show=args.show)
