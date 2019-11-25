@@ -38,7 +38,7 @@ def write_summary(steps,prelim_counts,clustering_thresholds):
                 summary_i = [ SequenceCounter(name, pattern).run() ]
         if len(summary_i) == 1:
             summary_i *= len(clustering_thresholds)
-            
+
         for id_threshold, summary_i_thresh in zip(clustering_thresholds, summary_i):
             res_all_samples[id_threshold].append(summary_i_thresh)
 

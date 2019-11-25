@@ -29,9 +29,10 @@ class Loader:
         self.path = {
             'fasta': f'{args.root}/sequences_{args.thresh}.fasta',
             'shared': f'{args.root}/abundance_table_{args.thresh}.shared',
-            'tax': f'{args.root}/annotations_{args.thresh}.taxonomy'
+            'tax': f'{args.root}/annotations_{args.thresh}.taxonomy',
+            'db': f'{args.root}/abundance_table_{args.thresh}.database'
         }
-        self.loaded = {'fasta': False, 'shared': False, 'tax': False}
+        self.loaded = {'fasta': False, 'shared': False, 'tax': False, 'db': False}
 
     def load(self, key):
         if self.loaded[key]:
@@ -44,6 +45,10 @@ class Loader:
                 self.load_shared()
             elif key == 'tax':
                 self.load_tax()
+            elif key == 'db':
+                self.load_db()
+                self.loaded['shared'] = True
+                self.loaded['tax'] = True                
             else:
                 print(f'Cannot load {key} (unknown format)')
                 return
@@ -54,24 +59,37 @@ class Loader:
         shared = (pd.read_csv(self.path['shared'], sep='\t', dtype={'Group': str})
                   .set_index('Group')
                   .drop(['label', 'numOtus'], axis=1))
-        
+        shared.columns.name = 'OTU'        
         self.shared = shared
 
     def load_tax(self):
-        tax = pd.read_csv(self.path['tax'], index_col=0, sep='\t')
+        tax = pd.read_csv(self.path['tax'], index_col=0, sep='\t', header=None, names=['OTU', 'Size', 'Taxonomy'])
         tax = tax.Taxonomy.str.split(';', expand=True)
         tax.columns = ['Kingdom', 'Phylum', 'Class', 'Order', 'Family', 'Genus', 'Species']
         tax = tax.replace('', np.nan).dropna(axis=1, how='all')
+        tax.index.name = 'OTU'
 
         self.tax = tax
 
+    def load_db(self):
+        db = (pd.read_csv(self.path['db'], index_col=0, sep='\t',
+                          usecols=lambda x: x not in ['repSeq', 'repSeqName'])
+              .rename(columns={'OTUConTaxonomy': 'tax'}))
+        db.index.name = 'OTU'
+        self.shared = db.drop('tax', axis=1).astype(int).T
+
+        ranks = ['Kingdom', 'Phylum', 'Class', 'Order', 'Family', 'Genus']
+        self.tax = (db.tax
+                    .str.strip(';').str.split(';', expand=True)
+                    .rename(columns={i: rank for (i, rank) in enumerate(ranks)}))
+        
     def load_fasta(self):
         sequences = {seq.id: str(seq.seq) for seq in SeqIO.parse(self.path['fasta'], 'fasta')}
         
         self.fasta = sequences
 
     def set_prevalence(self, min_abund=0):
-        self.load('shared')
+        self.load('db')
         self.prevalence = (self.shared > min_abund).mean(axis=0)
 
     def set_abundance(self):
@@ -90,7 +108,7 @@ def phylum_scatter(loader, rank='Phylum', select=None, min_group_size=5, show=Fa
         summaries = summaries[loader.tax[rank_s] == label]
 
     # Filter out Phyla that are not well represented
-    others = summaries.reset_index().groupby(rank).filter(lambda x: len(set(x['index'])) <= min_group_size)[rank].unique()
+    others = summaries.reset_index().groupby(rank).filter(lambda x: len(set(x['OTU'])) <= min_group_size)[rank].unique()
     summaries.loc[np.isin(summaries[rank], others), rank] = '_Other(<={} OTUs)'.format(min_group_size)
 
     col_wrap = int(2+np.sqrt(len(summaries[rank].unique())))
@@ -104,7 +122,7 @@ def phylum_scatter(loader, rank='Phylum', select=None, min_group_size=5, show=Fa
     plt.tight_layout()
     plt.subplots_adjust(hspace=0.5, wspace=0.05)
 
-    plt.savefig("scatterplot_{}_abd-prev_{}.png".format(rank, loader.thresh), dpi=300)
+    plt.savefig("scatterplot_{}_abd-prev_{}.pdf".format(rank, loader.thresh), transparent=True)
 
     if show:
         plt.show()
@@ -134,7 +152,7 @@ def biclustering(loader, top=100, cols=['Phylum', 'Class', 'Order'], show=False)
 
     ax.text(5 + right_clabel_pos, 0, '  '.join(cols), fontsize=5, fontweight='bold')
 
-    plt.savefig("biclustering_{}.png".format(loader.thresh), dpi=300)
+    plt.savefig("biclustering_{}.pdf".format(loader.thresh), transparent=True)
 
     if show:
         plt.show()
@@ -146,9 +164,10 @@ def main():
     args = parse_args()
     data_loader = Loader(args)
 
-    data_loader.load('shared')
-    data_loader.load('tax')
-
+    # data_loader.load('shared')
+    # data_loader.load('tax')
+    data_loader.load('db')    
+    
     data_loader.set_prevalence()
     data_loader.set_abundance()
     

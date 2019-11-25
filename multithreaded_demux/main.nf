@@ -18,7 +18,7 @@ def helpMessage() {
 
     ---------------- Optional arguments ---------------
     -profile          Select a configuration from the conf/ folder. Default is "local"
-    --outputdir       Path to output folder. Default: "./demultiplexed"
+    --outdir       Path to output folder. Default: "./demultiplexed"
     --max_mismatches  Maximum number of allowed mismatches between index and barcode. Default: 1
     --nsplits         Number of file chunks to create for multithreading. Default: 10
     --matching        By default, the order in which the barcodes pair match the index pair is inferred from the data.
@@ -41,96 +41,151 @@ if (params.help){
 }
 
 Channel
-    .fromFilePairs("${params.inputdir}/*_R{1,2}*.fastq*", flat: true)
-    .ifEmpty { error "Cannot find any sequencing read matching in ${params.inputdir}" }
+    .fromFilePairs("${params.inputdir}/*_R{1,2}*.fastq*", size: params.singleEnd ? 1 : 2, flat: true)
+    .ifEmpty { error "Cannot find any sequencing read in ${params.inputdir}/" }
     .into { INPUT_SEQ ; INPUT_SEQ_FOR_QC }
 
 Channel
-    .fromFilePairs("${params.inputdir}/*_I{1,2}*.fastq*", flat: true)
-    .ifEmpty { error "Cannot find any indexing read matching in ${params.inputdir}" }
+    .fromFilePairs("${params.inputdir}/*_I{1,2}*.fastq*", size: params.singleBarcoded ? 1 : 2 , flat: true)
+    .ifEmpty { error "Cannot find any indexing read in ${params.inputdir}/" }
     .into { INPUT_INDEX ; INPUT_INDEX_FOR_GUESS }
 
-meta = file("${params.inputdir}/*.csv").get(0)
+if (params.singleBarcoded) {
+	INPUT_INDEX
+		.splitFastq(by: params.n_per_file.toInteger(), file: true)
+		.map{[it[0], it[1..-1]]}
+		.into{IDX_SPLIT; SPLITS}
+} else {
+	INPUT_INDEX
+		.splitFastq(by: params.n_per_file.toInteger(), file: true, pe: !params.singleBarcoded)
+		.map{[it[0], it[1..-1]]}
+		.into{IDX_SPLIT; SPLITS}
+}
 
-n_per_file = (file("${params.inputdir}/*_I1*.fastq*").get(0).countFastq() / params.nsplits).toInteger()
+INPUT_SEQ
+	.splitFastq(by: params.n_per_file.toInteger(), file: true, pe: !params.singleEnd)
+	.map{[it[0], it[1..-1]]}
+	.set{SEQ_SPLIT}
 
-Channel.from(1..params.nsplits).into{COUNTER_IDX ; COUNTER_SEQ}
+SPLITS.count().map{1..it}.flatten().into{COUNTER_IDX ; COUNTER_SEQ}
 
-INPUT_IDX_SPLIT = COUNTER_IDX.merge(INPUT_INDEX.splitFastq(by: n_per_file, file: true, pe: true))
-INPUT_SEQ_SPLIT = COUNTER_SEQ.merge(INPUT_SEQ.splitFastq(by: n_per_file, file: true, pe: true))
+COUNTER_IDX.merge(IDX_SPLIT).set{INPUT_IDX_SPLIT}
+COUNTER_SEQ.merge(SEQ_SPLIT).set{INPUT_SEQ_SPLIT}
 
 process Fastqc {
     tag { "Fastqc" }
-    publishDir  params.outputdir, mode: "copy", pattern: "*.html"
+    publishDir  params.outdir, mode: "copy", pattern: "*.html"
     label "high_computation"
 
     input:
-    set val(v), file(fwd), file(rev) from INPUT_SEQ_FOR_QC
+    set val(v), file(fastqs) from INPUT_SEQ_FOR_QC.map{[it[0], it[1..-1]]}
 
     output:
     file("*.html")
 
     script:
     """
-    fastqc -o . --threads ${task.cpus} ${fwd} ${rev}
+    fastqc -o . --threads ${task.cpus} ${fastqs}
     """
 }
 
 process GuessMatchOrder {
     tag { "GuessMatchOrder" }
     label "low_computation"
+	publishDir params.outdir, pattern: "barcodes_ok.csv"
     
     input:
-    set (val(v), file(fwd), file(rev)) from INPUT_INDEX_FOR_GUESS
+    set (val(v), file(fastqs)) from INPUT_INDEX_FOR_GUESS.map{[it[0], it[1..-1]]}
+	file(meta) from Channel.fromPath("${params.inputdir}/*.csv")
 
     output:
-	stdout into GUESS
+	file("barcodes_ok.csv") into (BARCODES_FILE, BARCODES_FILE_FOR_MODEL)
 
     script:
     """
     #!/usr/bin/env bash
 
-    [ ${fwd.getExtension()} == 'gz' ] && z='z' || z=''
+    bash ${workflow.projectDir}/guess_matching_order.sh ${meta} ${params.matching} ${fastqs} > barcodes_ok.csv
 
-    if [ ${params.matching} == "auto" ]; then
-		symbol=\$(\${z}cat ${fwd} | head -c 2)
-
-		paste --delimiters=' ' <(\
-                \${z}grep --no-group-separator "^\${symbol}" ${fwd} -A1 | grep -v \${symbol}) <( \
-                \${z}grep --no-group-separator "^\${symbol}" ${rev} -A1 | grep -v \${symbol}) \
-			   | grep -v N \
-			   | sort | uniq -c | sort -rnk1 | head -n20 \
-			   | sed 's/^[[:space:]]*//g' | sed 's/ /,/g' | cut -d, -f2,3 \
-			   > pairs_freqs.txt
-
-		awk -F, '{OFS=","} {print \$2,\$1}' pairs_freqs.txt > pairs_freqs_rev.txt
-
-		same1=\$(comm -12 <(sort <(cut -d, -f2,3 ${meta})) <(sort pairs_freqs.txt) | wc -l)
-		same2=\$(comm -12 <(sort <(cut -d, -f2,3 ${meta})) <(sort pairs_freqs_rev.txt) | wc -l)
-
-		[ \$same2 -ge \$same1 ] && echo -n "--revMapping" || echo -n " "
-    else
-        [ ${params.matching} == "reversed" ] && echo -n "--revMapping" || echo -n " "
-    fi
     """	
 }
 
-process IndexMapping {
-    tag { "IndexMapping_${split}" }
-    publishDir "${params.outputdir}/other", mode: "copy", pattern: "*.tsv"
+process To_h5 {
+    tag { "to_h5_${split}" }
+    //publishDir "${params.outdir}/h5_data", mode: "copy", pattern: "*.h5"
     label "python_script"
     label "medium_computation"
     
     input:
-    set (val(split), val(v), file(fwd), file(rev), val(guess)) from INPUT_IDX_SPLIT.combine(GUESS)
+    set (val(split), val(v), file(fastqs)) from INPUT_IDX_SPLIT
 
     output:
-    set (val(split), file("demux_info*.tsv")) into DEMUX_CHANNEL
+    set (val(split), file("*.h5")) into H5_FILES
+	file "*.h5" into H5_FILES_FOR_ERROR_MODEL
 
     script:
     """
-    python3 ${workflow.projectDir}/demux_index.py --fwd ${fwd} --rev ${rev} --meta ${meta} --max_mismatches ${params.max_mismatches} ${guess} --strategy ${params.multimap} > demux_info_${split}.tsv
+    python3 ${workflow.projectDir}/load.py --fastqs ${fastqs} --split ${split}
 	"""
+}
+
+process ErrorModel {
+    tag { "ErrorModel" }
+    publishDir "${params.outdir}/other", mode: "copy", pattern: "*.{h5,pdf}"
+    label "python_script"
+    label "high_computation"
+    
+    input:
+	file h5 from H5_FILES_FOR_ERROR_MODEL.collect()
+	file meta from BARCODES_FILE_FOR_MODEL
+
+    output:
+    file("transition_probs.h5") into ERROR_MODEL
+	file("*.pdf")
+
+    script:
+    """
+    python3 ${workflow.projectDir}/error_model.py --max_dist ${params.max_mismatches} --n_bases ${params.n_bases.toInteger()} --meta ${meta}
+	"""
+}
+
+process IndexMapping {
+    tag { "IndexMapping_${split}" }
+    publishDir "${params.outdir}/sample_idx_mapping", mode: "copy", pattern: "*.tsv"
+    label "python_script"
+    label "medium_computation"
+	stageInMode "copy"
+    
+    input:
+    set val(split), file(h5), file(model), file(meta) from H5_FILES.combine(ERROR_MODEL.combine(BARCODES_FILE))
+
+    output:
+    set (val(split), file("demux_info*.tsv")) into DEMUX_CHANNEL
+	file("sample_counts*.csv") into SAMPLE_COUNTS
+
+    script:
+    """
+    python3 ${workflow.projectDir}/dada_demux_index.py --data ${h5} --meta ${meta} --error-model ${model} --split ${split} --max-mismatches ${params.max_mismatches}
+	"""
+}
+
+process SampleSizeDistribution {
+    tag { "SampleSizeDistribution" }
+    publishDir params.outdir, mode: "copy", pattern: "*.pdf"
+
+    label "python_script"
+    label "medium_computation"
+
+    input:
+	file f from SAMPLE_COUNTS.collect()
+	
+    output:
+    file("*.pdf")
+
+    script:
+    """
+    python3 ${workflow.projectDir}/plot_sample_size_distribution.py
+    """
 }
 
 process WriteSampleFastq {
@@ -140,36 +195,28 @@ process WriteSampleFastq {
     label "low_computation"
     
     input:
-    set (val(split), val(v), file(fwd), file(rev), file(demux_info)) from INPUT_SEQ_SPLIT.join(DEMUX_CHANNEL)
+    set (val(split), val(v), file(fastqs), file(demux_info)) from INPUT_SEQ_SPLIT.join(DEMUX_CHANNEL)
 
     output:
     file("*.fastq") optional true into DEMUX_SEQ_SPLIT
     
     script:
     """
-    python3 ${workflow.projectDir}/demux_fastq.py --fwd ${fwd} --rev ${rev} --mapping ${demux_info}
+    python3 ${workflow.projectDir}/demux_fastq.py --fastqs ${fastqs} --mapping ${demux_info}
     """
-	
 }
 
-DEMUX_SEQ_SPLIT.flatten().collectFile(storeDir: "${params.outputdir}/reads").set{DEMUX_SEQ}
+DEMUX_SEQ_SPLIT.flatten().collectFile(storeDir: "${params.outdir}/reads").set{DEMUX_SEQ}
 
-process SampleSizeDistribution {
-    tag { "SampleSizeDistribution" }
-    publishDir params.outputdir, mode: "copy", pattern: "*.png"
-
-    label "python_script"
+process Gzip {
+	tag { "Gzip" }
     label "high_computation"
 
     input:
-    file f from DEMUX_SEQ.collect()
+	file f from DEMUX_SEQ.collect()
 	
-    output:
-    file("*.png")
-
     script:
     """
-    python3 ${workflow.projectDir}/plot_sample_size_distribution.py ${params.outputdir}/reads
-    ls ${params.outputdir}/reads/*.fastq | xargs -P ${task.cpus} gzip
-    """
+    ls ${params.outdir}/reads/*.fastq | xargs -P ${task.cpus} gzip
+    """	
 }

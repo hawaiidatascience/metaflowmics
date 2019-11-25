@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
 getRad() {
-    files=$(ls -1 *$1 2>/dev/null)
+    files=($(ls -t -1 *$1 2>/dev/null))
     if [ ! -z files ]; then
-	echo `basename $files $1`
+	echo $(basename ${files[0]} $1)
     fi
 }
 
@@ -17,7 +17,7 @@ list=`getRad .list`
 
 set +o xtrace
 
-pairId=all
+prefix=all
 
 for arg in "$@"
 do
@@ -25,8 +25,8 @@ do
     --step=*)
 	step="${arg#*=}" ;;
     
-    --pairId=*)
-	pairId="${arg#*=}" ;;
+    --prefix=*)
+	prefix="${arg#*=}" ;;
 
     --optimize=*)
 	optimize="${arg#*=}" ;;
@@ -56,13 +56,16 @@ do
     --subsamplingNb=*)
 	subsamplingNb="${arg#*=}" ;;
 
+    --rename=*)
+	rename="${arg#*=}" ;;
+	
     *)
 	echo "$arg: Unknown option";;    
     esac
 done
 
 # General prefix for output names
-out="${pairId}_${step}"
+out="${prefix}_${step}"
 
 if [ ! -z $idThreshold ]; then
     if [ $idThreshold -eq 100 ]; then
@@ -102,13 +105,41 @@ elif [ $step == "preClassification" ]; then
     
 elif [ $step == "clustering" ]; then
     method=`[ ${idThreshold} -eq 100 ] && echo 'unique' || echo 'dgc'`
-
-    cmd=("cluster(count=${count}.count_table, fasta=${fasta}.fasta, method=${method}, cutoff=${mothurThresh})"
-		 "make.shared(list=${fasta}.${method}.list, count=${count}.count_table)")
 	
-    outputs_mothur=("${fasta}.${method}.shared"
-					"${fasta}.${method}.list")
+    cmd=("cluster(count=${count}.count_table, fasta=${fasta}.fasta, method=${method}, cutoff=${mothurThresh})")
+	
+    outputs_mothur=("${fasta}.${method}.list")
     
+elif [ $step == "multipletonsFilter" ]; then
+	cmd=("remove.rare(list=${list}.list, count=${count}.count_table, nseqs=${minAbundance})"
+		 "make.table(count=${count}.pick.count_table, compress=f)"
+		 "list.seqs(count=${count}.pick.full.count_table)"
+		 "get.seqs(taxonomy=${tax}.taxonomy, accnos=${count}.pick.full.accnos)"
+		 "get.seqs(fasta=${fasta}.fasta, accnos=${count}.pick.full.accnos)")
+
+	outputs_mothur=("${list}.${mothurThresh}.pick.list"
+				    "${count}.pick.full.count_table"
+				    "${fasta}.pick.fasta"
+				    "${tax}.pick.taxonomy")
+
+elif [ $step == "subsampling" ]; then
+    cmd=("sub.sample(count=${count}.count_table, taxonomy=${tax}.taxonomy, list=${list}.list, size=${subsamplingNb}, persample=true)"
+		 "list.seqs(list=${list}.${mothurThresh}.subsample.list)"
+		 "get.seqs(fasta=${fasta}.fasta, accnos=${list}.${mothurThresh}.subsample.accnos)")
+    
+    outputs_mothur=("${fasta}.pick.fasta"
+					"${count}.subsample.count_table"
+					"${tax}.subsample.taxonomy"
+					"${list}.${mothurThresh}.subsample.list")
+
+elif [ $step == "taxaFilter" ]; then
+	cmd=("remove.lineage(taxonomy=${tax}.taxonomy, fasta=${fasta}.fasta, count=${count}.count_table, list=${list}.list, taxon='${taxaToFilter}')")
+
+	outputs_mothur=("${tax}.pick.taxonomy"
+				    "${fasta}.pick.fasta"
+				    "${count}.pick.count_table"
+				    "${list}.${mothurThresh}.pick.list")
+
 elif [ $step == "consensusClassification" ]; then
     suffixTax=`echo $taxRad | cut -d. -f2`.wang
     
@@ -118,62 +149,19 @@ elif [ $step == "consensusClassification" ]; then
 					"${list}.${mothurThresh}.cons.tax.summary")
 
 elif [ $step == "otuRepr" ]; then
-    cmd=("get.oturep(count=${count}.count_table, fasta=${fasta}.fasta, list=${list}.list, method=abundance, rename=T)")
+    cmd=("get.oturep(count=${count}.count_table, fasta=${fasta}.fasta, list=${list}.list, method=abundance, rename=${rename})")
 
-    outputs_mothur=("${list}.${mothurThresh}.rep.fasta")
+    outputs_mothur=("${list}.${mothurThresh}.rep.fasta"
+				    "${list}.${mothurThresh}.rep.count_table")
 
-elif [ $step == 'multipletonsFilter' ]; then
-    cmd=("filter.shared(shared=${shared}.shared, mintotal=${minAbundance}, makerare=F)")
-
-    outputs_mothur=("${shared}.${mothurThresh}.filter.shared")
-
-elif [ $step == "subsampling" ]; then
-    cmd=("sub.sample(persample=true, fasta=${fasta}.fasta, constaxonomy=${tax}.taxonomy, shared=${shared}.shared, size=${subsamplingNb})")
-    
-    outputs_mothur=("${fasta}.subsample.fasta"
-					"${tax}.subsample.taxonomy"
-					"${shared}.${mothurThresh}.subsample.shared")
-
-elif [ $step == "taxaFilter" ]; then
-    # 2 cases depending on whether we do the taxa filtering on the taxonomy or constaxonomy file
-    # For the latter case, we need to also process the .shared file 
-    if [ -f "${shared}.list" ]; then
-        outputs_mothur=("${tax}.pick.cons.taxonomy"
-						"${list}.${mothurThresh}.pick.list"
-						"${shared}.${mothurThresh}.pick.shared")
+elif [ $step == "abundanceTable" ]; then
+	cmd=("make.shared(count=${count}.count_table, list=${list}.list)")
+	outputs_mothur=("${list}.shared")
 	
-	cmd=("remove.lineage(constaxonomy=${tax}.taxonomy, shared=${shared}.shared, list=${list}.list, taxon='${taxaToFilter}')")
-    else
-        outputs_mothur=("${fasta}.pick.fasta"
-						"${shared}.pick.shared"
-						"${tax}.pick.cons.taxonomy")
-	
-	cmd=("remove.lineage(constaxonomy=${tax}.taxonomy, shared=${shared}.shared, taxon='${taxaToFilter}')"
-	     "list.seqs(taxonomy=${tax}.pick.cons.taxonomy)"
-	     "get.seqs(fasta=${fasta}.fasta,accnos=current)")
-    fi
-
 elif [ $step == "postprocessing" ]; then
-	cmd=("count.seqs(shared=${shared}.shared)"
-		 "get.relabund(shared=${shared}.shared)")
-	outputs_mothur=("${shared}.relabund"
-				    "${shared}.${idThreshold}.count_table")
-	# "create.database(shared=${shared}.shared,label=${idThreshold},repfasta=${fasta}.fasta,constaxonomy=${tax}.taxonomy)")
-
-elif [ $step == "unifrac" ]; then
-    cmd=("clearcut(fasta=${fasta}.fasta, DNA=T)"
-		 "unifrac.unweighted(tree=current,count=${count}.count_table,distance=lt)"
-		 "unifrac.weighted(tree=current,count=${count}.count_table,distance=lt)")
-	
-	outputs_mothur=("${fasta}.tre1.unweighted.phylip.dist"
-					"${fasta}.tre1.weighted.phylip.dist"
-					"${fasta}.uwsummary"
-					"${fasta}.tre1.wsummary")
-	
-	outputs_custom=("${out}.unweighted.dist"
-					"${out}.weighted.dist"
-					"${out}.unweighted.summary"
-					"${out}.weighted.summary")
+	cmd=("get.relabund(shared=${shared}.shared)"
+		 "create.database(shared=${shared}.shared,label=${idThreshold},repfasta=${fasta}.fasta,count=${count}.count_table,constaxonomy=${tax}.taxonomy)")
+	outputs_mothur=("${shared}.relabund")
 	
 elif [ $step == "alphaDiversity" ]; then
 	cmd=("summary.single(shared=${shared}.shared,calc=nseqs-sobs-chao-shannon-shannoneven)")
@@ -196,27 +184,32 @@ set -o xtrace
 set +o xtrace
 
 # Rename output files
-# for output_mothur in ${outputs_mothur[@]}
+# Exclamation mark gets the index of the array element instead of the values
 for i in ${!outputs_mothur[@]}
 do
-	output_mothur=${outputs_mothur[i]}
-    extension=${output_mothur##*.}
-	output_renamed=`[ -z $outputs_custom ] && echo "${out}.${extension}" || echo ${outputs_custom[i]}`
+	out_file=${outputs_mothur[i]}
+    extension=${out_file##*.}
+	output_renamed=$([ -z ${outputs_custom} ] && echo "${out}.${extension}" || echo ${outputs_custom[i]})
     
-    # if the output file exists
-    if [ -e $output_mothur ]; then
-	echo "Success: Renaming $output_mothur to $output_renamed"
-	mv $output_mothur $output_renamed
+    if [ -f ${out_file} ]; then
+		echo "Step successful: Renaming ${out_file} to ${output_renamed}"
+		mv ${out_file} ${output_renamed}
+
     # Special case for screen.seqs (sometime mothur doesnt produce an output file).
 	# In this case, just copy the input into the output
     elif [ $step = "MSA" ] || [ $step = "taxaFilter" ] || [ $step = "subsampling" ]; then
-	filename_to_copy=`ls -t *$extension | head -1`
-	echo "WARNING: $output_renamed does not exist. Copying latest file with extension $extension ($filename_to_copy)."
-	cp $filename_to_copy $output_renamed
-    # Otherwise, raise an error
-    else
-	echo "ERROR: $output_mothur does not exist. Aborting."
-	exit 1
+		filename_to_copy=$(ls -t *$extension | head -1)
+		echo "WARNING: ${output_renamed} does not exist. Copying latest file with extension ${extension} (${filename_to_copy})."
+		cp ${filename_to_copy} ${output_renamed}
+
+	else
+		echo "ERROR: ${out_file} does not exist. Aborting."
+		exit 1
     fi
+
+	if [ "${extension}" == "shared" ]; then
+		mothur "#summary.single(shared=${output_renamed}, calc=nseqs-sobs)"
+	fi
+
 done
 

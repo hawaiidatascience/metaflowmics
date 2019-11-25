@@ -9,11 +9,11 @@ plot the distribution of the log counts.
 
 '''
 
-import sys
-from itertools import chain
 from math import log10
-import subprocess as sp
 from glob import glob
+
+import numpy as np
+import pandas as pd
 
 from matplotlib.ticker import MultipleLocator
 import matplotlib.pyplot as plt
@@ -22,14 +22,13 @@ def count_samples(folder='.'):
     '''
     Count the number of reads in all forward fastq files in [folder]
     '''
-    
-    nb_reads = []
-    for f in glob("{}/*_R1*.fastq".format(folder)):
-        parsed_sys_call = sp.check_output(['wc', '-l', f]).decode().split(' ')[0]
-        log_count = log10(int(parsed_sys_call))
-        nb_reads.append(log_count)
-    
-    return nb_reads
+
+    files = glob("{}/sample_counts*.csv".format(folder))
+    summaries = pd.concat([pd.read_csv(summary, index_col=0, dtype=str, header=None)
+                           for summary in files],
+                          axis=1, sort=True)
+
+    return summaries.fillna(0).astype(int).sum(axis=1).values
 
 def plot(counts, display=False):
     '''
@@ -37,17 +36,17 @@ def plot(counts, display=False):
     '''
 
     fig, ax = plt.subplots()
-    ax.hist(counts, bins=30)
+    ax.hist(np.log10(counts), bins=max(5, len(counts)//10))
     ax.set_xlabel('Sample size', fontsize=14)
-    ax.set_ylabel('Occurrences', fontsize=14)
+    ax.set_ylabel('Occurrence', fontsize=14)
     ax.xaxis.set_major_locator(MultipleLocator(1))
 
-    minor_ticks = list(chain(*[[log10(j*10**i) for j in range(2,10)] for i in ax.get_xticks()]))
+    minor_ticks = [log10(j*10**i) for j in range(2,10) for i in ax.get_xticks()]
     ax.set_xticks(minor_ticks, minor=True)
     ax.set_xticklabels(["{:,}".format(int(10**i)) for i in ax.get_xticks()])
 
     if not display:
-        fig.savefig('sample_sizes.png')
+        fig.savefig('sample_sizes.pdf', transparent=True)
     else:
         plt.show()
 
@@ -57,8 +56,7 @@ def main():
     The reads need to be formatted as .fastq (not gzipped)
     '''
 
-    folder = sys.argv[1]
-    counts = count_samples(folder)
+    counts = count_samples()
     plot(counts)
 
 if __name__ == '__main__':

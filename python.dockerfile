@@ -20,7 +20,10 @@ RUN wget https://www.bioinformatics.babraham.ac.uk/projects/fastqc/fastqc_v0.11.
 	&& mv FastQC /usr/local/bin
 
 # Install python libraries
-RUN pip3 install ipython biopython numpy pandas itsxpress matplotlib seaborn
+RUN pip3 install --upgrade pip && pip3 install ipython biopython numpy pandas itsxpress matplotlib seaborn
+
+# Install java for itsxpress
+RUN apt-get update && apt-get install -y default-jre
 
 # Set PATH
 ENV PATH /usr/local/bin/vsearch-2.11.1-linux-x86_64/bin:/usr/local/bin/bbmap:/usr/local/bin/FastQC:$PATH

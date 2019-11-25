@@ -1,16 +1,28 @@
 #!/usr/bin/env Rscript
 
 library(stringr)
+library(doParallel)
 
 library(ShortRead)
 library(seqinr)
-
 library(dada2)
 library(lulu)
+library(ape)
+library(phyloseq)
 
 library(ggplot2)
 
-filterReads <- function(pairId,fwd,rev=NULL,
+fast_table_load <- function(filename, cores=1, drop=c(), row.label=1) {
+    data <- as.data.frame(data.table::fread(filename, nThread=cores, drop=drop, header=T, blank.lines.skip=T))
+
+    if (row.label > 0) {
+        rownames(data) <- data[[row.label]]
+        data[, row.label] <- NULL
+    }
+    return(data)
+}
+
+filter_reads <- function(pairId,fwd,rev=NULL,
                         minLen=30,
                         maxEE=c(Inf,Inf),
                         truncLen=c(220,190),
@@ -51,7 +63,7 @@ filterReads <- function(pairId,fwd,rev=NULL,
     ggsave( sprintf("qualityProfile_%s.png",pairId), plot=fig, type = "cairo-png" )
 }
 
-extractChimeras <- function(derepFile,noChimeraFile,pairId)
+extract_chimeras <- function(derepFile,noChimeraFile,pairId)
 {
     ## Extract non chimeric sequences from derep file
     derep <- readRDS(derepFile)
@@ -73,7 +85,7 @@ extractChimeras <- function(derepFile,noChimeraFile,pairId)
     saveRDS(derep,paste0(pairId,"_R12_nochimera.RDS"))
 }
 
-learnErrorRates <- function(inputFiles,pairId,rds=FALSE)
+learn_error_rates <- function(inputFiles,pairId,rds=FALSE)
 {
     prefix.out = pairId
     if(length(inputFiles) > 1) {
@@ -94,7 +106,7 @@ learnErrorRates <- function(inputFiles,pairId,rds=FALSE)
     }
 }
 
-dadaDenoise <- function(errorFile,derepFile,pairId,derep.rds=FALSE,paired=TRUE)
+dada_denoise <- function(errorFile,derepFile,pairId,derep.rds=FALSE,paired=TRUE)
 {
     errors <- readRDS(errorFile)
 
@@ -113,18 +125,18 @@ dadaDenoise <- function(errorFile,derepFile,pairId,derep.rds=FALSE,paired=TRUE)
     saveRDS(denoised,sprintf("%s_dada.RDS",pairId))
 }
 
-getCounts <- function(attribute) {
-    getCounts_attr <- function(x) {
+get_counts <- function(attribute) {
+    get_counts_attr <- function(x) {
         #' Get the number of total and unique sequences
         #' on [attribute] attribute of object [x]
         total_count <- sum(x[[attribute]])
         uniq_count <- sum(x[[attribute]]>0)
         return(sprintf("%s (%s uniques)",total_count,uniq_count))
     }
-    return(getCounts_attr)
+    return(get_counts_attr)
 }
 
-mergeReads <- function(minOverlap, maxMismatch)
+merge_reads <- function(minOverlap, maxMismatch)
 {
     derepF <- list.files(path=".",pattern="*_R1.derep.RDS")
     derepR <- list.files(path=".",pattern="*_R2.derep.RDS")
@@ -144,7 +156,7 @@ mergeReads <- function(minOverlap, maxMismatch)
     return(merged)
 }
 
-makeSummary <- function(steps, patterns, attributes) {
+make_summary <- function(steps, patterns, attributes) {
     sample.names <- as.character(sapply(
         list.files(pattern=patterns[1]),
         function(x) unlist(strsplit(x, gsub('\\*', '', patterns[1]),fixed=T))[1]
@@ -156,16 +168,16 @@ makeSummary <- function(steps, patterns, attributes) {
     for( i in 1:length(patterns) ) {
         files <- list.files(pattern=patterns[i])
         data <- lapply(files, readRDS)
-        summary[steps[i]] = sapply(data, getCounts(attributes[i]))
+        summary[steps[i]] = sapply(data, get_counts(attributes[i]))
     }
 
     return(summary)
 }
     
-esvTable <- function(minOverlap=20, maxMismatch=1, paired=TRUE)
+esv_table <- function(minOverlap=20, maxMismatch=1, paired=TRUE)
 {
     if(paired) {
-        merged <- mergeReads(minOverlap, maxMismatch)
+        merged <- merge_reads(minOverlap, maxMismatch)
     } else {
         ## Retrieve all the dada2 denoised files for merging
         denoisedFiles <- list.files(pattern="*_dada.RDS")
@@ -195,7 +207,7 @@ esvTable <- function(minOverlap=20, maxMismatch=1, paired=TRUE)
         steps = c("4-Dereplication","5-ChimeraRemoval","6-Denoising")
         patterns = c("*_R1.*_derep.RDS","*_R1.*_nochimera.RDS","*_R1.*_dada.RDS")
         attributes = c("uniques","uniques","denoised")
-        summary <- makeSummary(steps, patterns, attributes)
+        summary <- make_summary(steps, patterns, attributes)
 
         write.csv(t(esvTable),"clustering_100.csv", quote=F)
     } else {
@@ -203,10 +215,10 @@ esvTable <- function(minOverlap=20, maxMismatch=1, paired=TRUE)
         steps = c("3.1-Dereplication","3.2-Denoising")
         patterns = c("*_R1_derep.RDS","*_R1_dada.RDS")
         attributes = c("uniques","denoised")        
-        summary <- makeSummary(steps, patterns, attributes)
+        summary <- make_summary(steps, patterns, attributes)
 
         if(paired) {
-            summary['4-ESV'] = sapply(merged, getCounts('abundance'))
+            summary['4-ESV'] = sapply(merged, get_counts('abundance'))
         } else {
             summary['4-ESV'] = summary['3.2-Denoising']
         }
@@ -221,7 +233,7 @@ esvTable <- function(minOverlap=20, maxMismatch=1, paired=TRUE)
     write.table(summary, "count_summary.tsv", row.names=F, sep="\t")                    
 }
 
-mergeFastaForVSEARCH <- function(filename)
+merge_fasta_for_vsearch <- function(filename)
 {
     #' Retrieve the sequences from abundance table and create a fasta file
     #' The header of each sequence includes its sample and its abundance
@@ -241,23 +253,20 @@ mergeFastaForVSEARCH <- function(filename)
     write.fasta(list.fasta, names=names(list.fasta), file.out='esv_merged_to_cluster.fasta')
 }
 
-luluCurate <- function(abundanceFile,matchListFile,threshold,min_ratio_type,min_ratio,min_match,min_rel_cooccurence)
+lulu_curate <- function(abundanceFile,matchListFile,threshold,min_ratio_type,min_ratio,min_match,min_rel_cooccurence,cores=1)
 {
     if(tools::file_ext(abundanceFile)=='shared'){
-        otutab <- read.table(abundanceFile,
-                             header=TRUE, row.names=2, colClasses=c("Group"="character"),
-                             as.is=TRUE,check.names=F)[,-c(1,2)]
-        otutab <- as.data.frame(t(otutab))
-        abundance_table_name = sprintf("lulu_table_%s.csv",threshold)
+        otutab <- t(fast_table_load(abundanceFile, cores=cores,
+                                    drop=c('label', 'numOtus'), row.label='Group'))
+        abundance_table_name <- sprintf("all_lulu_%s.csv",threshold)
     } else {
-        otutab <- read.csv(abundanceFile,
-                           header=TRUE, row.names=1,
-                           as.is=TRUE, check.names=F)
+        otutab <- fast_table_load(abundanceFile, cores=cores, row.label=1)
         
-        abundance_table_name = sprintf("abundance_table_%s.csv",threshold)
+        abundance_table_name <- sprintf("abundance_table_%s.csv",threshold)
     }
         
-    curated_ids_name = sprintf("lulu_ids_%s.csv",threshold)
+    curated_ids_name <- sprintf("lulu_ids_%s.csv",threshold)
+    mapping_discarded_name <- sprintf("mapping_discarded_%s.txt", threshold)
     
     matchList <- read.table(matchListFile,
                             header=FALSE, col.names=c("OTU1","OTU2","pctIdentity"),
@@ -265,7 +274,7 @@ luluCurate <- function(abundanceFile,matchListFile,threshold,min_ratio_type,min_
 
     if (dim(matchList)[1] > 0) {
         ## Run Lulu
-        curated <- lulu(otutab, matchList,
+        curated <- lulu(as.data.frame(otutab), matchList,
                         minimum_ratio_type=min_ratio_type,
                         minimum_ratio=min_ratio,
                         minimum_match=min_match,
@@ -281,12 +290,52 @@ luluCurate <- function(abundanceFile,matchListFile,threshold,min_ratio_type,min_
                     quote=F,
                     row.names=F,
                     col.names=F)
+
+        write.table(curated$otu_map[curated$discarded_otus,],
+                    mapping_discarded_name,
+                    quote=F)
+
     } else {
         write.csv(otutab, abundance_table_name)
+
         write.table(rownames(otutab),
                     curated_ids_name,
                     quote=F,
                     row.names=F)
+
+        empty.df <- read.table(text="", col.names=c('otu', 'parent_id'))
+        write.table(empty.df, mapping_discarded_name)
     }
 
+}
+
+merge_otu_list <- function(list_file, merge_list, otu_thresh=100, cores=1) {
+    list <- fast_table_load(list_file, row.label=-1, cores=cores)
+    to_merge <- read.csv(merge_list, sep=' ', row.names=1)[,'parent_id']
+
+    for (daughter in rownames(to_merge)) {
+        parent <- to_merge[daughter]
+        list[, parent] <- paste(list[, parent], list[, daughter], sep=',')
+        list[, daughter] <- NULL
+    }
+
+    write.table(list, sprintf('all_lulu_%s.list', otu_thresh), sep='\t', quote=F, row.names=F)
+}
+
+calculate_unifrac <- function(tree_file, abundance_file, method='weighted', otu_thresh=100, cores=1) {
+
+    registerDoParallel(cores=cores)
+
+    abundance <- fast_table_load(abundance_file, cores=cores,
+                                 drop=c('label', 'numOtus'), row.label='Group')
+    tree <- read.tree(tree_file)
+
+    ps <- phyloseq(
+        otu_table(as.matrix(abundance), taxa_are_rows=FALSE),
+        phy_tree(tree)
+    )
+
+    dists <- UniFrac(ps, weighted=(method=='weighted'), parallel=TRUE)
+
+    write.csv(as.matrix(dists), sprintf('unifrac_%s_%s.csv', method, otu_thresh))
 }

@@ -80,6 +80,7 @@ INPUT_FASTQ_OK = INPUT_FASTQ
 process ExtractITS {
     tag { "ITSextraction.${pairId}" }
     label "low_computation"
+	label "python_script"
     
     publishDir params.outdir+"Misc/1-ITSxpress", mode: "copy"
     
@@ -98,7 +99,7 @@ process ExtractITS {
     rev_arg=\$([ ${params.pairedEnd} == true ] && echo "--fastq2 \${read_pair[1]}" || echo "--single_end")
 
     itsxpress --region ${params.locus} --threads ${task.cpus} \
-	      --outfile ${pairId}_${params.locus}.fastq --log ITSxpress_${pairId}.log \
+    	      --outfile ${pairId}_${params.locus}.fastq --log ITSxpress_${pairId}.log \
               --fastq \${read_pair[0]} \${rev_arg}
     """
 }
@@ -119,10 +120,10 @@ process RemoveSmallAndNseqs {
     publishDir params.outdir+"Misc/2-NandSmallSeqsFiltering", mode: "copy"
 
     input:
-        set val(pairId), file(itsFile) from ITS_FASTQ
+    set val(pairId), file(itsFile) from ITS_FASTQ
     
     output:
-        set val(pairId), file("${pairId}_noN.fastq") into (NO_N_FASTQ,NO_N_FASTQ_FOR_COUNT)
+    set val(pairId), file("${pairId}_noN.fastq") into (NO_N_FASTQ,NO_N_FASTQ_FOR_COUNT)
 
     script:
     """
@@ -148,13 +149,12 @@ NO_N_COUNTS = NO_N_FASTQ_FOR_COUNT.collect{ ["'${it[0]}': ${it[1].countFastq()}"
 
 process QcFilter {
     tag { "filteredITS.${pairId}" }
-    
     label "low_computation"
 
     publishDir params.outdir+"Misc/3-QualityFiltering", mode: "copy"
 
     input:
-        set val(pairId), file(itsFile) from NO_N_FASTQ.filter{ it[1].size() > 0 }
+    set val(pairId), file(itsFile) from NO_N_FASTQ.filter{ it[1].size() > 0 }
     
     output:
 	set val(pairId), file("${pairId}_filtered.fastq.gz") into FILTERED_FASTQ_ALL
@@ -198,13 +198,13 @@ process Dereplication {
         file("*derep.RDS") into DEREP_FOR_COUNT_SUMMARY
     script:
 	"""
-        #!/usr/bin/env Rscript 
-        library(dada2)
+	#!/usr/bin/env Rscript 
+	library(dada2)
 
-        derep <- derepFastq("${filtRead}")
-        saveRDS(derep,"${pairId}_R12_derep.RDS")
-        uniquesToFasta(derep,"${pairId}_R12_derep.fasta")
-        """
+	derep <- derepFastq("${filtRead}")
+	saveRDS(derep,"${pairId}_R12_derep.RDS")
+	uniquesToFasta(derep,"${pairId}_R12_derep.fasta")
+	"""
 }
 
 /*
@@ -265,10 +265,10 @@ process LearnErrors {
     source("${params.script_dir}/util.R")
 
     # Extract no chimera sequences and store into an R object for dada2
-    extractChimeras("${derepRDS}","${sample_nochim}","${pairId}")
+    extract_chimeras("${derepRDS}","${sample_nochim}","${pairId}")
 
     # Build error model
-    learnErrorRates("${pairId}_R12_nochimera.RDS","${pairId}",rds=TRUE)
+    learn_error_rates("${pairId}_R12_nochimera.RDS","${pairId}",rds=TRUE)
     """
 }
 
@@ -294,7 +294,7 @@ process Denoise {
     #!/usr/bin/env Rscript
     source("${params.script_dir}/util.R")
 
-    dadaDenoise("${err}","${nochimera}","${pairId}_R12",derep.rds=TRUE,paired=FALSE)
+    dada_denoise("${err}","${nochimera}","${pairId}_R12",derep.rds=TRUE,paired=FALSE)
     """
 }
 
@@ -325,8 +325,8 @@ process MakeEsvTable {
     #!/usr/bin/env Rscript
     source("${params.script_dir}/util.R")
 
-    esvTable(paired=FALSE)
-    mergeFastaForVSEARCH("raw_sequence_table.csv")
+    esv_table(paired=FALSE)
+    merge_fasta_for_vsearch("raw_sequence_table.csv")
     """    
 }
 
@@ -432,7 +432,7 @@ process Lulu {
     #!/usr/bin/env Rscript
     source("${params.script_dir}/util.R")
 
-    luluCurate("${table}","${matchlist}","${idThreshold}","${params.min_ratio_type}","${params.min_ratio}","${params.min_match}","${params.min_rel_cooccurence}")
+    lulu_curate("${table}","${matchlist}","${idThreshold}","${params.min_ratio_type}","${params.min_ratio}","${params.min_match}","${params.min_rel_cooccurence}")
     """
 }
 
@@ -475,16 +475,18 @@ process ClassificationSintax {
     publishDir params.outdir+"Results", mode: "copy", pattern: "annotations*.tsv"
 
     input:
-        set idThreshold,file(fasta) from FASTA_LULU
+    set idThreshold,file(fasta) from FASTA_LULU
+	file(db) from Channel.fromPath(params.uniteDB)
+	
     output:
-        set idThreshold,file("annotations_sintax_${idThreshold}.tsv") into TAXONOMY
+    set idThreshold,file("annotations_sintax_${idThreshold}.tsv") into TAXONOMY
+	
     script:
 	
     """
-    vsearch --threads ${task.cpus} --db ${params.uniteDB} \
+    vsearch --threads ${task.cpus} --db ${db} \
             --sintax ${fasta} --sintax_cutoff ${params.confidenceThresh} \
             --tabbedout annotations_sintax_${idThreshold}.tsv
-
     """
 }
 

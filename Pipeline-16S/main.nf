@@ -127,7 +127,7 @@ process FilterAndTrim {
 
     rmphix <- !("${params.keepPhix}" == "true")
 
-    filterReads("${pairId}", fwd, rev=rev, minLen=${params.minLength}, maxEE=${params.maxEE}, truncLen=c(${params.truncLen}),rm.phix=rmphix, truncQ=${params.truncQ})
+    filter_reads("${pairId}", fwd, rev=rev, minLen=${params.minLength}, maxEE=${params.maxEE}, truncLen=c(${params.truncLen}),rm.phix=rmphix, truncQ=${params.truncQ})
     """
 }
 
@@ -164,7 +164,7 @@ process LearnErrors {
     source("${params.script_dir}/util.R")
 
     fastqs <- c("${fastq.join('","')}")
-    learnErrorRates(fastqs,"${pairId}")
+    learn_error_rates(fastqs,"${pairId}")
     """
 }
 
@@ -194,10 +194,10 @@ process Denoise {
     errors <- c("${err.join('","')}")
     fastqs <- c("${fastq.join('","')}")
 
-    dadaDenoise(errors[1], fastqs[1], "${pairId}_R1")
+    dada_denoise(errors[1], fastqs[1], "${pairId}_R1")
 
     if ("${params.singleEnd}" == "false") {
-        dadaDenoise(errors[2], fastqs[2], "${pairId}_R2")
+        dada_denoise(errors[2], fastqs[2], "${pairId}_R2")
     }
     """
 }
@@ -227,7 +227,7 @@ process Esv {
     #!/usr/bin/env Rscript
     source("${params.script_dir}/util.R")
 
-    esvTable(${params.minOverlap},${params.maxMismatch},"${params.singleEnd}"=="false")
+    esv_table(${params.minOverlap},${params.maxMismatch},"${params.singleEnd}"=="false")
     """
 }
 
@@ -242,7 +242,6 @@ process MultipleSequenceAlignment {
     tag { "MSA" }
     label "high_computation"
     label "mothur_script"
-	label "python_script"
     publishDir params.outdir+"Misc/5-MultipleSequenceAlignment", mode: "copy"
 
     input:
@@ -265,7 +264,8 @@ process MultipleSequenceAlignment {
     --minAlnLen=${params.minAlnLen} \
     --optimize=start-end
 
-    # python ${params.script_dir}/patch_mothur.py all_MSA.count_table
+    mothur "#make.table(count=all_MSA.count_table, compress=f)"
+    mv all_MSA.full.count_table all_MSA.count_table
     """
 }
 
@@ -329,48 +329,45 @@ process Clustering {
     label "high_computation"
     label "mothur_script"
     publishDir params.outdir+"Misc/8-Clustering", mode: "copy", pattern: "all_clustering*.shared"
-    publishDir params.outdir+"Results/raw", mode: "copy", pattern: "all_clustering*.{shared,list}"
+    publishDir params.outdir+"Results/raw/details", mode: "copy", pattern: "raw*.{shared,list,fasta,count_table}"
+    publishDir params.outdir+"Results/raw", mode: "copy", pattern: "*.database"	
 
     input:
     set file(count), file(fasta), file(tax) from PRE_CLASSIFIED_CONTIGS
     each idThreshold from clusteringThresholds
 
     output:
-    set val(idThreshold), file(count), file(tax), file("all_clustering_*.list"), file("all_clustering_*.shared") into CONTIGS_FOR_CLASSIFICATION
-    file("all_clustering_*.shared") into CLUSTERING_TO_COUNT
+	set val(idThreshold), file(fasta), file(count), file(tax), file("raw_clustering_*.list") into FOR_TAXA_FILTER
+    file("raw_*.summary") into CLUSTERING_TO_COUNT
+	file("raw*.{fasta,shared,taxonomy,taxonomy,database}")
 
     script:
     """
     ${params.script_dir}/mothur.sh \
     --step=clustering \
-    --idThreshold=${idThreshold}
-    """
-}
+    --idThreshold=${idThreshold} \
+    --prefix=raw
 
-/*
- *
- * Consensus classification (in scripts/mothur.sh)
- *
- */
-
-process ConsensusClassification {
-    tag { "consensusClassification.${idThreshold}" }
-    label "medium_computation"
-    label "mothur_script"
-    publishDir params.outdir+"Misc/9-ConsensusClassification", mode: "copy", pattern: "*.{summary,taxonomy}"
-    publishDir params.outdir+"Results/raw", mode: "copy", pattern: "*.taxonomy"
-
-    input:
-    set val(idThreshold), file(count), file(tax), file(list), file(shared) from CONTIGS_FOR_CLASSIFICATION
-
-    output:
-    file("*.summary") into CLASSIFICATION_SUMMARY
-    set val(idThreshold), file("*.taxonomy"), file(list), file(shared) into CONSTAXONOMY_CONTIGS
-
-    script:
-    """
     ${params.script_dir}/mothur.sh \
     --step=consensusClassification \
+    --idThreshold=${idThreshold} \
+    --prefix=raw
+
+    ${params.script_dir}/mothur.sh \
+    --step=abundanceTable \
+    --idThreshold=${idThreshold} \
+    --prefix=raw
+
+    ${params.script_dir}/mothur.sh \
+    --step=otuRepr \
+    --idThreshold=${idThreshold} \
+    --rename=f \
+    --prefix=raw
+
+    mv raw_otuRepr_${idThreshold}.fasta raw_sequences_${idThreshold}.fasta
+
+    ${params.script_dir}/mothur.sh \
+    --step=postprocessing \
     --idThreshold=${idThreshold}
     """
 }
@@ -383,15 +380,14 @@ process TaxaFilter {
     tag { "taxaFilter.${idThreshold}" }
     label "medium_computation"
     label "mothur_script"
-    publishDir params.outdir+"Misc/10-TaxaFilter", mode: "copy"
+    publishDir params.outdir+"Misc/9-TaxaFilter", mode: "copy"
 
     input:
-    set val(idThreshold), file(tax), file(list), file(shared) from CONSTAXONOMY_CONTIGS
+    set val(idThreshold), file(fasta), file(count), file(tax), file(list) from FOR_TAXA_FILTER
 
     output:
-    file("all_taxaFilter*.shared") into TAXA_FILTER_TO_COUNT
-    set val(idThreshold), file("all_taxaFilter*.shared") into FOR_MULTIPLETONS_FILTER
-    set val(idThreshold), file("all_taxaFilter*.taxonomy"), file("all_taxaFilter*.list") into TAXA_FILTERED
+    file("all_taxaFilter*.count_table") into TAXA_FILTER_TO_COUNT
+    set val(idThreshold), file("all_taxaFilter*.{list,taxonomy,fasta,count_table}") into FOR_MULTIPLETONS_FILTER
 
     script:
     """
@@ -408,14 +404,15 @@ process MultipletonsFilter {
     tag { "MultipletonsFilter.${idThreshold}" }
     label "medium_computation"
     label "mothur_script"
-    publishDir params.outdir+"Misc/11-MultipletonsFilter", mode: "copy"
+    publishDir params.outdir+"Misc/10-MultipletonsFilter", mode: "copy"
 
     input:
-    set val(idThreshold), file(shared) from FOR_MULTIPLETONS_FILTER
+    set val(idThreshold), file(f) from FOR_MULTIPLETONS_FILTER
 
     output:
-    set val(idThreshold), file("all_multipletonsFilter*.shared") into (SUBSAMPLING_EST, SUBSAMPLING_OFF_TO_COUNT, MULTIPLETONS_FILTERED)
-    file("all_multipletonsFilter*.shared") into MULTIPLETONS_FILTER_TO_COUNT
+    set val(idThreshold), file("all_multipletonsFilter*.count_table") into SUBSAMPLING_EST
+	set val(idThreshold), file("all_multipletonsFilter*.{count_table,fasta,list,taxonomy}") into FOR_SUBSAMPLING
+    file("all_multipletonsFilter*.count_table") into MULTIPLETONS_FILTER_TO_COUNT
 
     script:
     """
@@ -426,34 +423,13 @@ process MultipletonsFilter {
     """
 }
 
-TAXA_AND_MULTIPLETONS_FILTERED = TAXA_FILTERED.join(MULTIPLETONS_FILTERED).combine(FASTA_FOR_REPR)
-
-process OtuRepresentative {
-    tag { "OtuRepresentative.${idThreshold}" }
-    label "medium_computation"
-    label "mothur_script"
-
-    input:
-    set val(idThreshold), file(tax), file(list), file(shared), file(fasta), file(count) from TAXA_AND_MULTIPLETONS_FILTERED
-
-    output:
-    set val(idThreshold), file("*.fasta"), file(tax), file(shared) into FOR_SUBSAMPLING
-
-    script:
-    """
-    ${params.script_dir}/mothur.sh \
-    --step=otuRepr \
-    --idThreshold=${idThreshold}
-    """
-}
-
 process GetSubsamlingValue {
     tag "getSubsamplingValue_${idThreshold}"
     label "low_computation"
     label "python_script"
 
     input:
-    set val(idThreshold), file(shared) from SUBSAMPLING_EST
+    set val(idThreshold), file(count) from SUBSAMPLING_EST
 
     output:
     set val(idThreshold), stdout into SUBSAMPLING_THRESHOLDS
@@ -462,12 +438,11 @@ process GetSubsamlingValue {
     """
     #!/usr/bin/env python3
 
-    from util import getSubsamplingThreshold
+    from util import get_subsampling_threshold
 
-    getSubsamplingThreshold("${shared}", ${params.subsamplingQuantile}, ${params.minSubsamplingLevel}, ${params.customSubsamplingLevel})
+    get_subsampling_threshold("${count}", ${params.subsamplingQuantile}, ${params.minSubsamplingLevel}, ${params.customSubsamplingLevel})
     """
 }
-
 
 (SUBSAMPLING_IN, ALT_CHANNEL) = ( params.skipSubsampling
                   ? [Channel.empty(), FOR_SUBSAMPLING ]
@@ -482,15 +457,14 @@ process Subsampling {
     tag { "subsampling" }
     label "medium_computation"
     label "mothur_script"
-    publishDir params.outdir+"Misc/12-Subsampling", mode: "copy"
+    publishDir params.outdir+"Misc/11-Subsampling", mode: "copy"
 
     input:
-    set val(idThreshold), file(fasta), file(tax), file(shared), val(subSampThresh) \
-    from SUBSAMPLING_IN.join(SUBSAMPLING_THRESHOLDS)
+    set val(idThreshold), file(f), val(subSampThresh) from SUBSAMPLING_IN.join(SUBSAMPLING_THRESHOLDS)
 
     output:
-    set val(idThreshold), file("all_subsampling*.fasta"), file("all_subsampling*.taxonomy"), file("all_subsampling*.shared") into SUBSAMPLED_OUT
-    file("all_subsampling*.shared") into SUBSAMPLING_TO_COUNT
+    set val(idThreshold), file("all_subsampling*.{count_table,fasta,list,taxonomy}") into SUBSAMPLED_OUT
+    file("all_subsampling*.count_table") into SUBSAMPLING_TO_COUNT
 
     script:
     """
@@ -503,9 +477,8 @@ process Subsampling {
     """
 }
 
-(CONTIGS_FOR_PRELULU,FASTA_TO_FILTER,SUBSAMPLED_TAX,ABUNDANCE_TABLES_FOR_LULU) = SUBSAMPLED_OUT
-    .mix(ALT_CHANNEL)
-    .separate(4) { x -> [tuple(x[0],x[1]), tuple(x[0],x[1]), tuple(x[0],x[2]), tuple(x[0],x[3])] }
+SUBSAMPLED_OUT.mix(ALT_CHANNEL).into{FOR_PRELULU ; SUBSAMPLED_ALL}
+SUBSAMPLED_ALL.map{it -> [it[0], it[1][0], it[1][1], it[1][3]]}.set{SUBSAMPLED_NO_LIST}
 
 /*
  *
@@ -519,24 +492,24 @@ process PreLulu {
     tag { "preLulus.${idThreshold}" }
     label "medium_computation"
     label "require_vsearch"
-    publishDir params.outdir+"Misc/13-Lulu", mode: "copy"
+    publishDir params.outdir+"Misc/12-Lulu", mode: "copy"
 
     input:
-    set val(idThreshold),file(fasta) from CONTIGS_FOR_PRELULU
+    set val(idThreshold), file(f) from FOR_PRELULU
 
     output:
-    set val(idThreshold),file("match_list_${idThreshold}.txt") into MATCH_LISTS
+    set val(idThreshold), file("match_list_*.txt"), file("all_abundanceTable_*.shared"), file("${f[2]}") into FOR_LULU
 
     script:
-
     """
-    fasta_noGap="contigs_${idThreshold}_nogap.fasta"
+    ${params.script_dir}/mothur.sh --step=abundanceTable --idThreshold=${idThreshold}
+    ${params.script_dir}/mothur.sh --step=otuRepr --idThreshold=${idThreshold} --rename=t
 
-    sed '/^>/! s/[\\.-]//g' ${fasta} > \$fasta_noGap
+    sed -i '/^>/! s/[\\.-]//g' all_otuRepr_${idThreshold}.fasta
 
-    vsearch --usearch_global \$fasta_noGap \
+    vsearch --usearch_global all_otuRepr_${idThreshold}.fasta \
             --threads ${task.cpus} \
-            --db \$fasta_noGap --self \
+            --self --db all_otuRepr_${idThreshold}.fasta \
             --id 0.${params.min_match} \
             --iddef 1 \
             --userout match_list_${idThreshold}.txt \
@@ -557,23 +530,24 @@ process Lulu {
     tag { "Lulu.${idThreshold}" }
     label "high_computation"
     label "r_script"
-    publishDir params.outdir+"Misc/13-Lulu", mode: "copy"
+    publishDir params.outdir+"Misc/12-Lulu", mode: "copy"
 
     input:
-    set val(idThreshold),file(matchlist),file(table) from MATCH_LISTS.join(ABUNDANCE_TABLES_FOR_LULU)
+    set val(idThreshold), file(matchlist), file(table), file(list) from FOR_LULU
 
     output:
-    set val(idThreshold), file("lulu_table_${idThreshold}.csv") into TABLE_TO_FILTER
-    file("lulu_ids_${idThreshold}.csv") into IDS_LULU
-    file("lulu*.log_*") optional true
-    file("lulu_table_${idThreshold}.csv") into LULU_TO_COUNT
+    set val(idThreshold), file("all_lulu*.list") into MERGED_OTUS
+	file("all_lulu_*.csv") into LULU_TO_COUNT
 
     script:
     """
     #!/usr/bin/env Rscript
     source("${params.script_dir}/util.R")
 
-    luluCurate("${table}","${matchlist}","${idThreshold}","${params.min_ratio_type}","${params.min_ratio}","${params.min_match}","${params.min_rel_cooccurence}")
+    lulu_curate("${table}","${matchlist}","${idThreshold}",
+                "${params.min_ratio_type}","${params.min_ratio}","${params.min_match}","${params.min_rel_cooccurence}",
+                cores=${task.cpus})
+    merge_otu_list("${list}", "mapping_discarded_${idThreshold}.txt", ${idThreshold}, cores=${task.cpus})
     """
 }
 
@@ -588,26 +562,77 @@ process Lulu {
 process RareSeqsFilter {
     tag { "RareSeqsFilter.${idThreshold}" }
     label "low_computation"
-    label "python_script"
-    publishDir params.outdir+"Misc/14-RareSeqsFilter", mode:"copy", pattern:"*.shared"
-    publishDir params.outdir+"Results/main", mode:"copy", pattern:"*.{fasta,shared,taxonomy}"
+    label "mothur_script"
+    publishDir params.outdir+"Misc/13-RareSeqsFilter", mode:"copy", pattern:"*.shared"
 
     input:
-    set idThreshold, file(fasta), file(abundance), file(tax) from FASTA_TO_FILTER.join(TABLE_TO_FILTER).join(SUBSAMPLED_TAX)
+	set idThreshold, file(count), file(fasta), file(taxonomy), file(list) from SUBSAMPLED_NO_LIST.join(MERGED_OTUS) 
 
     output:
-    set idThreshold, file("*.fasta"), file("*.shared"), file("*.taxonomy") into (FOR_DATABASE, FOR_PLOT)
-    file("*.shared") into RARE_SEQS_FILTER_TO_COUNT
+	set idThreshold, file("all_rareSeqFilter*.{count_table,fasta,list,taxonomy}") into FOR_DB
+	file("*.count_table") into RARE_SEQS_FILTER_TO_COUNT
 
     script:
     """
-    #!/usr/bin/env python3
+    ${params.script_dir}/mothur.sh \
+    --step=multipletonsFilter \
+    --idThreshold=${idThreshold} \
+    --minAbundance=${params.minAbundance}
 
-    from util import filterIds, filterAbundance, csvToShared
+    for f in \$(ls all_multipletonsFilter*); do
+        mv \$f \${f/multipletonsFilter/rareSeqFilter}
+    done
+    """
+}
 
-    filterAbundance("${abundance}",minAbundance=${params.minAbundance})
-    filterIds("curated_${abundance}","${fasta}","${tax}","${idThreshold}")
-    csvToShared("curated_${abundance}","${idThreshold}")
+
+/*
+ *
+ * Collect all results into mothur database before moving on
+ *
+ */
+
+process Database {
+    tag { "database" }
+    label "medium_computation"
+    label "mothur_script"
+    publishDir params.outdir+"Results/main/details", mode: "copy", pattern: "*.{taxonomy,shared,fasta}"
+    publishDir params.outdir+"Results/main", mode: "copy", pattern: "*.database"	
+    publishDir params.outdir+"Results/postprocessing", mode: "copy", pattern: "*.relabund"
+
+    input:
+    set val(idThreshold), file(f) from FOR_DB
+
+    output:
+    set val(idThreshold), file("sequences_*.fasta"), file("abundance_table_*.shared") into FOR_TREE
+    set val(idThreshold), file("abundance_table_*.shared") into FOR_ALPHADIV, FOR_BETADIV
+    set val(idThreshold), file("*.database") into FOR_PLOT
+    file("*.relabund")
+
+    script:
+    """
+    ${params.script_dir}/mothur.sh \
+    --step=consensusClassification \
+    --idThreshold=${idThreshold}
+
+    mv all_consensusClassification_${idThreshold}.taxonomy annotations_${idThreshold}.taxonomy
+
+    ${params.script_dir}/mothur.sh \
+    --step=abundanceTable \
+    --idThreshold=${idThreshold}
+
+    mv all_abundanceTable_${idThreshold}.shared abundance_table_${idThreshold}.shared
+
+    ${params.script_dir}/mothur.sh \
+    --step=otuRepr \
+    --idThreshold=${idThreshold} \
+    --rename=f
+
+    mv all_otuRepr_${idThreshold}.fasta sequences_${idThreshold}.fasta
+
+    ${params.script_dir}/mothur.sh \
+    --step=postprocessing \
+    --idThreshold=${idThreshold}
     """
 }
 
@@ -623,13 +648,13 @@ process SummaryPlot {
     tag { "SummaryPlot.${idThreshold}" }
     label "medium_computation"
     label "python_script"
-    publishDir params.outdir+"Results/figures", mode:"copy", pattern:"*.png"
+    publishDir params.outdir+"Results/figures", mode:"copy", pattern:"*.pdf"
 
     input:
-    set idThreshold, file(fasta), file(shared), file(taxonomy) from FOR_PLOT
+    set idThreshold, file(db) from FOR_PLOT
 
     output:
-    file("*.png")
+    file("*.pdf")
 
     script:
     """
@@ -683,73 +708,61 @@ process SummaryFile {
              ("5-MultipleSequenceAlignment","all_MSA.count_table"),
              ("6-ChimeraRemoval","all_chimera.count_table"),
              ("7-PreClassification",None),
-             ("8-ConsensusClassification",None),
-             ("9-Clustering","all_clustering_*.shared"),
-             ("10-TaxaFilter","all_taxaFilter_*.shared"),
-             ("11-MultipletonsFilter","all_multipletonsFilter_*.shared"),
-             ("12-Subsampling","all_subsampling_*.shared"),
-             ("13-Lulu","lulu_table_*.csv"),
-             ("14-RareSeqsFilter","abundance_table_*.shared")
+             ("8-Clustering","raw_abundanceTable_*.groups.summary"),
+             ("9-TaxaFilter","all_taxaFilter_*.count_table"),
+             ("10-MultipletonsFilter","all_multipletonsFilter_*.count_table"),
+             ("11-Subsampling","all_subsampling_*.count_table"),
+             ("12-Lulu","all_lulu_*.csv"),
+             ("13-RareSeqsFilter","all_rareSeqFilter_*.count_table")
     ]
 
     write_summary(steps,counts,clustering_thresholds)
     """
 }
-
-/*
- *
- * Collect all results into mothur database before moving on
- *
- */
-
-process Database {
-    tag { "database" }
-    label "medium_computation"
-    label "mothur_script"
-    // publishDir params.outdir+"Results/main", mode: "copy", pattern: "*.db"
-    publishDir params.outdir+"Results/postprocessing", mode: "copy", pattern: "*.relabund"
-
-    input:
-    set val(idThreshold), file(fasta), file(shared), file(taxa) from FOR_DATABASE
-    file f from STEPS_SUMMARY
-
-    output:
-    set val(idThreshold), file(fasta), file("*.count_table") into FOR_UNIFRAC
-    set val(idThreshold), file(shared) into FOR_ALPHADIV, FOR_BETADIV
-    file("*.relabund")
-    // file("*.db")
-
-    script:
-    """
-    ${params.script_dir}/mothur.sh \
-    --step=postprocessing \
-    --idThreshold=${idThreshold}
-    """
-}
-
 /*
  *
  * Generates some results with mothur
  *
  */
 
-process UnifracDist {
-    tag { "Unifrac_${idThreshold}" }
+process FastTree {
+    tag { "FastTree_${idThreshold}" }
     label "high_computation"
-    label "mothur_script"
-    publishDir params.outdir+"Results/postprocessing/unifrac", mode: "copy", pattern: "*.{summary,dist}"
+    // label "mothur_script"
+    publishDir params.outdir+"Results/postprocessing/unifrac", mode: "copy", pattern: "*.tre"
 
     input:
-    set val(idThreshold), file(fasta), file(count) from FOR_UNIFRAC
+    set val(idThreshold), file(fasta), file(shared) from FOR_TREE
 
     output:
-    set file("*.summary"), file("*.dist")
+    set val(idThreshold), file(shared), file("*.tre") into CLEARCUT_TREE
 
     script:
     """
-    ${params.script_dir}/mothur.sh \
-    --step=unifrac \
-    --idThreshold=${idThreshold}
+    sed -r 's/.*(Otu[0-9]+)\\|.*/\\>\\1/' ${fasta} > relabeled_${fasta}
+    FastTree relabeled_${fasta} > FastTree_${idThreshold}.tre
+    """
+}
+
+process UnifracDist {
+    tag { "Unifrac_${idThreshold}" }
+    label "high_computation"
+    label "r_script"
+    publishDir params.outdir+"Results/postprocessing/unifrac", mode: "copy", pattern: "*.csv"
+
+    input:
+    set val(idThreshold), file(shared), file(tree) from CLEARCUT_TREE
+	each mode from ('weighted', 'unweighted')
+
+    output:
+    file("unifrac*.csv")
+
+    script:
+    """
+    #!/usr/bin/env Rscript
+    source("${params.script_dir}/util.R")
+ 
+    calculate_unifrac("${tree}", "${shared}", method="${mode}", otu_thresh=${idThreshold}, cores=${task.cpus})
     """
 }
 

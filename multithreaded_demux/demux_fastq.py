@@ -19,8 +19,7 @@ def parse_args():
     '''
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--fwd', type=str)
-    parser.add_argument('--rev', type=str)
+    parser.add_argument('--fastqs', type=str, nargs='+')
     parser.add_argument('--mapping', type=str)
     args = parser.parse_args()
 
@@ -34,41 +33,43 @@ def main():
 
     args = parse_args()
 
-    demux_info = pd.read_csv(args.mapping, header=None, index_col=0, sep="\t", dtype=str,
-                             names=['bc_fwd', 'bc_rev', 'sample_name'])
+    demux_info = pd.read_csv(args.mapping, header=None, index_col=0, sep="\t", dtype=str).dropna(axis=1, how='all')
+    index_orient = ['fwd', 'rev'][:demux_info.shape[1]-3]
+    demux_info.columns = ['rid'] + index_orient + ['sample_name', 'mismatches']
 
+    read_orient = ['fwd', 'rev'][:len(args.fastqs)]
+    
     print('Preparing handles.')
     handles = {}
     for sample in demux_info['sample_name'].unique():
         if sample != '_UNKNOWN_':
-            handles[sample+'fwd'] = open('{}_R1.fastq'.format(sample), 'w')
-            handles[sample+'rev'] = open('{}_R2.fastq'.format(sample), 'w')
+            for i, orient in enumerate(read_orient, 1):
+                handles[sample+orient] = open('{}_R{}.fastq'.format(sample, i), 'w')
 
-    parser_fwd = FastqGeneralIterator(open(args.fwd, 'r'))
-    parser_rev = FastqGeneralIterator(open(args.rev, 'r'))
+    parsers = [FastqGeneralIterator(open(fastq, 'r')) for fastq in args.fastqs]
 
     print('Starting demultiplexing')
-    for seq_nb, (seq_fwd, seq_rev) in enumerate(zip(parser_fwd, parser_rev)):
-        id_fwd = seq_fwd[0].split(' ')[0]
-        id_rev = seq_rev[0].split(' ')[0]
+    for seq_nb, sequences in enumerate(zip(*parsers)):
+        ids = [seq[0].split()[0] for seq in sequences]
 
-        if id_fwd != id_rev:
-            print("Sequence #{}: {} and {} do not match"
-                  .format(seq_nb, id_fwd, id_rev))
-            continue
+        if len(ids) > 1:
+            if ids[0] != ids[1]:
+                print("Sequence #{}: {} (fwd) and {} (rev) do not match. The forward and reverse read files seem to be out of order"
+                      .format(seq_nb, *ids))
+                exit(42)
 
-        sample_assignment = demux_info.loc[id_fwd, "sample_name"]
+        sample_assignment = demux_info.loc[ids[0], "sample_name"]
 
         if sample_assignment == '_UNKNOWN_':
             continue
 
-        handles[sample_assignment+'fwd'].write('@{}\n{}\n+\n{}\n'.format(*seq_fwd))
-        handles[sample_assignment+'rev'].write('@{}\n{}\n+\n{}\n'.format(*seq_rev))
+        for orient, seq in zip(read_orient, sequences):
+            handles[sample_assignment + orient].write('@{}\n{}\n+\n{}\n'.format(*seq))
 
     for sample in demux_info['sample_name'].unique():
         if sample != '_UNKNOWN_':
-            handles[sample+'fwd'].close()
-            handles[sample+'rev'].close()
+            for orient in read_orient:
+                handles[sample + orient].close()
 
     print("Demultiplexing finished.")
 
