@@ -12,18 +12,23 @@ sns.set_style("white")
 
 def parse_args():
     '''
+    Retrieve all possible arguments from the command line
     '''
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--root', type=str, default='.')
-    parser.add_argument('--meta', type=str, default='')
-    parser.add_argument('--thresh', type=int, default=100)
-    parser.add_argument('--show', action='store_true', default=False)    
+    parser.add_argument('--root', type=str, default='.', descr='Directory with all pipeline outputs (.shared, .taxonomy or .database)')
+    parser.add_argument('--meta', type=str, default='', descr='Path to metadata (optional)')
+    parser.add_argument('--thresh', type=int, default=100, descr='OTU threshold')
+    parser.add_argument('--show', action='store_true', default=False, descr='Display the figure. If not set, saves it as PDF')
+    parser.add_argument('--skip-meta', action='store_true', default=False, descr='Skip plots including metadata information')
     args = parser.parse_args()
 
     return args
 
 class Loader:
+    '''
+    Data loader object to facilitate loading and organizing data
+    '''
 
     def __init__(self, args):
         self.root = args.root
@@ -58,9 +63,12 @@ class Loader:
                 print(f'Cannot load {key} (unknown format)')
                 return
             self.loaded[key] = True
-            
         
     def load_shared(self):
+        '''
+        Loader for mothur shared file
+        '''
+        
         shared = (pd.read_csv(self.path['shared'], sep='\t', dtype={'Group': str})
                   .set_index('Group')
                   .drop(['label', 'numOtus'], axis=1))
@@ -69,6 +77,10 @@ class Loader:
         self.shared = shared
 
     def load_tax(self):
+        '''
+        Loader for mothur taxonomy file
+        '''
+
         tax = pd.read_csv(self.path['tax'], index_col=0, sep='\t', header=None, names=['OTU', 'Size', 'Taxonomy'])
         tax = tax.Taxonomy.str.split(';', expand=True)
         tax.columns = ['Kingdom', 'Phylum', 'Class', 'Order', 'Family', 'Genus', 'Species']
@@ -78,6 +90,10 @@ class Loader:
         self.tax = tax
 
     def load_db(self):
+        '''
+        Loader for mothur database file
+        '''
+
         db = (pd.read_csv(self.path['db'], index_col=0, sep='\t',
                           usecols=lambda x: x not in ['repSeq', 'repSeqName'])
               .rename(columns={'OTUConTaxonomy': 'tax'}))
@@ -92,26 +108,47 @@ class Loader:
                     .rename(columns={i: rank for (i, rank) in enumerate(ranks)}))
 
     def load_meta(self, path=None):
+        '''
+        Loader for metadata file
+        '''
+        
         if not self.path['meta']:
             return
 
         self.meta = pd.read_csv(self.path['meta'], dtype=str)
         
     def load_fasta(self):
+        '''
+        Loader for fasta file
+        '''
+        
         sequences = {seq.id: str(seq.seq) for seq in SeqIO.parse(self.path['fasta'], 'fasta')}
         
         self.fasta = sequences
 
     def set_prevalence(self, min_abund=0):
+        '''
+        Computes prevalence
+        '''
+        
         self.load('db')
         self.prevalence = (self.shared > min_abund).mean(axis=0)
 
     def set_abundance(self):
+        '''
+        Computes abundance of each OTU
+        '''
+        
         self.load('shared')
         self.abundance = self.shared.sum(axis=0)
         
 
 def phylum_scatter(loader, rank='Phylum', select=None, min_group_size=5, show=False):
+    '''
+    Abundance vs Prevalence scatter plot for each OTU. 
+    Each facet corresponds to one of the possible ranks at the given level (default is Phylum)
+    '''
+    
     summaries = pd.DataFrame(
         {'Prevalence': loader.prevalence,
          'Abundance': loader.abundance,
@@ -142,6 +179,9 @@ def phylum_scatter(loader, rank='Phylum', select=None, min_group_size=5, show=Fa
         plt.show()
 
 def biclustering(loader, top=100, cols=['Phylum', 'Class', 'Order'], show=False):
+    '''
+    Biclustering of sample x OTU abundance matrix (z-scores). Display {cols} on the right side.
+    '''
 
     sorted_otus = (loader.abundance * loader.prevalence).sort_values(ascending=False).index
     selected_otus = sorted_otus[loader.shared.std() > 0][:top]
@@ -172,6 +212,14 @@ def biclustering(loader, top=100, cols=['Phylum', 'Class', 'Order'], show=False)
         plt.show()
 
 def stacked_bars(loader, level='Phylum', factors=None, norm=True, n_top=-1, out_prefix='bars'):
+    '''
+    Stacked bar graph showing the levels (default is Phylum).
+    - x-axis is factors[0] (or sample id if empty)
+    - row facets are factors[1]
+    - col facets are factors[2]
+    If there are too many possible annotations, n_top can limit the annotations to the {n_top} most abundance
+    '''
+    
     shared = loader.shared.T.copy()
     shared[level] = loader.tax[level]
     shared_by_tax = shared.groupby(level).agg(sum).T
@@ -215,6 +263,9 @@ def stacked_bars(loader, level='Phylum', factors=None, norm=True, n_top=-1, out_
     plt.savefig(f'{out_prefix}_stacked_bars.pdf', transparent=True)    
 
 def stacked_single(x, y, hue, palette=None, x_values=None, **kwargs):
+    '''
+    Sub-routine to plot stacked bar graph
+    '''
 
     ax = plt.gca()
     df = pd.DataFrame({'x': x, 'y': y, 'hue': hue}).pivot('x', 'hue')
@@ -233,6 +284,7 @@ def stacked_single(x, y, hue, palette=None, x_values=None, **kwargs):
     
 def main():
     '''
+    Script runner
     '''
 
     args = parse_args()
@@ -244,11 +296,12 @@ def main():
     data_loader.set_prevalence()
     data_loader.set_abundance()
 
-    stacked_bars(data_loader, level='Phylum', norm=True, n_top=-1, out_prefix='bars')
-    
     biclustering(data_loader, show=args.show)
     phylum_scatter(data_loader, show=args.show)
     phylum_scatter(data_loader, rank='Class', select=('Phylum', 'Proteobacteria'), show=args.show)
 
+    if not args.skip_metadata:
+        stacked_bars(data_loader, level='Phylum', norm=True, n_top=-1, out_prefix='bars')
+    
 if __name__ == '__main__':
     main()
