@@ -328,8 +328,8 @@ process Clustering {
     tag { "clustering.${idThreshold}" }
     label "high_computation"
     label "mothur_script"
-    publishDir params.outdir+"Misc/8-Clustering", mode: "copy", pattern: "all_clustering*.shared"
-    publishDir params.outdir+"Results/raw/details", mode: "copy", pattern: "raw*.{shared,list,fasta,count_table}"
+    publishDir params.outdir+"Misc/8-Clustering", mode: "copy", pattern: "raw.*"
+    publishDir params.outdir+"Results/raw/details", mode: "copy", pattern: "raw*.{shared,fasta,taxonomy}"
     publishDir params.outdir+"Results/raw", mode: "copy", pattern: "*.database"	
 
     input:
@@ -339,7 +339,7 @@ process Clustering {
     output:
 	set val(idThreshold), file(fasta), file(count), file(tax), file("raw_clustering_*.list") into FOR_TAXA_FILTER
     file("raw_*.summary") into CLUSTERING_TO_COUNT
-	file("raw*.{fasta,shared,taxonomy,taxonomy,database}")
+	file("raw*.{fasta,shared,taxonomy,database}")
 
     script:
     """
@@ -607,7 +607,7 @@ process Database {
     set val(idThreshold), file("sequences_*.fasta"), file("abundance_table_*.shared") into FOR_TREE
     set val(idThreshold), file("abundance_table_*.shared") into FOR_ALPHADIV, FOR_BETADIV
     set val(idThreshold), file("*.database") into FOR_PLOT
-    file("*.relabund")
+    file("*.relabund"), file("*.taxonomy")
 
     script:
     """

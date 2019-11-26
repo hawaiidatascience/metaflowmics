@@ -12,7 +12,7 @@ test16S:
 	nextflow run Pipeline-16S --reads "${PWD}/tests/16S/*_R1.fastq.gz" --referenceAln databases/silva.seed_v132.align --referenceTax databases/silva.seed_v132.tax --singleEnd --truncLen 240 -profile $(CONF)
 
 testdemux:
-	nextflow run multithreaded_demux --inputdir "${PWD}/tests/demux" -profile $(CONF)
+	nextflow run multithreaded_demux --inputdir "${PWD}/tests/demux" -profile $(CONF) --n_per_file 100 --n_bases 1e3
 
 clean:
 	rm -rf work .nextflow*

@@ -6,6 +6,7 @@ import h5py
 
 NUCLS = list('ACGTN')
 MAPPING_BASE5 = str.maketrans(''.join(NUCLS), '01234')
+RC_TRANS = str.maketrans('ACGT', 'TGCA')
 
 def parse_args():
     '''
@@ -14,6 +15,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--fastqs', type=str, nargs='+')
     parser.add_argument('--split', type=int)
+    parser.add_argument('--rc', type=bool, action='store_true', default=False)
     args = parser.parse_args()
 
     return args
@@ -38,7 +40,7 @@ def get_lengths(filename):
 
     return (rid_len, bc_len)
 
-def fastqs_to_h5(fastqs, n_reads, bc_len=None, rid_len=None, split=0):
+def fastqs_to_h5(fastqs, n_reads, bc_len=None, rid_len=None, split=0, rc=False):
     parsers = [FastqGeneralIterator(open(fastq)) for fastq in fastqs]
 
     data = [
@@ -50,6 +52,8 @@ def fastqs_to_h5(fastqs, n_reads, bc_len=None, rid_len=None, split=0):
 
     for k, parser in enumerate(parsers):
         for i, (rid, seq, qual) in enumerate(parser):
+            if rc:
+                seq = seq.translate(RC_TRANS)
             data[k]['rid'][i] = rid.split()[0]
             data[k]['index'][i] = seq2idx(seq)
             data[k]['seq'][i] = seq2intlist(seq)
@@ -78,7 +82,7 @@ def main():
     n_reads = sum(1 for _ in open(args.fastqs[0])) // 4
     (rid_len, bc_len) = get_lengths(args.fastqs[0])
     
-    fastqs_to_h5(args.fastqs, n_reads, bc_len=bc_len, rid_len=rid_len, split=args.split)
+    fastqs_to_h5(args.fastqs, n_reads, bc_len=bc_len, rid_len=rid_len, split=args.split, rc=args.rc)
 
 if __name__ == '__main__':
     main()
