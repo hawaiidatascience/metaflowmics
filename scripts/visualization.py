@@ -300,7 +300,7 @@ def main():
     phylum_scatter(data_loader, show=args.show)
     phylum_scatter(data_loader, rank='Class', select=('Phylum', 'Proteobacteria'), show=args.show)
 
-    if not args.skip_metadata:
+    if not args.skip_meta:
         stacked_bars(data_loader, level='Phylum', norm=True, n_top=-1, out_prefix='bars')
     
 if __name__ == '__main__':
