@@ -2,7 +2,16 @@
 
 meta=$1
 matching=$2
-fastqs=($3 $4)
+rc=$3
+fastqs=($4 $5)
+
+if [ "$rc" == true ]; then
+	cat ${meta} | rev | cut -d, -f1 | tr "ATGC" "TACG" > rev_idx_rc.csv
+	cat ${meta} | rev | cut -d, -f2- | rev > samp_idx1.csv
+	paste -d, samp_idx1.csv rev_idx_rc.csv > metadata.csv
+else
+	cp ${meta} metadata.csv
+fi
 
 if [ ${#fastqs[@]} -eq 2 ]; then 
 
@@ -16,13 +25,13 @@ if [ ${#fastqs[@]} -eq 2 ]; then
 				${z}grep --no-group-separator "^${symbol}" ${rev} -A1 | grep -v ${symbol}) \
 			   | grep -v N \
 			   | sort | uniq -c | sort -rnk1 | head -n20 \
-			   | sed 's/^[[:space:]]*//g' | sed 's/ /,/g' | cut -d, -f2,3 \
-			   > pairs_freqs.txt
-
+			   | sed 's/^[[:space:]]*//g' | sed 's/ /,/g' \
+			   | cut -d, -f2,3 > pairs_freqs.txt
+		
 		awk -F, '{OFS=","} {print $2,$1}' pairs_freqs.txt > pairs_freqs_rev.txt
 
-		same1=$(comm -12 <(sort <(cut -d, -f2,3 ${meta})) <(sort pairs_freqs.txt) | wc -l)
-		same2=$(comm -12 <(sort <(cut -d, -f2,3 ${meta})) <(sort pairs_freqs_rev.txt) | wc -l)
+		same1=$(comm -12 <(sort <(cut -d, -f2,3 metadata.csv)) <(sort pairs_freqs.txt) | wc -l)
+		same2=$(comm -12 <(sort <(cut -d, -f2,3 metadata.csv)) <(sort pairs_freqs_rev.txt) | wc -l)
 
 		reversed=`[ $same2 -ge $same1 ] && echo true || echo false`
 	else
@@ -30,11 +39,11 @@ if [ ${#fastqs[@]} -eq 2 ]; then
 	fi
 
 	if [ $reversed==true ]; then
-		awk -F"," '{OFS=","}{print $1,$3,$2}' ${meta}
+		awk -F"," '{OFS=","}{print $1,$3,$2}' metadata.csv
 	else
-		cat ${meta}
+		cat metadata.csv
 	fi
 
 else
-	awk -F"," '{OFS=","}{print $1,$2,NaN}' ${meta}
+	awk -F"," '{OFS=","}{print $1,$2,NaN}' metadata.csv
 fi

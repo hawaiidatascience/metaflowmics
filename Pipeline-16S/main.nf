@@ -607,7 +607,7 @@ process Database {
     set val(idThreshold), file("sequences_*.fasta"), file("abundance_table_*.shared") into FOR_TREE
     set val(idThreshold), file("abundance_table_*.shared") into FOR_ALPHADIV, FOR_BETADIV
     set val(idThreshold), file("*.database") into FOR_PLOT
-    file("*.relabund"), file("*.taxonomy")
+    set file("*.relabund"), file("*.taxonomy")
 
     script:
     """
@@ -746,7 +746,7 @@ process FastTree {
 }
 
 process UnifracDist {
-    tag { "Unifrac_${idThreshold}" }
+    tag { "Unifrac_${idThreshold}_${mode}" }
     label "high_computation"
     label "r_script"
     publishDir params.outdir+"Results/postprocessing/unifrac", mode: "copy", pattern: "*.csv"

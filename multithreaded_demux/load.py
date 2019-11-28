@@ -15,7 +15,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--fastqs', type=str, nargs='+')
     parser.add_argument('--split', type=int)
-    parser.add_argument('--rc', type=bool, action='store_true', default=False)
+    parser.add_argument('--rc', action='store_true', default=False)
     args = parser.parse_args()
 
     return args

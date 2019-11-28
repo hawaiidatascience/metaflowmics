@@ -105,14 +105,13 @@ process GuessMatchOrder {
     """
     #!/usr/bin/env bash
 
-    bash ${workflow.projectDir}/guess_matching_order.sh ${meta} ${params.matching} ${fastqs} > barcodes_ok.csv
+    bash ${workflow.projectDir}/guess_matching_order.sh ${meta} ${params.matching} ${params.reverseComplement} ${fastqs} > barcodes_ok.csv
 
     """	
 }
 
 process To_h5 {
     tag { "to_h5_${split}" }
-    //publishDir "${params.outdir}/h5_data", mode: "copy", pattern: "*.h5"
     label "python_script"
     label "medium_computation"
     
@@ -125,7 +124,10 @@ process To_h5 {
 
     script:
     """
-    python3 ${workflow.projectDir}/load.py --fastqs ${fastqs} --split ${split}
+    python3 ${workflow.projectDir}/load.py \
+        --fastqs ${fastqs} \
+        --split ${split} \
+        \$([ ${params.reverseComplement} -eq 1 ] && echo "--rc" || echo "")
 	"""
 }
 
