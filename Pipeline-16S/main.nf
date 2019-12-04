@@ -386,7 +386,7 @@ process TaxaFilter {
     set val(idThreshold), file(fasta), file(count), file(tax), file(list) from FOR_TAXA_FILTER
 
     output:
-    file("all_taxaFilter*.count_table") into TAXA_FILTER_TO_COUNT
+    file("all_taxaFilter*.summary") into TAXA_FILTER_TO_COUNT
     set val(idThreshold), file("all_taxaFilter*.{list,taxonomy,fasta,count_table}") into FOR_MULTIPLETONS_FILTER
 
     script:
@@ -412,7 +412,7 @@ process MultipletonsFilter {
     output:
     set val(idThreshold), file("all_multipletonsFilter*.count_table") into SUBSAMPLING_EST
 	set val(idThreshold), file("all_multipletonsFilter*.{count_table,fasta,list,taxonomy}") into FOR_SUBSAMPLING
-    file("all_multipletonsFilter*.count_table") into MULTIPLETONS_FILTER_TO_COUNT
+    file("all_multipletonsFilter*.summary") into MULTIPLETONS_FILTER_TO_COUNT
 
     script:
     """
@@ -464,7 +464,7 @@ process Subsampling {
 
     output:
     set val(idThreshold), file("all_subsampling*.{count_table,fasta,list,taxonomy}") into SUBSAMPLED_OUT
-    file("all_subsampling*.count_table") into SUBSAMPLING_TO_COUNT
+    file("all_subsampling*.summary") into SUBSAMPLING_TO_COUNT
 
     script:
     """
@@ -491,7 +491,7 @@ SUBSAMPLED_ALL.map{it -> [it[0], it[1][0], it[1][1], it[1][3]]}.set{SUBSAMPLED_N
 process PreLulu {
     tag { "preLulus.${idThreshold}" }
     label "medium_computation"
-    label "require_vsearch"
+    label "mothur_script"
     publishDir params.outdir+"Misc/12-Lulu", mode: "copy"
 
     input:
@@ -570,7 +570,7 @@ process RareSeqsFilter {
 
     output:
 	set idThreshold, file("all_rareSeqFilter*.{count_table,fasta,list,taxonomy}") into FOR_DB
-	file("*.count_table") into RARE_SEQS_FILTER_TO_COUNT
+	file("*.summary") into RARE_SEQS_FILTER_TO_COUNT
 
     script:
     """
@@ -710,11 +710,11 @@ process SummaryFile {
              ("6-ChimeraRemoval","all_chimera.count_table"),
              ("7-PreClassification",None),
              ("8-Clustering","raw_abundanceTable_*.groups.summary"),
-             ("9-TaxaFilter","all_taxaFilter_*.count_table"),
-             ("10-MultipletonsFilter","all_multipletonsFilter_*.count_table"),
-             ("11-Subsampling","all_subsampling_*.count_table"),
+             ("9-TaxaFilter","all_taxaFilter_*.groups.summary"),
+             ("10-MultipletonsFilter","all_multipletonsFilter_*.groups.summary"),
+             ("11-Subsampling","all_subsampling_*.groups.summary"),
              ("12-Lulu","all_lulu_*.csv"),
-             ("13-RareSeqsFilter","all_rareSeqFilter_*.count_table")
+             ("13-RareSeqsFilter","all_rareSeqFilter_*.groups.summary")
     ]
 
     write_summary(steps,counts,clustering_thresholds)

@@ -14,16 +14,17 @@ RUN curl -L https://sourceforge.net/projects/bbmap/files/latest/download \
 RUN curl -L "https://github.com/torognes/vsearch/releases/download/v2.11.1/vsearch-2.11.1-linux-x86_64.tar.gz" \
 	| tar xz -C /usr/local/bin
 
+# Install python libraries
+RUN pip3 install --upgrade pip && pip3 install ipython biopython numpy pandas itsxpress matplotlib seaborn h5py scikit-learn
+
+# Install java for itsxpress
+RUN apt-get update && apt-get install -y default-jre procps
+
 # FASTQC
 RUN wget https://www.bioinformatics.babraham.ac.uk/projects/fastqc/fastqc_v0.11.8.zip \
 	&& unzip fastqc_v0.11.8.zip && rm fastqc_v0.11.8.zip \
+    && chmod a+x FastQC/fastqc \
 	&& mv FastQC /usr/local/bin
-
-# Install python libraries
-RUN pip3 install --upgrade pip && pip3 install ipython biopython numpy pandas itsxpress matplotlib seaborn
-
-# Install java for itsxpress
-RUN apt-get update && apt-get install -y default-jre
 
 # Set PATH
 ENV PATH /usr/local/bin/vsearch-2.11.1-linux-x86_64/bin:/usr/local/bin/bbmap:/usr/local/bin/FastQC:$PATH

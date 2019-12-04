@@ -208,8 +208,13 @@ do
     fi
 
 	if [ "${extension}" == "shared" ]; then
+		echo "Calculating summary for ${output_renamed}"
 		mothur "#summary.single(shared=${output_renamed}, calc=nseqs-sobs)"
 	fi
-
 done
 
+if [ -f "${out}.list" ] && [ -f "${out}.count_table" ] && [ ! -f "${out}.shared" ]; then
+	echo "Calculating summary for ${output_renamed} and ${out}.count_table"
+	mothur "#make.shared(list=${out}.list, count=${out}.count_table); summary.single(shared=current, calc=nseqs-sobs)"
+	# python $(dirname $0)/count_summary.py --list ${output_renamed} --count "${out}.count_table"
+fi

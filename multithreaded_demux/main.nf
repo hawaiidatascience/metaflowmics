@@ -76,6 +76,7 @@ process Fastqc {
     tag { "Fastqc" }
     publishDir  params.outdir, mode: "copy", pattern: "*.html"
     label "high_computation"
+	label "python_script"
 
     input:
     set val(v), file(fastqs) from INPUT_SEQ_FOR_QC.map{[it[0], it[1..-1]]}
@@ -92,6 +93,7 @@ process Fastqc {
 process GuessMatchOrder {
     tag { "GuessMatchOrder" }
     label "low_computation"
+	label "python_script"
 	publishDir params.outdir, pattern: "barcodes_ok.csv"
     
     input:
@@ -105,7 +107,7 @@ process GuessMatchOrder {
     """
     #!/usr/bin/env bash
 
-    bash ${workflow.projectDir}/guess_matching_order.sh ${meta} ${params.matching} ${params.reverseComplement} ${fastqs} > barcodes_ok.csv
+    bash ${params.script_dir}/demux/guess_matching_order.sh ${meta} ${params.matching} ${params.reverseComplement} ${fastqs} > barcodes_ok.csv
 
     """	
 }
@@ -124,10 +126,10 @@ process To_h5 {
 
     script:
     """
-    python3 ${workflow.projectDir}/load.py \
+    python3 ${params.script_dir}/demux/load.py \
         --fastqs ${fastqs} \
         --split ${split} \
-        \$([ ${params.reverseComplement} -eq 1 ] && echo "--rc" || echo "")
+        \$([ "${params.reverseComplement}" == true ] && echo "--rc" || echo "")
 	"""
 }
 
@@ -147,7 +149,7 @@ process ErrorModel {
 
     script:
     """
-    python3 ${workflow.projectDir}/error_model.py --max_dist ${params.max_mismatches} --n_bases ${params.n_bases.toInteger()} --meta ${meta}
+    python3 ${params.script_dir}/demux/error_model.py --max_dist ${params.max_mismatches} --n_bases ${params.n_bases.toInteger()} --meta ${meta}
 	"""
 }
 
@@ -167,7 +169,7 @@ process IndexMapping {
 
     script:
     """
-    python3 ${workflow.projectDir}/dada_demux_index.py --data ${h5} --meta ${meta} --error-model ${model} --split ${split} --max-mismatches ${params.max_mismatches}
+    python3 ${params.script_dir}/demux/dada_demux_index.py --data ${h5} --meta ${meta} --error-model ${model} --split ${split} --max-mismatches ${params.max_mismatches}
 	"""
 }
 
@@ -186,7 +188,7 @@ process SampleSizeDistribution {
 
     script:
     """
-    python3 ${workflow.projectDir}/plot_sample_size_distribution.py
+    python3 ${params.script_dir}/demux/plot_sample_size_distribution.py
     """
 }
 
@@ -204,7 +206,7 @@ process WriteSampleFastq {
     
     script:
     """
-    python3 ${workflow.projectDir}/demux_fastq.py --fastqs ${fastqs} --mapping ${demux_info}
+    python3 ${params.script_dir}/demux/demux_fastq.py --fastqs ${fastqs} --mapping ${demux_info}
     """
 }
 

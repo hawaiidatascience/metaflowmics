@@ -8,8 +8,10 @@ RUN apt-get install -y libcurl4-openssl-dev libxml2-dev libssl-dev libssh2-1-dev
 
 # Install R libraries
 RUN Rscript -e "install.packages(c('BiocManager','stringr','seqinr','ggplot2','remotes','doParallel'),dependencies=TRUE, repos='http://cran.rstudio.com/')"
-RUN Rscript -e "BiocManager::install('dada2', 'phyloseq')"
+RUN Rscript -e "BiocManager::install('phyloseq')"
+RUN Rscript -e "remotes::install_github('benjjneb/dada2', ref='v1.14')"
 RUN Rscript -e "remotes::install_github('tobiasgf/lulu')"
+RUN Rscript -e "install.packages(c('stringi', 'igraph', 'vegan'))"
 
 WORKDIR /workspace
 
