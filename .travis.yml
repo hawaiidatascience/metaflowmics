@@ -25,7 +25,6 @@ install:
   - wget https://github.com/nextflow-io/nextflow/releases/download/v19.10.0/nextflow-19.10.0-all
   - chmod a+x nextflow-19.10.0-all
   - mv nextflow-19.10.0-all $NXF_HOME/nextflow
-  - export PATH=$PATH:$NXF_HOME
 
 script:
   - cd metagenomics-pipelines && make test CONF=singularity_test
