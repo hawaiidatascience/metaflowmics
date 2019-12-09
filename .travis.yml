@@ -3,25 +3,20 @@ os: linux
 
 language: groovy
 
-go:
-  - 1.13.5
-  
 jdk:
   - openjdk8
 
 before_install:
-  - export BIN_DIR="$HOME/bin" && echo $PATH
-  - export PATH="$PATH:$BIN_DIR" && echo $PATH
   - sudo apt-get update
   - sudo apt-get install -y build-essential libssl-dev uuid-dev libseccomp-dev pkg-config squashfs-tools cryptsetup
   - export GO_VERSION=1.13.5 OS=linux ARCH=amd64
   - wget -qO- https://dl.google.com/go/go${GO_VERSION}.${OS}-${ARCH}.tar.gz | tar xz 
-  - export PATH="$PATH:$PWD/go/bin" && echo $PATH
+  - export PATH="$PATH:$PWD/go/bin"
   - git clone https://github.com/sylabs/singularity.git && cd singularity
   - echo $(which go)
   - ./mconfig
   - cd builddir && make
-  - mv $PWD/singularity $BIN_DIR
+  - mv singularity /home/travis/.local/bin
   - cd ../..
 
 env:
