@@ -69,7 +69,7 @@ Chimeric contigs are removed using Mothur's implementation of VSEARCH.
 
 OTU clustering (Mothur)
 ^^^^^^^^^^^^^^^^^^^^^^^
-OTU are clustered at similarity levels *<100, 97>* (100% means no clustering). 
+OTU are clustered at similarity levels *<100%, 97%>* (100% means no clustering). 
 
 Taxa filter
 ^^^^^^^^^^^
@@ -81,14 +81,14 @@ OTU with a total abundance of *<2>* or below are discarded.
 
 Subsampling
 ^^^^^^^^^^^
-We perform sample normalization by subsampling each sample to the same level. Samples with a size below this level are discarded. By default, the subsampling level is defined as the <:math:`10^{th}`> percentile of the sample sizes, and a hard threshold is set if this value goes below *<5000>*. The recommended approach is to determine this value before the analysis and a custom subsampling level can be set. This step can be skipped.
+We perform sample normalization by subsampling each sample to the same level. Samples with a size below this level are discarded. By default, the subsampling level is defined as the *<10th>* percentile of the sample sizes, and a hard threshold is set if this value goes below *<5000>*. The recommended approach is to determine this value before the analysis and a custom subsampling level can be set. This step can be skipped.
 
 Co-occurrence pattern correction
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 A daughter OTU is merged with its parent if:
 
 * they share at least *<97%>* similarity
-* *<min>* (daughter\_abundance\_sample/parent\_abundance\_sample) < *<1>*
+* *<min>* (:math:`\frac{\text{daughter\_abundance}}{\text{parent\_abundance}}`) < *<1>*
 * the relative co-occurence (proportion of time the daughter is present when the parent is present) must be at least *<1>*
 
 Rare sequences filter

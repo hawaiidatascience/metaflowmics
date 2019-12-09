@@ -43,13 +43,13 @@ This algorithm is expecting 5 input files for demultiplexing:
 
 Guessing the mapping order
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
-To demultiplex, we need to map each index pair in the (I1, I2) files to a barcode pair in the barcode file. Due to protocol variability in sample preparation, the matching order is not always consistent, and for two different experiment, we can have either the "direct" matching order (:math:`I1 \equiv barcode1, I2 \equiv barcode2`) or a "reversed" matching order (:math:`I1 \equiv barcode2, I2 \equiv barcode1`). If the user knows the matching order, it is recommended to enfore it by setting the --matching flag to either "direct" or "reversed". 
+To demultiplex, we need to map each index pair in the (I1, I2) files to a barcode pair in the barcode file. Due to protocol variability in sample preparation, the matching order is not always consistent, and for two different experiment, we can have either the "direct" matching order (:math:`I1 \equiv` barcode1, :math:`I2 \equiv` barcode2) or a "reversed" matching order (:math:`I1 \equiv` barcode2, :math:`I2 \equiv` barcode1). If the user knows the matching order, it is recommended to enfore it by setting the --matching flag to either "direct" or "reversed". 
 
 The default behavior is a third option, "auto". The guess consists in counting the occurrences of each index pairs from (I1, I2) (in this order), extract the 20 most frequent pairs, and see how many of those eactly match a given barcode pair. The same is done for the pair (I2, I1). If (I1, I2) has the most matches, then the order is set to "direct", and otherwise to "reversed". To make the process faster, any index pair containing a N nucleotides are discarded.
 
 Mapping index to sample names
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Once the order is determined, both index and sequencing reads are split in chunks of equal sizes of *<100000>*. For each file chunk, we compare each index pair with all barcodes and extract the samples with less errors than *<3>* for each forward and reverse match (therefore in total, there can be up to :math:`2*max_mismatches-1` errors). If several samples match this criteria, we keep the sample with the least mismatches.
+Once the order is determined, both index and sequencing reads are split in chunks of equal sizes of *<1e5>*. For each file chunk, we compare each index pair with all barcodes and extract the samples with less errors than *<3>* for each forward and reverse match (therefore in total, there can be up to :math:`2\cdot max\_mismatches-1` errors). If several samples match this criteria, we keep the sample with the least mismatches.
 
 Figures
 ^^^^^^^
