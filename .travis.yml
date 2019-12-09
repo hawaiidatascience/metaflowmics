@@ -8,12 +8,10 @@ jdk:
 
 env:
   - NXF_HOME="$HOME/.nextflow"
-  - GO_VERSION=1.13.3
-  - OS=linux
-  - ARCH=amd64
-  - PATH="$HOME/go/bin:$PATH"
   
 before_install:
+  - export GO_VERSION=1.13.3 OS=linux ARCH=amd64
+  - export PATH="$HOME/go/bin:$PATH"
   - sudo apt-get update
   - sudo apt-get install -y build-essential libssl-dev uuid-dev libseccomp-dev pkg-config squashfs-tools cryptsetup
   - wget -qO- https://dl.google.com/go/go${GO_VERSION}.${OS}-${ARCH}.tar.gz | tar xz
