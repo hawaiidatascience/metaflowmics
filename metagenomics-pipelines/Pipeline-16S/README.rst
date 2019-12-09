@@ -53,7 +53,7 @@ Reads need to be demultiplexed and gzipped
 
 Read filtering (Dada2)
 ^^^^^^^^^^^^^^^^^^^^^^
-`filterAndTrim()`: Reads are truncated at positions `<fwd: 220>-<rev: 190>` or at the first occurrence of a base of quality <truncQ: 2> or lower. Reads matching the phiX genome are <discarded>, as well as reads with an expected number of errrors above `<maxEE: 3>`. Reads shorter than `<minLength: 20bp>` are filtered out. Finally, samples with less than <minReads: 50> reads are discarded.
+`filterAndTrim()`: Reads are truncated at positions `<fwd: 220>-<rev: 190>` or at the first occurrence of a base of quality <truncQ: 2> or lower. Reads matching the phiX genome are <discarded>, as well as reads with an expected number of errrors above `maxEE: 3`. Reads shorter than *minLength: 20bp* are filtered out. Finally, samples with less than **minReads: 50** reads are discarded.
 
 Denoising (Dada2)
 ^^^^^^^^^^^^^^^^^
