@@ -17,8 +17,8 @@ before_install:
   - git clone https://github.com/sylabs/singularity.git && cd singularity
   - go version
   - cat mlocal/checks/version.go
-  - env GO111MODULE=off go run mlocal/checks/version.go go1.13
   - go run mlocal/checks/version.go go1.13
+  - env GO111MODULE=off go run mlocal/checks/version.go go1.13
   - ./mconfig
   - cd builddir && make  
   - cd ../..
