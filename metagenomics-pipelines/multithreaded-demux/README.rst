@@ -31,16 +31,15 @@ For more information about the available profiles, see the corresponding section
 Demultiplexing steps
 --------------------
 
-The demultiplexing algorithm is summarized below. Values in curly braces ({}) correspond to default values of tunable parameters.
+The demultiplexing algorithm is summarized below. Values in between "<" ">" correspond to default values of tunable parameters.
 
 Inputs
 ^^^^^^
 This algorithm is expecting 5 input files for demultiplexing:
 
-- 2 index fastq files (unzipped) matching the glob pattern "\*_I{1,2}\*.fastq.gz"
-- 2 read fastq files (unzipped) matching the glob pattern "\*_R{1,2}\*.fastq.gz"
-- 1 barcode file (extension: .csv), comma separated, with no header and 3 columns: 
-   (sample name, forward barcode, reverse complement of reverse barcode)
+- 2 index fastq files (unzipped) matching the glob pattern `*_I{1,2}*.fastq.gz`
+- 2 read fastq files (unzipped) matching the glob pattern `*_R{1,2}*.fastq.gz`
+- 1 barcode file (extension: .csv), comma separated, with no header and 3 columns: (sample name, forward barcode, reverse complement of reverse barcode)
 
 Guessing the mapping order
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -50,7 +49,7 @@ The default behavior is a third option, "auto". The guess consists in counting t
 
 Mapping index to sample names
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Once the order is determined, both index and sequencing reads are split in chunks of equal sizes of ceil(n_reads/{nsplits}). For each file chunk, we compare each index pair with all barcodes and extract the samples with less errors than {max_mismatches} for each forward and reverse match (therefore in total, there can be up to 2*{max_mismatches}-1 errors). If several samples match this criteria, we keep the sample with the least mismatches. If there are still multiple matches, we discard the read pair. Other strategy are available to handle multi-mappers:
+Once the order is determined, both index and sequencing reads are split in chunks of equal sizes of ceil(n_reads/{nsplits}). For each file chunk, we compare each index pair with all barcodes and extract the samples with less errors than {max_mismatches} for each forward and reverse match (therefore in total, there can be up to `2*{max_mismatches}-1 errors`). If several samples match this criteria, we keep the sample with the least mismatches. If there are still multiple matches, we discard the read pair. Other strategy are available to handle multi-mappers:
 
 - The "discard" strategy discards any read pair that maps multiple samples. Depending on the {max_mismatches} value, this can result in most of the reads being discarded.
 - The "min_all" strategy keep all matches achieving the minimum score. Therefore, if a read pair achieves the minimum score for multiple samples, it is copied in each.

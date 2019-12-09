@@ -45,7 +45,7 @@ For more information about the available profiles, see the corresponding section
 16S pipeline steps
 ------------------
 
-The 16S analysis pipeline is summarized below. Values in curly braces ({}) correspond to default values of tunable parameters.
+The 16S analysis pipeline is summarized below. Values in between "<" ">" correspond to default values of tunable parameters.
 
 Inputs
 ^^^^^^
@@ -53,7 +53,7 @@ Reads need to be demultiplexed and gzipped
 
 Read filtering (Dada2)
 ^^^^^^^^^^^^^^^^^^^^^^
-`filterAndTrim()`: Reads are truncated at positions {fwd: 220}-{rev: 190} or at the first occurrence of a base of quality {2} or lower. Reads matching the phiX genome are {discarded}, as well as reads with an expected number of errrors above {maxEE}. Reads shorter than {20} bp are filtered out. Finally, samples with less than 50 reads are discarded.
+`filterAndTrim()`: Reads are truncated at positions <fwd: 220>-<rev: 190> or at the first occurrence of a base of quality <truncQ: 2> or lower. Reads matching the phiX genome are <discarded>, as well as reads with an expected number of errrors above <maxEE: 3>. Reads shorter than <minLength: 20bp> are filtered out. Finally, samples with less than <minReads: 50> reads are discarded.
 
 Denoising (Dada2)
 ^^^^^^^^^^^^^^^^^
@@ -61,11 +61,11 @@ Denoising (Dada2)
 
 Read merging (Dada2)
 ^^^^^^^^^^^^^^^^^^^^
-`mergePairs()`: Paired reads are merged if they overlap by at least {20} bp with {1} mismatch at most
+`mergePairs()`: Paired reads are merged if they overlap by at least <minOverlap: 20bp> with <maxMismatch: 2bp> mismatch at most
 
 Contig filtering (Mothur)
 ^^^^^^^^^^^^^^^^^^^^^^^^^
-Contigs are aligned against the silva reference database. Discard any sequence with an alignment shorter than {50} bp, as well as sequences starting after where {95}% of the sequences start, or end before {95}% of the sequences end.
+Contigs are aligned against the silva reference database. Discard any sequence with an alignment shorter than <minAlnLen: 50bp>, as well as sequences starting after where <criteria: 95%> of the sequences start, or end before <criteria: 95%> of the sequences end.
 
 Chimera filtering (Mothur / VSEARCH)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -73,31 +73,31 @@ Chimeric contigs are removed using Mothur's implementation of VSEARCH
 
 OTU clustering (Mothur)
 ^^^^^^^^^^^^^^^^^^^^^^^
-OTU are clustered at similarity levels {100, 97}% (100% means no clustering). 
+OTU are clustered at similarity levels <idThreshold: 100, 97> (100% means no clustering). 
 
 Taxa filter
 ^^^^^^^^^^^
-Lineages are assigned to each individual sequence using the SILVA reference database. Any sequence matching {mitochondria, chloroplasts, unknown} annotations are removed.
+Lineages are assigned to each individual sequence using the SILVA reference database. Any sequence matching <taxaToFilter: mitochondria, chloroplasts, unknown> annotations are removed.
 
 Multipletons filter
 ^^^^^^^^^^^^^^^^^^^
-OTU with a total abundance of {2} or below are discarded.
+OTU with a total abundance of <minAbundance: 2> or below are discarded.
 
 Subsampling
 ^^^^^^^^^^^
-We perform sample normalization by subsampling each sample to the same level. Samples with a size below this level are discarded. By default, the subsampling level is defined as the {10th} percentile of the sample sizes, and a hard threshold is set if this value goes below {5000}. The recommended approach is to determine this value before the analysis and a custom subsampling level can be set. This step can be skipped.
+We perform sample normalization by subsampling each sample to the same level. Samples with a size below this level are discarded. By default, the subsampling level is defined as the <subsamplingQuantile: 0.10> percentile of the sample sizes, and a hard threshold is set if this value goes below <minSubsamplingLevel: 5000>. The recommended approach is to determine this value before the analysis and a custom subsampling level can be set. This step can be skipped.
 
 Co-occurrence pattern correction
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 A daughter OTU is merged with its parent if:
 
-* they share at least {97}% similarity
-* {min}(daughter\_abundance\_sample/parent\_abundance\_sample) < {1}
-* the relative co-occurence (proportion of time the daughter is present when the parent is present) must be at least {1}
+* they share at least <min_match: 97%> similarity
+* <min_ratio_type: min>(daughter\_abundance\_sample/parent\_abundance\_sample) < <min_ratio: 1>
+* the relative co-occurence (proportion of time the daughter is present when the parent is present) must be at least <min_rel_cooccurence: 1>
 
 Rare sequences filter
 ^^^^^^^^^^^^^^^^^^^^^
-OTU with a total abundance of {2} or below are discarded.
+OTU with a total abundance of <minAbundance: 2> or below are discarded.
 
 Consensus classification and representative sequences extraction
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
