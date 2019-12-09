@@ -3,13 +3,17 @@ os: linux
 
 language: groovy
 
+go:
+  - 1.13.3
+
 jdk:
   - openjdk8
 
 before_install:
   - sudo apt-get update
   - sudo apt-get install -y build-essential libssl-dev uuid-dev libseccomp-dev pkg-config squashfs-tools cryptsetup
-  - export GO_VERSION=1.13.5 OS=linux ARCH=amd64
+  - go version
+  - export GO_VERSION=1.13.3 OS=linux ARCH=amd64
   - wget -qO- https://dl.google.com/go/go${GO_VERSION}.${OS}-${ARCH}.tar.gz | tar xz 
   - export PATH="$PWD/go/bin:$PATH"
   - git clone https://github.com/sylabs/singularity.git && cd singularity
