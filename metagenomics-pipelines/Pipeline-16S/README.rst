@@ -79,6 +79,8 @@ Multipletons filter
 ^^^^^^^^^^^^^^^^^^^
 OTU with a total abundance of *<2>* or below are discarded.
 
+.. _subsampling:
+
 Subsampling
 ^^^^^^^^^^^
 We perform sample normalization by subsampling each sample to the same level. Samples with a size below this level are discarded. By default, the subsampling level is defined as the *<10th>* percentile of the sample sizes, and a hard threshold is set if this value goes below *<5000>*. The recommended approach is to determine this value before the analysis and a custom subsampling level can be set. This step can be skipped.
