@@ -1,5 +1,5 @@
-Nextflow Demultiplexing
-======================
+Read demultiplexing
+===================
 
 Pre-requisites
 --------------
@@ -22,7 +22,7 @@ Running the pipeline
 To run the pipeline on your data, simply enter the following command:
 
 .. code-block:: bash
-    nextflow run multithreaded-demux -profile CONFIG --inputdir "PATH_TO_READS"
+    nextflow run multithreaded-demux -profile <config> --inputdir "<path_to_reads>"
 
 For more information about the available profiles, see the corresponding section.
 

@@ -9,8 +9,8 @@ Pre-requisites
 - R(>=3.5) + libraries: ggplot2, lulu, dada2, seqinr, stringr, ShortRead, doParallel, ape, phyloseq
 - `Mothur <https://github.com/mothur/mothur>`_ (tested with v1.43) 
 
-Usage
------
+Download the software
+^^^^^^^^^^^^^^^^^^^^^
 
 Clone the repository:
 
@@ -18,14 +18,25 @@ Clone the repository:
     git clone https://github.com/hawaiidatascience/nextflow_cmaiki.git
     cd nextflow_cmaiki/metagenomics-pipelines
 
-Running the pipeline
-^^^^^^^^^^^^^^^^^^^^
+Silva Database
+^^^^^^^^^^^^^^
+
+In addition, you will need to download the Silva reference database available on the `Mothur website <https://www.mothur.org/wiki/Silva_reference_files>`_:
+
+.. code-block:: bash
+	wget https://www.mothur.org/w/images/3/32/Silva.nr_v132.tgz
+	tar -xvzf Silva.nr_v132.tgz -O Pipeline-16S && rm -f Silva.nr_v132.tgz
+
+Usage
+-----
 
 To run the pipeline on your data, simply enter the following command:
 
 .. code-block:: bash
-    nextflow run 16S-pipeline -profile CONFIG --reads "PATH_TO_READS/GLOB_PATTERN"
+    nextflow run 16S-pipeline -profile <config> --reads "<path_to_reads/glob_pattern>" --referenceAln databases/silva.nr_v132.align --referenceTax databases/silva.full_v132.tax
 
+The input reads need to be in the `.fastq` format (preferably gzipped) in a single folder. Reads can be single or paired-end. In the former case, the flag `--singleEnd` must be set and in the latter case, the glob pattern needs to group the R1 and R2 reads using the syntax "\*R{1,2}\*". 
+	
 For more information about the available profiles, see the corresponding section.
 	
 16S pipeline steps
@@ -33,52 +44,65 @@ For more information about the available profiles, see the corresponding section
 
 The 16S analysis pipeline is summarized below. Values in curly braces ({}) correspond to default values of tunable parameters.
 
-**Inputs**: 
+Inputs
+^^^^^^
 Reads need to be demultiplexed and gzipped
 
-**Read filtering (Dada2)**: 
+Read filtering (Dada2)
+^^^^^^^^^^^^^^^^^^^^^^
 `filterAndTrim()`: Reads are truncated at positions {220} / {190} (fwd/rev) or at the first occurrence of a base of quality {2} or lower. Reads matching the phiX genome are {discarded}, as well as reads with an expected number of errrors above {maxEE}. Reads shorter than {20} bp are filtered out. Finally, samples with less than 50 reads are discarded.
 
-**Denoising (Dada2)**: 
+Denoising (Dada2)
+^^^^^^^^^^^^^^^^^
 `learnErrors()`, `dada()`: Error models and denoising are performed on each sample independently.
 
-**Read merging (Dada2)**: 
+Read merging (Dada2)
+^^^^^^^^^^^^^^^^^^^^
 `mergePairs()`: Paired reads are merged if they overlap by at least {20} bp with {1} mismatch at most
 
-**Contig filtering (Mothur)**: 
+Contig filtering (Mothur)
+^^^^^^^^^^^^^^^^^^^^^^^^^
 Contigs are aligned against the silva reference database. Discard any sequence with an alignment shorter than {50} bp, as well as sequences starting after where {95}% of the sequences start, or end before {95}% of the sequences end.
 
-**Chimera filtering (Mothur / VSEARCH)**: 
+Chimera filtering (Mothur / VSEARCH)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Chimeric contigs are removed using Mothur's implementation of VSEARCH
 
-**OTU clustering (Mothur)**: 
+OTU clustering (Mothur)
+^^^^^^^^^^^^^^^^^^^^^^^
 OTU are clustered at similarity levels {100, 97}% (100% means no clustering). 
 
-**Taxa filter**: 
+Taxa filter
+^^^^^^^^^^^
 Lineages are assigned to each individual sequence using the SILVA reference database. Any sequence matching {mitochondria, chloroplasts, unknown} annotations are removed.
 
-**Multipletons filter**: 
+Multipletons filter
+^^^^^^^^^^^^^^^^^^^
 OTU with a total abundance of {2} or below are discarded.
 
-**Subsampling**: 
+Subsampling
+^^^^^^^^^^^
 We perform sample normalization by subsampling each sample to the same level. Samples with a size below this level are discarded. By default, the subsampling level is defined as the {10th} percentile of the sample sizes, and a hard threshold is set if this value goes below {5000}. The recommended approach is to determine this value before the analysis and a custom subsampling level can be set. This step can be skipped.
 
-**Co-occurrence pattern correction**: 
+Co-occurrence pattern correction
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 A daughter OTU is merged with its parent if:
 
 * they share at least {97}% similarity
 * {min}(daughter\_abundance\_sample/parent\_abundance\_sample) < {1}
 * the relative co-occurence (proportion of time the daughter is present when the parent is present) must be at least {1}
 
-**Rare sequences filter**: 
+Rare sequences filter
+^^^^^^^^^^^^^^^^^^^^^
 OTU with a total abundance of {2} or below are discarded.
 
-**Consensus classification and representative sequences extraction**
+Consensus classification and representative sequences extraction
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Using the remaining sequences, we choose a representative sequence for each OTU cluster as the most abundant sequence in the cluster. 
 For each taxonomic rank, OTU's taxonomy is assigned as the majority vote in the OTU cluster. If the consensus vote is lower than 51%, no taxonomy is assigned at the given rank.
 
-**Summaries**:
-
+Summaries
+^^^^^^^^^
 - (samples x pipeline steps) table with the number of remaining sequences in each sample at each step
 - Figures
 
@@ -87,7 +111,8 @@ For each taxonomic rank, OTU's taxonomy is assigned as the majority vote in the 
   #. scatter plot of OTUs abundance vs prevalence for proteobacteria, one facet per class.
   #. barplot of relative taxonomy composition at Phylum level for each sample. In a metadata table is provided, this plots represents the composition for each level of the provided factor.
 
-**Postprocessing**: 
+Postprocessing
+^^^^^^^^^^^^^^
 For each clustering thresho, we compute alpha and beta diversity metrics (see `mothur calculators <https://www.mothur.org/wiki/Calculators>`_ for a full description of these acronyms)
 
 - Alpha diversity: `nseqs`, `sobs`, `chao`, `shannon`, `shannoneven`

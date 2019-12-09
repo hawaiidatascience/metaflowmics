@@ -9,8 +9,8 @@ Pre-requisites
 - R(>=3.5) + libraries: ggplot2, lulu, dada2, seqinr, stringr, ShortRead, doParallel, ape, phyloseq
 - install `VSEARCH <https://github.com/torognes/vsearch/releases>`_, `HMMER <http://eddylab.org/software/hmmer>`_ and `BBTools <https://sourceforge.net/projects/bbmap>`_
 
-Usage
------
+Download the software
+^^^^^^^^^^^^^^^^^^^^^
 
 Clone the repository:
 
@@ -18,14 +18,27 @@ Clone the repository:
     git clone https://github.com/hawaiidatascience/nextflow_cmaiki.git
     cd nextflow_cmaiki/metagenomics-pipelines
 
-Running the pipeline
-^^^^^^^^^^^^^^^^^^^^
+UNITE Database
+^^^^^^^^^^^^^^
+
+In addition, you will need to download the UNITE reference database (all eukaryotes) available on the `UNITE website <https://unite.ut.ee/repository.php>`_. Converting any non ASCII character is also preferable using the `iconv` command:
+
+.. code-block:: bash
+	wget https://files.plutof.ut.ee/doi/A1/C9/A1C964DFB03C2A1B37FA16784BA739C88F0941AC68560CEA54DD707F1CF00AC4.zip -O uniteDB.zip
+	unzip uniteDB.zip && rm uniteDB.zip
+	iconv -f utf-8 -t ascii//translit UNITE_public_all_02.02.2019.fasta > databases/uniteDB.fasta
+	rm -f UNITE_public_all_02.02.2019.fasta
+
+Usage
+-----
 
 To run the pipeline on your data, simply enter the following command:
 
 .. code-block:: bash
-    nextflow run ITS-pipeline -profile CONFIG --reads "PATH_TO_READS/GLOB_PATTERN"
+    nextflow run ITS-pipeline -profile <config> --reads "<path_to_reads/glob_pattern>" --uniteDB databases/uniteDB.fasta
 
+The input reads need to be in the `.fastq` format (preferably gzipped) in a single folder. Reads can be single or paired-end. In the latter case, the glob pattern needs to group the R1 and R2 reads using the syntax "\*R{1,2}\*", and the flag `--pairedEnd` must be set.
+	
 For more information about the available profiles, see the corresponding section.
 
 ITS pipeline steps

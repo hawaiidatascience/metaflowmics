@@ -18,7 +18,7 @@ Each of the available pipelines are were built using multiple computing language
 
 The requirements to run the pipeline with the docker instance are minimal:
 
-- `Nextflow <https://www.nextflow.io/docs/latest/getstarted.html>`_(>=19.10)
+- `Nextflow <https://www.nextflow.io/docs/latest/getstarted.html>`_ (>=19.10)
 - `Singularity` can be compiled from source in the `GitHub releases <https://github.com/sylabs/singularity/releases>`_ or installed via `apt-get` in the NeuroDebian repository.
 - For the 16S and ITS pipelines, downloading the microbial / fungal database is also required. Refer to the corresponding sections for more information.
 
@@ -26,11 +26,11 @@ The requirements to run the pipeline with the docker instance are minimal:
 Usage
 -----
 
-The pipelines have a similar functionning. To get the available options, you can display the help using the following command (where `PIPELINE_NAME` refers to one of the 3 folders in `nextflow_cmaiki/metagenomics-pipelines`):
+The pipelines have a similar functionning. To get the available options, you can display the help using the following command (where <pipeline-name> refers to one of the 3 folders in `nextflow_cmaiki/metagenomics-pipelines`):
 
 .. code-block:: bash
 
-    nextflow run PIPELINE_NAME --help
+    nextflow run <pipeline-name> --help
 
 When running any of the pipelines, you will need to provide a few mandatory arguments:
 
