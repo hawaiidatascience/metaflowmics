@@ -38,7 +38,7 @@ To run the pipeline on your data, simply enter the following command:
 
     nextflow run 16S-pipeline -profile <config> --reads "<path_to_reads/glob_pattern>" --referenceAln databases/silva.nr_v132.align --referenceTax databases/silva.full_v132.tax
 
-The input reads need to be in the `.fastq` format (preferably gzipped) in a single folder. Reads can be single or paired-end. In the former case, the flag `--singleEnd` must be set and in the latter case, the glob pattern needs to group the R1 and R2 reads using the syntax "\*R{1,2}\*". 
+The input reads need to be in the `.fastq` format (preferably gzipped) in a single folder. Reads can be single or paired-end. In the former case, the flag `--singleEnd` must be set and in the latter case, the glob pattern needs to group the R1 and R2 reads using the syntax `*R{1,2}*`. 
 	
 For more information about the available profiles, see the corresponding section.
 	
@@ -53,7 +53,7 @@ Reads need to be demultiplexed and gzipped
 
 Read filtering (Dada2)
 ^^^^^^^^^^^^^^^^^^^^^^
-`filterAndTrim()`: Reads are truncated at positions <fwd: 220>-<rev: 190> or at the first occurrence of a base of quality <truncQ: 2> or lower. Reads matching the phiX genome are <discarded>, as well as reads with an expected number of errrors above <maxEE: 3>. Reads shorter than <minLength: 20bp> are filtered out. Finally, samples with less than <minReads: 50> reads are discarded.
+`filterAndTrim()`: Reads are truncated at positions `<fwd: 220>-<rev: 190>` or at the first occurrence of a base of quality <truncQ: 2> or lower. Reads matching the phiX genome are <discarded>, as well as reads with an expected number of errrors above `<maxEE: 3>`. Reads shorter than `<minLength: 20bp>` are filtered out. Finally, samples with less than <minReads: 50> reads are discarded.
 
 Denoising (Dada2)
 ^^^^^^^^^^^^^^^^^
