@@ -10,7 +10,7 @@ jdk:
   - openjdk8
 
 before_install:
-  - export BIN_DIR=$HOME/bin && mkdir $BIN_DIR && export PATH=$PATH:$BIN_DIR
+  - export BIN_DIR=$HOME/bin
   - sudo apt-get update
   - sudo apt-get install -y build-essential libssl-dev uuid-dev libseccomp-dev pkg-config squashfs-tools cryptsetup
   - export GO_VERSION=1.13.5 OS=linux ARCH=amd64
