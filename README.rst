@@ -1,5 +1,5 @@
-Documentation: Nextflow pipelines for metagenomics
-==================================================
+Nextflow pipelines for metagenomics
+===================================
 .. image:: https://travis-ci.org/hawaiidatascience/nextflow_cmaiki.svg?branch=master
    :target: https://travis-ci.org/hawaiidatascience/nextflow_cmaiki
 .. image:: https://readthedocs.org/projects/metagenomics-pipelines/badge/?version=latest

@@ -10,6 +10,7 @@
    :caption: Contents:
 
    self
+   config
    demux_app
    pipeline_16S
    pipeline_ITS

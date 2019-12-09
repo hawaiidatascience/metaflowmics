@@ -1,19 +1,10 @@
-ITS-pipeline
-============
-
-Follow these instructions to get the pipeline started on your machine
+Fungal ITS pipeline
+===================
 
 Pre-requisites
 --------------
 
-The preferred way to use this pipeline is through the singularity configuration. It requires little setup since all dependencies are dealt with using a custom docker container.
-
-Requirements:
-
 - `Nextflow <https://www.nextflow.io/docs/latest/getstarted.html>`_
-
-If you wish to run the pipeline without it, you will need to satisfy in addition the following dependencies:
-
 - python3 + packages: Biopython, pandas, matplotlib, seaborn, ITSxpress
 - R(>=3.5) + libraries: ggplot2, lulu, dada2, seqinr, stringr, ShortRead, doParallel, ape, phyloseq
 - install `VSEARCH <https://github.com/torognes/vsearch/releases>`_, `HMMER <http://eddylab.org/software/hmmer>`_ and `BBTools <https://sourceforge.net/projects/bbmap>`_
@@ -27,16 +18,6 @@ Clone the repository:
     git clone https://github.com/hawaiidatascience/nextflow_cmaiki.git
     cd nextflow_cmaiki/metagenomics-pipelines
 
-Changing the default pipeline parameters
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Pipeline parameters can be set either:
-
-- in the file `nextflow.config`
-- by using the flags --[PARAMETER-NAME] [PARAMETER-VALUE]
-
-Enter `nextflow run 16S-pipeline --help` for the commands detail.
-
 Running the pipeline
 ^^^^^^^^^^^^^^^^^^^^
 
@@ -47,8 +28,8 @@ To run the pipeline on your data, simply enter the following command:
 
 For more information about the available profiles, see the corresponding section.
 
-Pipeline summary
-----------------
+ITS pipeline steps
+------------------
 
 The ITS analysis pipeline is summarized below. Values in curly braces ({}) correspond to default values of tunable parameters.
 

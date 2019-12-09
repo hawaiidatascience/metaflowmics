@@ -1,19 +1,10 @@
 Nextflow Demultiplexing
 ======================
 
-Follow these instructions to get the app started on your machine
-
 Pre-requisites
 --------------
 
-The preferred way to use this pipeline is through the singularity configuration. It requires little setup since all dependencies are dealt with using a custom docker container.
-
-Requirements:
-
 - `Nextflow <https://www.nextflow.io/docs/latest/getstarted.html>`_
-
-If you wish to run the pipeline without it, you will need to satisfy in addition the following depndencies:
-
 - python3 + libraries: Biopython, pandas, numpy, matplotlib, seaborn, argparse
 
 Usage
@@ -25,17 +16,6 @@ Clone the repository:
     git clone https://github.com/hawaiidatascience/nextflow_cmaiki.git
 	cd nextflow_cmaiki/metagenomics-pipelines
 
-Changing the default pipeline parameters
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Pipeline parameters can be set either:
-
-- in the file `nextflow.config`
-- by using the flags --[PARAMETER-NAME] [PARAMETER-VALUE]
-
-Enter `nextflow run multithreaded-demux --help` for the commands detail.
-
-
 Running the pipeline
 ^^^^^^^^^^^^^^^^^^^^
 
@@ -46,8 +26,8 @@ To run the pipeline on your data, simply enter the following command:
 
 For more information about the available profiles, see the corresponding section.
 
-Demultiplexing
---------------
+Demultiplexing steps
+--------------------
 
 The demultiplexing algorithm is summarized below. Values in curly braces ({}) correspond to default values of tunable parameters.
 
