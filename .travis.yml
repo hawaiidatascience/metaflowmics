@@ -7,9 +7,14 @@ services:
   - docker
   - singularity
 
+env:
+  - NXF_HOME="$HOME/.nextflow"
+  
 install:
   - sudo apt-get -qq update
-  - curl -fsSL get.nextflow.io | bash
+  - mkdir $NXF_HOME
+  - wget https://github.com/nextflow-io/nextflow/releases/download/v19.10.0/nextflow-19.10.0-all -o $NXF_HOME && chmod a+x nextflow-19.10.0-all && mv nextflow-19.10.0-all $NXF_HOME/nextflow
+  - export PATH=$PATH:$NXF_HOME
 
 script:
 - make test CONF=singularity
