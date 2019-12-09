@@ -1,2 +1,4 @@
-Running on a High Performance Computing Cluster
-===============================================
+.. _hpc_conf:
+
+Configure for a High Performance Computing Cluster
+==================================================

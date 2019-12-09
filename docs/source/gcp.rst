@@ -1,2 +1,4 @@
-Running on Google Cloud Plateform
-=================================
+.. _gcp_conf:
+
+Configure for Google Cloud Plateform
+=====================================

@@ -14,8 +14,9 @@
    demux_app
    pipeline_16S
    pipeline_ITS
-   gcp
    hpcc
+   gcp
+   advanced_config
    agave_to_go
 
 Indices and tables
