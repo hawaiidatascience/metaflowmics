@@ -1,11 +1,11 @@
 test:
 	nextflow run multithreaded_demux --inputdir "${PWD}/tests/demux" -profile $(CONF) --n_per_file 100 --n_bases 1e3
-	nextflow run Pipeline-ITS --reads "${PWD}/tests/ITS/*R1.fastq.gz" -profile $(CONF)
+	nextflow run Pipeline-ITS --reads "${PWD}/tests/ITS/*R1.fastq.gz" -profile $(CONF) --uniteDB databases/test_unite.fasta
 	nextflow run Pipeline-16S --reads "${PWD}/tests/16S/*_R{1,2}.fastq.gz" --referenceAln databases/test.align --referenceTax databases/test.tax -profile $(CONF)
 
 testITS:
-	nextflow run Pipeline-ITS --reads "${PWD}/tests/ITS/*R1.fastq.gz" -profile $(CONF)
-	nextflow run Pipeline-ITS --reads "${PWD}/tests/ITS/*_R{1,2}.fastq.gz" --pairedEnd -profile $(CONF)
+	nextflow run Pipeline-ITS --reads "${PWD}/tests/ITS/*R1.fastq.gz" -profile $(CONF) --uniteDB databases/test_unite.fasta
+	nextflow run Pipeline-ITS --reads "${PWD}/tests/ITS/*_R{1,2}.fastq.gz" --pairedEnd -profile $(CONF) --uniteDB databases/test_unite.fasta
 
 test16S:
 	nextflow run Pipeline-16S --reads "${PWD}/tests/16S/*_R{1,2}.fastq.gz" --referenceAln databases/test.align --referenceTax databases/test.tax -profile $(CONF)
