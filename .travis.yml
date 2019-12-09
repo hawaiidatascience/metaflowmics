@@ -13,7 +13,8 @@ before_install:
   - wget -qO- https://dl.google.com/go/go${GO_VERSION}.${OS}-${ARCH}.tar.gz | tar xz 
   - export PATH="$PWD/go/bin:$PATH"
   - git clone https://github.com/sylabs/singularity.git && cd singularity
-  - echo $(which go)
+  - go version
+  - echo $(command -v go)
   - ./mconfig
   - cd builddir && make
   - mv singularity /home/travis/.local/bin
