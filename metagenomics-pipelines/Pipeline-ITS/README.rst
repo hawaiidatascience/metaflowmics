@@ -74,7 +74,7 @@ Co-occurrence pattern correction (LULU)
 A daughter OTU is merged with its parent if:
 
 * they share at least *<97%>* similarity
-* *<min>* (daughter\_abundance\_sample/parent\_abundance\_sample) < *<1>*
+* *<min>* (:math:`\frac{\text{daughter_abundance}}{\text{parent_abundance}}`) < *<1>*
 * the relative co-occurence (proportion of time the daughter is present when the parent is present) must be at least *<1>*
 
 Consensus classification (VSEARCH)

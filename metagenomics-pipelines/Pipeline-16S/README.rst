@@ -88,7 +88,7 @@ Co-occurrence pattern correction
 A daughter OTU is merged with its parent if:
 
 * they share at least *<97%>* similarity
-* *<min>* (:math:`\frac{\text{daughter\_abundance}}{\text{parent\_abundance}}`) < *<1>*
+* *<min>* (:math:`\frac{\text{daughter_abundance}}{\text{parent_abundance}}`) < *<1>*
 * the relative co-occurence (proportion of time the daughter is present when the parent is present) must be at least *<1>*
 
 Rare sequences filter
