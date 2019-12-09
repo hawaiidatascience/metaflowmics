@@ -10,18 +10,30 @@ before_install:
   - sudo apt-get update
   - sudo apt-get install -y build-essential libssl-dev uuid-dev libseccomp-dev pkg-config squashfs-tools cryptsetup
   - export GO_VERSION=1.13.3 OS=linux ARCH=amd64
-  - wget -qO- https://dl.google.com/go/go${GO_VERSION}.${OS}-${ARCH}.tar.gz | tar xz
-  - mv go $HOME
-  - export GOPATH="${HOME}/go"
-  - export PATH="${GOPATH}/bin:${PATH}"
-  - SINGULARITY_BASE="${GOPATH}/src/github.com/sylabs/singularity"
-  - mkdir -p "${GOPATH}/src/github.com/sylabs"
-  - cd "${GOPATH}/src/github.com/sylabs"
-  - git clone https://github.com/sylabs/singularity
+  - wget -O /tmp/go${VERSION}.${OS}-${ARCH}.tar.gz https://dl.google.com/go/go${VERSION}.${OS}-${ARCH}.tar.gz
+  - sudo tar -C /usr/local -xzf /tmp/go${VERSION}.${OS}-${ARCH}.tar.gz
+  - echo 'export GOPATH=${HOME}/go' >> ~/.bashrc
+  - echo 'export PATH=/usr/local/go/bin:${PATH}:${GOPATH}/bin' >> ~/.bashrc
+  - source ~/.bashrc
+  - curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh |
+  sh -s -- -b $(go env GOPATH)/bin v1.15.0
+  - mkdir -p ${GOPATH}/src/github.com/sylabs
+  - cd ${GOPATH}/src/github.com/sylabs
+  - git clone https://github.com/sylabs/singularity.git
   - cd singularity
-  - ./mconfig -v -p /usr/local
-  - cd builddir && make
-  - cd ../..
+  - git checkout v3.5.1
+  - cd ${GOPATH}/src/github.com/sylabs/singularity
+  - ./mconfig
+  - cd ./builddir && make
+  - sudo make install
+  # - export PATH="$HOME/go/bin:$PATH"
+  # - wget -qO- https://dl.google.com/go/go${GO_VERSION}.${OS}-${ARCH}.tar.gz | tar xz
+  # - mv go $HOME
+  # - git clone https://github.com/sylabs/singularity.git && cd singularity
+  # - go version
+  # - ./mconfig -v -p /usr/local
+  # - cd builddir && make  
+  # - cd ../..
 
 env:
   - NXF_HOME="$HOME/.nextflow"
