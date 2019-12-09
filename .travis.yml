@@ -7,8 +7,9 @@ jdk:
   - openjdk8
 
 before_install:
+  - sudo apt-get remove golang-go
+  - sudo apt-get remove --auto-remove golang-go
   - which go
-  - sudo rm -rf $(which go)
   - sudo apt-get update
   - sudo apt-get install -y build-essential libssl-dev uuid-dev libseccomp-dev pkg-config squashfs-tools cryptsetup
   - export GO_VERSION=1.13.5 OS=linux ARCH=amd64
@@ -17,7 +18,6 @@ before_install:
   - git clone https://github.com/sylabs/singularity.git && cd singularity
   - go version
   - cat mlocal/checks/version.go
-  - go run mlocal/checks/version.go go1.13
   - env GO111MODULE=off go run mlocal/checks/version.go go1.13
   - ./mconfig
   - cd builddir && make  
