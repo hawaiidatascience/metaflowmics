@@ -15,6 +15,7 @@ Download the software
 Clone the repository:
 
 .. code-block:: bash
+
     git clone https://github.com/hawaiidatascience/nextflow_cmaiki.git
     cd nextflow_cmaiki/metagenomics-pipelines
 
@@ -24,6 +25,7 @@ Silva Database
 In addition, you will need to download the Silva reference database available on the `Mothur website <https://www.mothur.org/wiki/Silva_reference_files>`_:
 
 .. code-block:: bash
+
 	wget https://www.mothur.org/w/images/3/32/Silva.nr_v132.tgz
 	tar -xvzf Silva.nr_v132.tgz -O Pipeline-16S && rm -f Silva.nr_v132.tgz
 
@@ -33,6 +35,7 @@ Usage
 To run the pipeline on your data, simply enter the following command:
 
 .. code-block:: bash
+
     nextflow run 16S-pipeline -profile <config> --reads "<path_to_reads/glob_pattern>" --referenceAln databases/silva.nr_v132.align --referenceTax databases/silva.full_v132.tax
 
 The input reads need to be in the `.fastq` format (preferably gzipped) in a single folder. Reads can be single or paired-end. In the former case, the flag `--singleEnd` must be set and in the latter case, the glob pattern needs to group the R1 and R2 reads using the syntax "\*R{1,2}\*". 
@@ -50,11 +53,11 @@ Reads need to be demultiplexed and gzipped
 
 Read filtering (Dada2)
 ^^^^^^^^^^^^^^^^^^^^^^
-`filterAndTrim()`: Reads are truncated at positions {220} / {190} (fwd/rev) or at the first occurrence of a base of quality {2} or lower. Reads matching the phiX genome are {discarded}, as well as reads with an expected number of errrors above {maxEE}. Reads shorter than {20} bp are filtered out. Finally, samples with less than 50 reads are discarded.
+`filterAndTrim()`: Reads are truncated at positions {fwd: 220}-{rev: 190} or at the first occurrence of a base of quality {2} or lower. Reads matching the phiX genome are {discarded}, as well as reads with an expected number of errrors above {maxEE}. Reads shorter than {20} bp are filtered out. Finally, samples with less than 50 reads are discarded.
 
 Denoising (Dada2)
 ^^^^^^^^^^^^^^^^^
-`learnErrors()`, `dada()`: Error models and denoising are performed on each sample independently.
+`learnErrors(), dada()`: Error models and denoising are performed on each sample independently.
 
 Read merging (Dada2)
 ^^^^^^^^^^^^^^^^^^^^
