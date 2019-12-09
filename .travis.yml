@@ -1,15 +1,11 @@
+language: groovy
+  
 jdk:
   - openjdk8
 
-python:
-  - "3.6"
-  
 services:
   - docker
   - singularity
-
-before_install:
-  - pip install codecov
 
 install:
   - sudo apt-get -qq update
@@ -17,6 +13,3 @@ install:
 
 script:
 - make test CONF=singularity
-
-after_success:
-  - codecov
