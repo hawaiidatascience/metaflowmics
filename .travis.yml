@@ -17,7 +17,7 @@ before_install:
   - SINGULARITY_BASE="${GOPATH}/src/github.com/sylabs/singularity"
   - mkdir -p "${GOPATH}/src/github.com/sylabs"
   - cd "${GOPATH}/src/github.com/sylabs"
-  - git clone -b release-3.2 https://github.com/sylabs/singularity
+  - git clone https://github.com/sylabs/singularity
   - cd singularity
   - ./mconfig -v -p /usr/local
   - cd builddir && make
