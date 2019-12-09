@@ -15,7 +15,7 @@ before_install:
   - export VERSION=1.13.5 OS=linux ARCH=amd64
   - wget -qO- https://dl.google.com/go/go${VERSION}.${OS}-${ARCH}.tar.gz | tar xz 
   - export PATH=${PWD}/go/bin:${PATH}
-  - git clone https://github.com/sylabs/singularity.git && cd singularity
+  - git clone https://github.com/sylabs/singularity.git
   - cd singularity && ./mconfig
   - cd builddir && make
   - export PATH=$PATH:$PWD/
