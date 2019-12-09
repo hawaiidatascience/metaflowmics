@@ -17,6 +17,7 @@ before_install:
 
 env:
   - NXF_HOME="$HOME/.nextflow"
+  - PATH="$NXF_HOME:$PATH"
   
 install:
   - sudo apt-get -qq update
