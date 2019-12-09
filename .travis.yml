@@ -7,6 +7,8 @@ jdk:
   - openjdk8
 
 before_install:
+  - which go
+  - sudo rm -rf $(which go)
   - sudo apt-get update
   - sudo apt-get install -y build-essential libssl-dev uuid-dev libseccomp-dev pkg-config squashfs-tools cryptsetup
   - export GO_VERSION=1.13.5 OS=linux ARCH=amd64
