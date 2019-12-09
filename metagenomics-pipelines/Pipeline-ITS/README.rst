@@ -5,7 +5,7 @@ Pre-requisites
 --------------
 
 - `Nextflow <https://www.nextflow.io/docs/latest/getstarted.html>`_
-- python3 + packages: Biopython, pandas, matplotlib, seaborn, ITSxpress
+- python(>=3.6) + packages: Biopython, pandas, matplotlib, seaborn, ITSxpress
 - R(>=3.5) + libraries: ggplot2, lulu, dada2, seqinr, stringr, ShortRead, doParallel, ape, phyloseq
 - install `VSEARCH <https://github.com/torognes/vsearch/releases>`_, `HMMER <http://eddylab.org/software/hmmer>`_ and `BBTools <https://sourceforge.net/projects/bbmap>`_
 

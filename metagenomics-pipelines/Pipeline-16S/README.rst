@@ -5,7 +5,7 @@ Pre-requisites
 --------------
 
 - `Nextflow <https://www.nextflow.io/docs/latest/getstarted.html>`_
-- python3 + libraries: Biopython, pandas, matplotlib, seaborn
+- python(>=3.6) + libraries: Biopython, pandas, matplotlib, seaborn
 - R(>=3.5) + libraries: ggplot2, lulu, dada2, seqinr, stringr, ShortRead, doParallel, ape, phyloseq
 - `Mothur <https://github.com/mothur/mothur>`_ (tested with v1.43) 
 

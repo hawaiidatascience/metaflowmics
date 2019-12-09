@@ -1,13 +1,24 @@
+arch: amd64
+os: linux
+
 language: groovy
+
+go:
+  - 1.13.5
   
 jdk:
   - openjdk8
 
 before_install:
-  - wget -O- http://neuro.debian.net/lists/xenial.us-ca.libre | sudo tee /etc/apt/sources.list.d/neurodebian.sources.list
-  - sudo apt-key adv --recv-keys --keyserver hkp://pool.sks-keyservers.net:80 0xA5D32F012649A5A9
-  - sudo apt-get update
-  - sudo apt-get install -y singularity-container
+  - sudo apt-get update && apt-get install -y build-essential libssl-dev uuid-dev libseccomp-dev pkg-config squashfs-tools cryptsetup
+  - export VERSION=1.13.5 OS=linux ARCH=amd64
+  - wget -qO- https://dl.google.com/go/go${VERSION}.${OS}-${ARCH}.tar.gz | tar xz 
+  - export PATH=${PWD}/go/bin:${PATH}
+  - git clone https://github.com/sylabs/singularity.git && cd singularity
+  - cd singularity && ./mconfig
+  - cd builddir && make
+  - export PATH=$PATH:$PWD/
+  - cd ../..
 
 env:
   - NXF_HOME="$HOME/.nextflow"

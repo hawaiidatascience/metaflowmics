@@ -5,7 +5,7 @@ Pre-requisites
 --------------
 
 - `Nextflow <https://www.nextflow.io/docs/latest/getstarted.html>`_
-- python3 + libraries: Biopython, pandas, numpy, matplotlib, seaborn, argparse
+- python(>=3.6) + libraries: Biopython, pandas, numpy, matplotlib, seaborn, argparse
 
 Usage
 -----
