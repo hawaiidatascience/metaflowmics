@@ -4,7 +4,6 @@ Results*
 *outputs
 *result*
 *packages
-database*
 report.html
 timeline.html
 trace.txt
@@ -13,4 +12,7 @@ trace.txt
 *.tsv
 *.pdf
 *.h5
+silva*
+unite*
 !sample_barcodes.csv
+!*_genus_uniq*
