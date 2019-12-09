@@ -40,7 +40,7 @@ To run the pipeline on your data, simply enter the following command:
 
 The input reads need to be in the `.fastq` format (preferably gzipped) in a single folder. Reads can be single or paired-end. In the former case, the flag `--singleEnd` must be set and in the latter case, the glob pattern needs to group the R1 and R2 reads using the syntax `*R{1,2}*`. 
 	
-For more information about the available profiles, see the :ref:`../../docs/source/getting_started` section or :ref:`getting_started` or :doc:`configuration <../../docs/source/getting_started>`.
+For more information about the available profiles, see the :ref:`getting_started` section.
 	
 16S pipeline steps
 ------------------

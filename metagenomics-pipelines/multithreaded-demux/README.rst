@@ -26,7 +26,7 @@ To run the pipeline on your data, simply enter the following command:
 
     nextflow run multithreaded-demux -profile <config> --inputdir "<path_to_reads>"
 
-For more information about the available profiles, see the corresponding section.
+For more information about the available profiles, see the :ref:`getting_started` section.
 
 Demultiplexing steps
 --------------------
@@ -49,7 +49,7 @@ The default behavior is a third option, "auto". The guess consists in counting t
 
 Mapping index to sample names
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Once the order is determined, both index and sequencing reads are split in chunks of equal sizes of ceil(n_reads/{nsplits}). For each file chunk, we compare each index pair with all barcodes and extract the samples with less errors than {max_mismatches} for each forward and reverse match (therefore in total, there can be up to :math:`2*max_mismatches-1` errors). If several samples match this criteria, we keep the sample with the least mismatches.
+Once the order is determined, both index and sequencing reads are split in chunks of equal sizes of *<100000>*. For each file chunk, we compare each index pair with all barcodes and extract the samples with less errors than *<3>* for each forward and reverse match (therefore in total, there can be up to :math:`2*max_mismatches-1` errors). If several samples match this criteria, we keep the sample with the least mismatches.
 
 Figures
 ^^^^^^^

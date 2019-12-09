@@ -42,12 +42,12 @@ To run the pipeline on your data, simply enter the following command:
 
 The input reads need to be in the `.fastq` format (preferably gzipped) in a single folder. Reads can be single or paired-end. In the latter case, the glob pattern needs to group the R1 and R2 reads using the syntax "\*R{1,2}\*", and the flag `--pairedEnd` must be set.
 	
-For more information about the available profiles, see the corresponding section.
+For more information about the available profiles, see the :ref:`getting_started` section.
 
 ITS pipeline steps
 ------------------
 
-The ITS analysis pipeline is summarized below. Values in curly braces ({}) correspond to default values of tunable parameters.
+The ITS analysis pipeline is summarized below. Values in between "<" ">" correspond to default values of tunable parameters.
 
 Inputs
 ^^^^^^
@@ -55,11 +55,11 @@ Reads need to be demultiplexed and gzipped
 
 ITS extraction
 ^^^^^^^^^^^^^^
-Target region ({ITS1}/ITS2) is extracted using ITSxpress. Reads missing either the left or the right flanking regions are discarded. If reads are paired, both reads are merged before ITS region extraction. Since reverse reads are often of very low quality, default mode is single-end.
+The target region *<ITS1>* is extracted using ITSxpress. Reads missing either the left or the right flanking regions are discarded. If reads are paired, both reads are merged before ITS region extraction. Since reverse reads are often of very low quality, default mode is single-end.
 
 Contig filtering (Python, Fastx-toolkit, VSEARCH)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Contigs containing 'N' nucletodes are discarded, as well as contigs smaller than {20} bp. Then, we use fastq_quality_filter and keep reads with at worst {90%} of their bases above quality {25}. We further filter the contigs and remove any chimeric sequence using VSEARCH.
+Contigs containing 'N' nucletodes are discarded, as well as contigs smaller than *<20bp>*. Then, we use fastq_quality_filter and keep reads with at worst *<90%>* of their bases above quality *<25>*. We further filter the contigs and remove any chimeric sequence using VSEARCH.
 
 Denoising (Dada2)
 ^^^^^^^^^^^^^^^^^
@@ -67,19 +67,19 @@ Denoising (Dada2)
 
 OTU clustering (VSEARCH)
 ^^^^^^^^^^^^^^^^^^^^^^^^
-OTU are clustered at similarity levels {100, 97}% (100% means no clustering).
+OTU are clustered at similarity levels *<100%, 97%>* (100% means no clustering).
 
 Co-occurrence pattern correction (LULU)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 A daughter OTU is merged with its parent if:
 
-* they share at least {97}% similarity
-* {min}(daughter\_abundance\_sample/parent\_abundance\_sample) < {1}
-* the relative co-occurence (proportion of time the daughter is present when the parent is present) must be at least {1}
+* they share at least *<97%>* similarity
+* *<min>* (daughter\_abundance\_sample/parent\_abundance\_sample) < *<1>*
+* the relative co-occurence (proportion of time the daughter is present when the parent is present) must be at least *<1>*
 
 Consensus classification (VSEARCH)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Lineages are assigned to each individual sequence using the UNITE reference database. Consensus taxonomy is done for each OTU using a consensus vote. If the consensus is lower than {50%} as a given rank, the taxonomy is not reported.
+Lineages are assigned to each individual sequence using the UNITE reference database. Consensus taxonomy is done for each OTU using a consensus vote. If the consensus is lower than *<50%>* as a given rank, the taxonomy is not reported.
 
 Summaries
 ^^^^^^^^^
