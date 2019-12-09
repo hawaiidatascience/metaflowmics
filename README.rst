@@ -1,8 +1,10 @@
 Documentation: Nextflow pipelines for metagenomics
 ==================================================
 .. image:: https://travis-ci.org/hawaiidatascience/nextflow_cmaiki.svg?branch=master
-    :target: https://travis-ci.org/hawaiidatascience/nextflow_cmaiki
-
+   :target: https://travis-ci.org/hawaiidatascience/nextflow_cmaiki
+.. image:: https://readthedocs.org/projects/metagenomics-pipelines/badge/?version=latest
+   :target: https://metagenomics-pipelines.readthedocs.io/en/latest/?badge=latest
+			 
 This repository is a collection of tools for 16S and ITS data analysis and was developed to support scientifics at the `Pacific Biosciences Research Center <http://www.pbrc.hawaii.edu/>`_ to analyze microbial data.
 This work was funded by the `Hawaii Data Science Institute <http://datascience.hawaii.edu/>`_
 

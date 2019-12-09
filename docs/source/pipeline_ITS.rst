@@ -1,2 +1,1 @@
-ITS pipeline
-============
+.. include:: ../../metagenomics-pipelines/Pipeline-ITS/README.rst

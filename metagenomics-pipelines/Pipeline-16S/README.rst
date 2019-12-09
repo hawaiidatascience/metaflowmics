@@ -1,53 +1,54 @@
-# 16S-pipeline
-
-## Getting started
+16S-pipeline
+============
 
 Follow these instructions to get the pipeline started on your machine
 
-### Pre-requisites
+Pre-requisites
+--------------
 
 The preferred way to use this pipeline is through the singularity configuration. It requires little setup since all dependencies are dealt with using a custom docker container.
 
 Requirements:
-- [Nextflow](https://www.nextflow.io/docs/latest/getstarted.html)
+
+- `Nextflow <https://www.nextflow.io/docs/latest/getstarted.html>`_
 
 If you wish to run the pipeline without it, you will need to satisfy in addition the following dependencies:
 
 - python3 + libraries: Biopython, pandas, matplotlib, seaborn
 - R(>=3.5) + libraries: ggplot2, lulu, dada2, seqinr, stringr, ShortRead, doParallel, ape, phyloseq
-- [Mothur](https://github.com/mothur/mothur) (tested with v1.43) 
+- `Mothur <https://github.com/mothur/mothur>`_ (tested with v1.43) 
 
-### Usage
+Usage
+-----
 
-- Clone the repository:
-```
-git clone https://github.com/hawaiidatascience/nextflow_cmaiki.git
-cd Pipeline-16S
-```
+Clone the repository:
 
-#### Make your own configuration file
-To run the pipeline locally, you need to set up a configuration file. An example is available in `conf/local.config`.
-You can modify this configuration to fit the specs of your machine.
+.. code-block:: bash
+    git clone https://github.com/hawaiidatascience/nextflow_cmaiki.git
+    cd nextflow_cmaiki/metagenomics-pipelines
 
-#### Changing the default pipeline parameters
+Changing the default pipeline parameters
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Pipeline parameters can be set either:
+
 - in the file `nextflow.config`
-- by using the flags --[PARAMETER-NAME] [PARAMETER-VALUE] (see `nextflow run 16S-pipeline --help`)
+- by using the flags --[PARAMETER-NAME] [PARAMETER-VALUE]
 
-### Running the pipeline
+Enter `nextflow run 16S-pipeline --help` for the commands detail.
 
-Then, you can run the pipeline by running:
-`nextflow run 16S-pipeline -profile manoa_hpc --reads 'PATH_TO_READS/GLOB_PATTERN'`
+Running the pipeline
+^^^^^^^^^^^^^^^^^^^^
 
-You can also run the pipeline using the available docker instances. For that, you'll just need to select the correct profile "docker"
-```
-nextflow run 16S-pipeline -profile docker --reads 'PATH_TO_READS/GLOB_PATTERN'
-```
+To run the pipeline on your data, simply enter the following command:
 
-Then, you can run the pipeline using the docker profile
+.. code-block:: bash
+    nextflow run 16S-pipeline -profile CONFIG --reads "PATH_TO_READS/GLOB_PATTERN"
 
-## Pipeline summary
+For more information about the available profiles, see the corresponding section.
+	
+Pipeline summary
+----------------
 
 The 16S analysis pipeline is summarized below. Values in curly braces ({}) correspond to default values of tunable parameters.
 
@@ -83,6 +84,7 @@ We perform sample normalization by subsampling each sample to the same level. Sa
 
 **Co-occurrence pattern correction**: 
 A daughter OTU is merged with its parent if:
+
 * they share at least {97}% similarity
 * {min}(daughter\_abundance\_sample/parent\_abundance\_sample) < {1}
 * the relative co-occurence (proportion of time the daughter is present when the parent is present) must be at least {1}
@@ -94,16 +96,20 @@ OTU with a total abundance of {2} or below are discarded.
 Using the remaining sequences, we choose a representative sequence for each OTU cluster as the most abundant sequence in the cluster. 
 For each taxonomic rank, OTU's taxonomy is assigned as the majority vote in the OTU cluster. If the consensus vote is lower than 51%, no taxonomy is assigned at the given rank.
 
-**Summaries**: 
+**Summaries**:
+
 - (samples x pipeline steps) table with the number of remaining sequences in each sample at each step
 - Figures
-  - (top OTUs x samples) bi-clustered heatmap with phylum, class and order information.
-  - scatter plot of OTUs abundance vs prevalence, one facet per phylum.
-  - scatter plot of OTUs abundance vs prevalence for proteobacteria, one facet per class.
-  - barplot of relative taxonomy composition at Phylum level for each sample. In a metadata table is provided, this plots represents the composition for each level of the provided factor.
+
+  #. (top OTUs x samples) bi-clustered heatmap with phylum, class and order information.
+  #. scatter plot of OTUs abundance vs prevalence, one facet per phylum.
+  #. scatter plot of OTUs abundance vs prevalence for proteobacteria, one facet per class.
+  #. barplot of relative taxonomy composition at Phylum level for each sample. In a metadata table is provided, this plots represents the composition for each level of the provided factor.
 
 **Postprocessing**: 
-For each clustering thresho, we compute alpha and beta diversity metrics (see [mothur calculators](https://www.mothur.org/wiki/Calculators) for a full description of these acronyms)
+For each clustering thresho, we compute alpha and beta diversity metrics (see `mothur calculators <https://www.mothur.org/wiki/Calculators>`_ for a full description of these acronyms)
+
 - Alpha diversity: `nseqs`, `sobs`, `chao`, `shannon`, `shannoneven`
 - Beta diversity: `braycurtis`, `thetayc`, `sharedsobs`, `sharedchao`
-In addition, we compute the phylogenetic tree using [FastTree](http://www.microbesonline.org/fasttree/) and compute the UniFrac distances using the R's [phyloseq](https://bioconductor.org/packages/release/bioc/html/phyloseq.html) package implementing the [Fast UniFrac](https://www.ncbi.nlm.nih.gov/pubmed/19710709) algorithm.
+
+In addition, we compute the phylogenetic tree using `FastTree <http://www.microbesonline.org/fasttree/>`_ and compute the UniFrac distances using the R's `phyloseq <https://bioconductor.org/packages/release/bioc/html/phyloseq.html>`_ package implementing the `Fast UniFrac <https://www.ncbi.nlm.nih.gov/pubmed/19710709>`_ algorithm.

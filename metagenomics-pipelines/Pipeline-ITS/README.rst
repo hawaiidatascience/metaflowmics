@@ -1,48 +1,54 @@
-# ITS-pipeline
-
-## Getting started
+ITS-pipeline
+============
 
 Follow these instructions to get the pipeline started on your machine
 
-### Pre-requisites
+Pre-requisites
+--------------
 
 The preferred way to use this pipeline is through the singularity configuration. It requires little setup since all dependencies are dealt with using a custom docker container.
 
 Requirements:
-- [Nextflow](https://www.nextflow.io/docs/latest/getstarted.html)
+
+- `Nextflow <https://www.nextflow.io/docs/latest/getstarted.html>`_
 
 If you wish to run the pipeline without it, you will need to satisfy in addition the following dependencies:
 
 - python3 + packages: Biopython, pandas, matplotlib, seaborn, ITSxpress
 - R(>=3.5) + libraries: ggplot2, lulu, dada2, seqinr, stringr, ShortRead, doParallel, ape, phyloseq
-- install [VSEARCH](https://github.com/torognes/vsearch/releases), [HMMER](http://eddylab.org/software/hmmer) and [BBTools](https://sourceforge.net/projects/bbmap)
+- install `VSEARCH <https://github.com/torognes/vsearch/releases>`_, `HMMER <http://eddylab.org/software/hmmer>`_ and `BBTools <https://sourceforge.net/projects/bbmap>`_
 
-### Usage
+Usage
+-----
 
-- Clone the repository:
-```
-git clone https://github.com/hawaiidatascience/nextflow_cmaiki.git
-cd Pipeline-ITS
-```
+Clone the repository:
 
-#### Make your own configuration file
-To run the pipeline locally, you need to set up a configuration file. An example is available in `conf/local.config`.
-You can modify this configuration to fit the specs of your machine.
+.. code-block:: bash
+    git clone https://github.com/hawaiidatascience/nextflow_cmaiki.git
+    cd nextflow_cmaiki/metagenomics-pipelines
 
-#### Changing the default pipeline parameters
+Changing the default pipeline parameters
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Pipeline parameters can be set either:
+
 - in the file `nextflow.config`
-- by using the flags --[PARAMETER-NAME] [PARAMETER-VALUE] (see `nextflow run ITS-pipeline --help`)
+- by using the flags --[PARAMETER-NAME] [PARAMETER-VALUE]
 
-### Running the pipeline
+Enter `nextflow run 16S-pipeline --help` for the commands detail.
 
-Then, you can run the pipeline by running:
-`nextflow run ITS-pipeline -profile singularity --reads 'PATH_TO_READS/GLOB_PATTERN'`
+Running the pipeline
+^^^^^^^^^^^^^^^^^^^^
 
-Then, you can run the pipeline using the docker profile
+To run the pipeline on your data, simply enter the following command:
 
-## Pipeline summary
+.. code-block:: bash
+    nextflow run ITS-pipeline -profile CONFIG --reads "PATH_TO_READS/GLOB_PATTERN"
+
+For more information about the available profiles, see the corresponding section.
+
+Pipeline summary
+----------------
 
 The ITS analysis pipeline is summarized below. Values in curly braces ({}) correspond to default values of tunable parameters.
 
@@ -63,6 +69,7 @@ OTU are clustered at similarity levels {100, 97}% (100% means no clustering).
 
 **Co-occurrence pattern correction (LULU)**: 
 A daughter OTU is merged with its parent if:
+
 * they share at least {97}% similarity
 * {min}(daughter\_abundance\_sample/parent\_abundance\_sample) < {1}
 * the relative co-occurence (proportion of time the daughter is present when the parent is present) must be at least {1}
