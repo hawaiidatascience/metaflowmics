@@ -5,19 +5,32 @@ Nextflow pipelines for metagenomics
 .. image:: https://readthedocs.org/projects/metagenomics-pipelines/badge/?version=latest
    :target: https://metagenomics-pipelines.readthedocs.io/en/latest/?badge=latest
 			 
-This repository is a collection of tools for 16S and ITS data analysis and was developed to support scientifics at the `Pacific Biosciences Research Center <http://www.pbrc.hawaii.edu/>`_ to analyze microbial data.
-This work was funded by the `Hawaii Data Science Institute <http://datascience.hawaii.edu/>`_
+Cite (Work in progress)
+-----------------------
 
-Each analysis tool has been implemented using `Nextflow <https://www.nextflow.io/docs/latest/getstarted.html>`_ to facilitate their use on any environment, and more specifically on a High Performance Computing Cluster or a Cloud service (GCP, AWS, ...). Some configurations, including the one for the HPCC at the University of Hawaii at Manoa is already available in the `conf` folder. These configurations can be expanded for any other platform. 
-See `nextflow documentation <https://www.nextflow.io/docs/latest/config.html>`_ for more information. 
+Scalable and reproducible pipelines for the analysis of microbiome marker data
+
+Description
+-----------
+
+This repository is a collection of tools for 16S and ITS data analysis and was developed to support scientifics at the `Pacific Biosciences Research Center <http://www.pbrc.hawaii.edu/>`_ to analyze microbial data.
+This work was funded by the `Hawaii Data Science Institute <http://datascience.hawaii.edu/>`_.
+
+Each analysis tool has been implemented using `Nextflow <https://www.nextflow.io/docs/latest/getstarted.html>`_ to facilitate their use on any environment, and more specifically on a High Performance Computing Cluster or a Cloud service (GCP, AWS, ...). Some configurations are already available in the `conf` folder (local, hpcc, google cloud). These configurations can be expanded for any other platform. 
 
 You will find three available app:
 
-#. A demultiplexing app that can demultiplex reads with single or paired barcodes.
+#. A demultiplexing app for single or paired barcodes.
 #. A 16S pipeline for bacterial reads
 #. An ITS pipeline for fungal reads
 
-If you are interested in using one of these app, please see the README in the respective folder.
+See the `documentation <https://metagenomics-pipelines.readthedocs.io>` for more details.
 
-Finally, a docker instance is already available. To use them, you can use the "docker" (or "singularity" if you do not have sudo rights) configuration file.
+Contribute
+----------
+- Issue tracker: `GitHub <https://github.com/hawaiidatascience/nextflow_cmaiki/issues>`
+- Source Code: `GitHub <https://github.com/hawaiidatascience/nextflow_cmaiki>`
 
+License
+-------
+Apache 2.0
