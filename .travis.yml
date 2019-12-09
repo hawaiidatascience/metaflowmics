@@ -3,29 +3,27 @@ os: linux
 
 language: groovy
 
-go:
-  - 1.13.3
-
 jdk:
   - openjdk8
 
+env:
+  - NXF_HOME="$HOME/.nextflow"
+  - GO_VERSION=1.13.3
+  - OS=linux
+  - ARCH=amd64
+  - PATH="$HOME/go/bin:$PATH"
+  
 before_install:
   - sudo apt-get update
   - sudo apt-get install -y build-essential libssl-dev uuid-dev libseccomp-dev pkg-config squashfs-tools cryptsetup
-  - go version
-  - export GO_VERSION=1.13.3 OS=linux ARCH=amd64
-  - wget -qO- https://dl.google.com/go/go${GO_VERSION}.${OS}-${ARCH}.tar.gz | tar xz 
-  - export PATH="$PWD/go/bin:$PATH"
+  - wget -qO- https://dl.google.com/go/go${GO_VERSION}.${OS}-${ARCH}.tar.gz | tar xz
+  - mv go $HOME
   - git clone https://github.com/sylabs/singularity.git && cd singularity
   - go version
-  - echo $(command -v go)
-  - ./mconfig
+  - ./mconfig -v -p /usr/local
   - cd builddir && make
-  - mv singularity /home/travis/.local/bin
+  
   - cd ../..
-
-env:
-  - NXF_HOME="$HOME/.nextflow"
 
 install:
   - sudo apt-get -qq update
