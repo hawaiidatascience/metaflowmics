@@ -21,4 +21,4 @@ install:
   - export PATH=$PATH:$NXF_HOME
 
 script:
-- make test CONF=singularity
+- make test CONF=singularity_test
