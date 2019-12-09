@@ -3,13 +3,13 @@ language: groovy
 jdk:
   - openjdk8
 
-services:
-  - docker
-  - singularity
+before_install:
+  - sudo apt-get update
+  - sudo apt-get install -y singularity-container
 
 env:
   - NXF_HOME="$HOME/.nextflow"
-  
+
 install:
   - sudo apt-get -qq update
   - mkdir $NXF_HOME
