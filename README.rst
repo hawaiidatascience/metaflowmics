@@ -24,12 +24,12 @@ You will find three available app:
 #. A 16S pipeline for bacterial reads
 #. An ITS pipeline for fungal reads
 
-See the `documentation <https://metagenomics-pipelines.readthedocs.io>` for more details.
+See the `documentation <https://metagenomics-pipelines.readthedocs.io>`_ for more details.
 
 Contribute
 ----------
-- Issue tracker: `GitHub <https://github.com/hawaiidatascience/nextflow_cmaiki/issues>`
-- Source Code: `GitHub <https://github.com/hawaiidatascience/nextflow_cmaiki>`
+- Issue tracker: `GitHub <https://github.com/hawaiidatascience/nextflow_cmaiki/issues>`_
+- Source Code: `GitHub <https://github.com/hawaiidatascience/nextflow_cmaiki>`_
 
 License
 -------
