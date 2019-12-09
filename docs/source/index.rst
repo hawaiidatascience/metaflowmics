@@ -3,14 +3,19 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to metagenomics-pipelines's documentation!
-==================================================
+.. include:: ../../README.rst
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
-
+   self
+   demux_app
+   pipeline_16S
+   pipeline_ITS
+   gcp
+   hpcc
+   agave_to_go
 
 Indices and tables
 ==================
