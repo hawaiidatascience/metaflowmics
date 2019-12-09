@@ -1,0 +1,22 @@
+jdk:
+  - openjdk8
+
+python:
+  - "3.6"
+  
+services:
+  - docker
+  - singularity
+
+before_install:
+  - pip install codecov
+
+install:
+  - sudo apt-get -qq update
+  - curl -fsSL get.nextflow.io | bash
+
+script:
+- make test CONF=singularity
+
+after_success:
+  - codecov

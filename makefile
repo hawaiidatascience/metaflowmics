@@ -20,15 +20,9 @@ clean:
 	rm -rf ITS-pipeline_outputs
 	rm -rf ITS-pipeline_outputs
 
-python_container:
-	sudo docker build -f python.dockerfile -t nakor/python_libs_pipeline scripts/
-	sudo docker push nakor/python_libs_pipeline
-R_container:
-	sudo docker build -f r.dockerfile -t nakor/r_libs_pipeline scripts/
-	sudo docker push nakor/r_libs_pipeline
-mothur_container:
-	sudo docker build -f mothur.dockerfile -t nakor/mothur_pipeline scripts/
-	sudo docker push nakor/mothur_pipeline
+dockerfile:
+	sudo docker build -f pipeline-env.dockerfile -t nakor/pipeline-env scripts/
+	sudo docker push nakor/pipeline-env
 
 gcp_wrapper_16S:
 	@ make gcp16S NXF_MODE=google GOOGLE_APPLICATION_CREDENTIALS="${HOME}/.gcp_credentials.json"

@@ -6,11 +6,15 @@ Follow these instructions to get the pipeline started on your machine
 
 ### Pre-requisites
 
-To run the pipeline, you will need to satisfy the following dependencies:
+The preferred way to use this pipeline is through the singularity configuration. It requires little setup since all dependencies are dealt with using a custom docker container.
 
+Requirements:
 - [Nextflow](https://www.nextflow.io/docs/latest/getstarted.html)
+
+If you wish to run the pipeline without it, you will need to satisfy in addition the following dependencies:
+
 - python3 + libraries: Biopython, pandas, matplotlib, seaborn
-- R + libraries: ggplot2, lulu, dada2, seqinr, stringr, ShortRead
+- R(>=3.5) + libraries: ggplot2, lulu, dada2, seqinr, stringr, ShortRead, doParallel, ape, phyloseq
 - [Mothur](https://github.com/mothur/mothur) (tested with v1.43) 
 
 ### Usage
@@ -68,8 +72,8 @@ Chimeric contigs are removed using Mothur's implementation of VSEARCH
 **OTU clustering (Mothur)**: 
 OTU are clustered at similarity levels {100, 97}% (100% means no clustering). 
 
-**Consensus classification and taxa filter**: 
-Lineages are assigned to each individual sequence using the SILVA reference database. Consensus taxonomy is done for each OTU and taxa matching {mitochondria, chloroplasts, unknown} are removed.
+**Taxa filter**: 
+Lineages are assigned to each individual sequence using the SILVA reference database. Any sequence matching {mitochondria, chloroplasts, unknown} annotations are removed.
 
 **Multipletons filter**: 
 OTU with a total abundance of {2} or below are discarded.
@@ -86,11 +90,20 @@ A daughter OTU is merged with its parent if:
 **Rare sequences filter**: 
 OTU with a total abundance of {2} or below are discarded.
 
+**Consensus classification and representative sequences extraction**
+Using the remaining sequences, we choose a representative sequence for each OTU cluster as the most abundant sequence in the cluster. 
+For each taxonomic rank, OTU's taxonomy is assigned as the majority vote in the OTU cluster. If the consensus vote is lower than 51%, no taxonomy is assigned at the given rank.
+
 **Summaries**: 
 - (samples x pipeline steps) table with the number of remaining sequences in each sample at each step
 - Figures
+  - (top OTUs x samples) bi-clustered heatmap with phylum, class and order information.
+  - scatter plot of OTUs abundance vs prevalence, one facet per phylum.
+  - scatter plot of OTUs abundance vs prevalence for proteobacteria, one facet per class.
+  - barplot of relative taxonomy composition at Phylum level for each sample. In a metadata table is provided, this plots represents the composition for each level of the provided factor.
 
 **Postprocessing**: 
 For each clustering thresho, we compute alpha and beta diversity metrics (see [mothur calculators](https://www.mothur.org/wiki/Calculators) for a full description of these acronyms)
 - Alpha diversity: `nseqs`, `sobs`, `chao`, `shannon`, `shannoneven`
 - Beta diversity: `braycurtis`, `thetayc`, `sharedsobs`, `sharedchao`
+In addition, we compute the phylogenetic tree using [FastTree](http://www.microbesonline.org/fasttree/) and compute the UniFrac distances using the R's [phyloseq](https://bioconductor.org/packages/release/bioc/html/phyloseq.html) package implementing the [Fast UniFrac](https://www.ncbi.nlm.nih.gov/pubmed/19710709) algorithm.

@@ -658,7 +658,7 @@ process SummaryPlot {
 
     script:
     """
-    python ${params.script_dir}/visualization.py \
+    python3 ${params.script_dir}/visualization.py \
         --thresh ${idThreshold} \$([ "${params.meta}" == '' ] && echo "" || echo "--meta ${params.meta}")
     """
 }

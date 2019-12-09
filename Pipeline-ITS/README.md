@@ -6,12 +6,16 @@ Follow these instructions to get the pipeline started on your machine
 
 ### Pre-requisites
 
-To run the pipeline, you will need to satisfy the following dependencies:
+The preferred way to use this pipeline is through the singularity configuration. It requires little setup since all dependencies are dealt with using a custom docker container.
 
+Requirements:
 - [Nextflow](https://www.nextflow.io/docs/latest/getstarted.html)
-- python3 + libraries: Biopython, pandas
-- R + libraries: ggplot2, lulu, dada2, seqinr, stringr, ShortRead
-- [Mothur](https://github.com/mothur/mothur) (tested with v1.43) 
+
+If you wish to run the pipeline without it, you will need to satisfy in addition the following dependencies:
+
+- python3 + packages: Biopython, pandas, matplotlib, seaborn, ITSxpress
+- R(>=3.5) + libraries: ggplot2, lulu, dada2, seqinr, stringr, ShortRead, doParallel, ape, phyloseq
+- install [VSEARCH](https://github.com/torognes/vsearch/releases), [HMMER](http://eddylab.org/software/hmmer) and [BBTools](https://sourceforge.net/projects/bbmap)
 
 ### Usage
 
@@ -34,13 +38,7 @@ Pipeline parameters can be set either:
 ### Running the pipeline
 
 Then, you can run the pipeline by running:
-`nextflow run ITS-pipeline -profile manoa_hpc --reads 'PATH_TO_READS/GLOB_PATTERN'`
-
-To run the pipeline using Docker, you need to first create the docker container:
-```
-> make python_container
-> make R_container
-```
+`nextflow run ITS-pipeline -profile singularity --reads 'PATH_TO_READS/GLOB_PATTERN'`
 
 Then, you can run the pipeline using the docker profile
 
