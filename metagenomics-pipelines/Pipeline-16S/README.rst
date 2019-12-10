@@ -26,8 +26,10 @@ In addition, you will need to download the Silva reference database available on
 
 .. code-block:: bash
 
+	mkdir -p databases && cd databases
 	wget https://www.mothur.org/w/images/3/32/Silva.nr_v132.tgz
-	tar -xvzf Silva.nr_v132.tgz -O Pipeline-16S && rm -f Silva.nr_v132.tgz
+	tar -xvzf Silva.nr_v132.tgz
+	rm -f Silva.nr_v132.tgz && cd ..
 
 Usage
 -----

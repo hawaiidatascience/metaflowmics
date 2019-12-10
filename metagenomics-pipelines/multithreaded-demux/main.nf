@@ -8,33 +8,35 @@ def helpMessage() {
 
     Usage:
     nextflow run nextflow-demux -profile local --inputdir test/
-    
-    --------------- Mandatory arguments ---------------
-    --inputdir    Path to data folder. It should include:
-                      - 2 index fastq files (unzipped) matching the glob pattern "*_I{1,2}*.fastq.gz"
-                      - 2 read fastq files (unzipped) matching the glob pattern "*_R{1,2}*.fastq.gz"
-                      - 1 barcode file (extension: ".csv"), comma separated, with no header and 3 columns: 
-                         (sample name, forward barcode, reverse complement of reverse barcode)
 
-    ---------------- Optional arguments ---------------
-    -profile          Select a configuration from the conf/ folder. Default is "local"
-    --outdir       Path to output folder. Default: "./demultiplexed"
-    --max_mismatches  Maximum number of allowed mismatches between index and barcode. Default: 1
-    --nsplits         Number of file chunks to create for multithreading. Default: 10
-    --matching        By default, the order in which the barcodes pair match the index pair is inferred from the data.
-                      To change this behavior, set this parameter to either "ordered" or "reversed". Default: "auto"
-    --multimap        Strategy for handling index pairs matching multiple samples. 
-                      Default consists in assigning to the sample with the least mismatches and discarding the pair if 
-                      multiple sample achieve the minimum score. To change this behavior, set this parameter to:
-					  - "discard" to discard any multimapping. This strategy is strongly affected by 
-                        the number of allowed mismatches, and can result in discarding most of the reads.
-					  - "min_all" to assign to all the samples with the minimum score.
-					  - "all" to assign to all matching samples.
+    For more detailed information, see https://metagenomics-pipelines.readthedocs.io/en/latest/
+    
+    ---------------------------------- Mandatory arguments ----------------------------------------
+
+    --inputdir  Path to data folder. It should include:
+				- 2 index fastq files (unzipped) matching the glob pattern "*_I{1,2}*.fastq.gz"
+				- 2 read fastq files (unzipped) matching the glob pattern "*_R{1,2}*.fastq.gz"
+				- 1 barcode file (extension: ".csv"), comma separated, with no header and
+				  three columns (sample name, forward barcode, RevCompl of reverse barcode)
+    -profile    Choose a configuration. Choices are local, hpc, gcp and
+                their corresponding test configurations (by adding _test)
+
+    ---------------------------------- Optional arguments ----------------------------------------
+
+    --singleBarcoded     Set this flag if your reads are single-barcoded.
+    --singleEnd          Set this flag if your reads are single-end
+    --reverseComplement  Set this flag if you want to reverse complement the reverse barcodes
+    --outdir             Path to output folder. Default: "./demultiplexed"
+    --max_mismatches     Maximum number of allowed mismatches between index and barcode. Default: 1
+    --n_per_file         Number of reads per file (processed in parallel). Default: 1e6
+    --n_bases            Number of bases to use to build the error model. Default: 1e5
+    --matching           By default, the order in which the barcodes pair match the index pair is 
+                         inferred from the data. To change this behavior, set this parameter to 
+                         either "ordered" or "reversed". Default: "auto"
     """.stripIndent()
 }
 
 // Show help message
-params.help = false
 if (params.help){
     helpMessage()
     exit 0

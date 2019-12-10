@@ -8,24 +8,29 @@ def helpMessage() {
     Usage:
     nextflow run ITS-pipeline --reads '*_R1.fastq.gz' --locus ITS1 --pairedEnd 0 -profile local
 
-    --------------- Mandatory arguments ---------------
+    ---------------------------------- Mandatory arguments ----------------------------------------
+
       --reads         Path to input data
       --uniteDB       Path to taxonomic database to be used for annotation (e.g. /path/unite.fa.gz)
 
-    ---------------- Optional arguments ---------------
-      -profile        Select a configuration from the conf/ folder. Default is "local"
+    ---------------------------------- Optional arguments ----------------------------------------
+
       --pairedEnd     If your data is paired-end
       --locus         Sequenced ITS region (ITS1,ITS2 or ALL). Default: ITS1
-      --outdir        The output directory where the results will be saved. Default: ./ITS-pipeline_outputs
+      --outdir        The output directory where the results will be saved. 
+                      Default: ./ITS-pipeline_outputs
 
     [Trimming]
-      --minLen        Remove reads with length less than minLen. minLen is enforced after trimming and truncation; Default: 20
-      --minQuality    Quality filtering. Keep contigs with more than [minQuality] bases in [minPercentHighQ]% bases. Default: 25
+      --minLen        Remove reads with length less than minLen. 
+                      minLen is checked after trimming and truncation. Default: 20
+      --minQuality    Quality filtering. Keep contigs with more than <minQuality> bases in 
+                      <minPercentHighQ>% bases. Default: 25
 
     [Quality filtering]
-      --minPercentHighQ  Quality filtering. Keep contigs with more than [minQuality] bases in [minPercentHighQ]% bases. Default: 90
-      --minReads         Discard samples with less than [minReads] reads. Default: 50
-      --minDerep         Discard samples with less than [minDerep] unique contigs. Default: 5
+      --minPercentHighQ  Quality filtering. Keep contigs with more than <minQuality> bases in 
+                         <minPercentHighQ>% bases. Default: 90
+      --minReads         Discard samples with less than <minReads> reads. Default: 50
+      --minDerep         Discard samples with less than <minDerep> unique contigs. Default: 5
 
     [Taxonomy assignment]
       --taxaMinId        The minimum identity for calling a taxonomy. Default 50%

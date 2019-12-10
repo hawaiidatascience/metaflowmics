@@ -5,57 +5,68 @@ def helpMessage() {
     ===================================
     16S-rDNA-pipeline
     ===================================
+
     Usage:
-    nextflow run 16S-pipeline --reads "*_R{1,2}.fastq.gz" -profile local
+    nextflow run 16S-pipeline -profile local --reads "*_R{1,2}.fastq.gz"
+
+    For more detailed information, see https://metagenomics-pipelines.readthedocs.io/en/latest/
     
-    --------------- Mandatory arguments ---------------
+    ---------------------------------- Mandatory arguments ----------------------------------------
+
     --reads         Path to input data (glob pattern)
     --referenceAln  Path to the SILVA reference database (fasta format)
     --referenceTax  Path to the SILVA reference database (taxonomy file)
 
-    ---------------- Optional arguments ---------------
-    -profile        Select a configuration from the conf/ folder. Default is "local"
+---------------------------------- Optional arguments ----------------------------------------
+
     --outdir        Path to output directory. Default: "./16S-pipeline_outputs"
-    
-    --singleEnd   If your data is single end
+    --singleEnd     If your data is single end
 
     [Quality filtering]
-    --minReads    Sample with less than [minRead] are discarded. Default: 50
+    --minReads    Sample with less than <minRead> are discarded. Default: 50
     --truncLen    Where to truncate the forward and reverse reads. Default: "220,190"
-    --minLength   Reads short than [minLength] are discarded. Default: 20
-    --maxEE       Reads with an expected number of errrors above [maxEE] are discarded. Default: 3
-    --truncQ      Read truncation at the first occurence of a base of quality below [truncQ]. Default: 2
+    --minLength   Reads short than <minLength> are discarded. Default: 20
+    --maxEE       Reads with an expected number of errrors above <maxEE> are discarded. Default: 3
+    --truncQ      Read truncation at the 1st occurence of a base of quality <= <truncQ>. Default: 2
     --keepPhix    Keep reads matching phiX genome.
 
     [Read merging]
     --minOverlap    Minimum overlap between forward and reverse read. Default: 20
-    --maxMismatch   Maximum number of mismatches in the overlap between forward and reverse read. Default: 1
+    --maxMismatch   Maximum number of mismatches in the overlap between forward and reverse read. 
+                    Default: 1
 
     [Contig filtering]
     --criteria      Optimization criteria when aligning sequences against reference database. 
-                    Discard any sequence starting after where [criteria]% of the sequences start, or end before [criteria]% of the sequences end. 
+                    Discard any sequence starting after where <criteria>% of the sequences 
+                    start or end before <criteria>% of the sequences end. 
                     Default: 95
     --minAlnLen     Minimum alignment length in MSA. Default: 50
     --taxaToFilter  Set of taxa to exclude from the analysis. 
-                    Default: "Bacteria;Proteobacteria;Alphaproteobacteria;Rickettsiales;Mitochondria;-Bacteria;Cyanobacteria;Oxyphotobacteria;Chloroplast;-unknown;"
+                    Default: "Bacteria;Proteobacteria;Alphaproteobacteria;Rickettsiales;Mitochondria                    ;-Bacteria;Cyanobacteria;Oxyphotobacteria;Chloroplast;-unknown;"
     
     [Subsampling]
     --customSubsamplingLevel  User defined subsampling level. Ignored if <= 0
-    --subsamplingQuantile     Automatic subsampling level is at quantile [subsamplingQuantile] of the sample sizes. 
-                              Ignored if customSubsamplingLevel or skipSubsampling are set. Default: 0.1
-    --minSubsamplingLevel     Minimum subsampling level used if the automatic level falls below [minSubsamplingLevel]. Default: 5000
-    --skipSubsampling         Skip the subssampling step
+    --subsamplingQuantile     Automatic subsampling level is at quantile <subsamplingQuantile>
+                              of the sample sizes. 
+                              Ignored if customSubsamplingLevel or skipSubsampling are set.
+                              Default: 0.1
+    --minSubsamplingLevel     Minimum subsampling level used if the automatic level falls below 
+                              this value. Default: 5000
+    --skipSubsampling         Skip the subsampling step
 
     [OTU clustering]
-    --clusteringThresholds   Percent similarity threshold for OTU clustering (100 is no clustering). Default: 100,97
+    --clusteringThresholds   Percent similarity threshold for OTU clustering (100 is no clustering)
+                             Default: 100,97
 
     [Co-occurence pattern correction]
-    --min_ratio_type         Function to compare the abundance of a parent OTU and its daughter (default: min)
-    --min_ratio              Minimum abundance ratio between parent and daughter (across all samples). Default: 1
-    --min_rel_cooccurence    Proportion of the parent samples where daughter occurs (max=1)
-   
+    --min_ratio_type         Function to compare the abundance of a parent OTU and its daughter.
+                             Default: min
+    --min_ratio              Minimum abundance ratio between parent and daughter
+                             (across all samples). Default: 1
+    --min_rel_cooccurence    Proportion of the parent samples where daughter occurs. Default: 1
+
     [Other]
-    --minAbundance    Remove OTUs with a total abundance equal or below [minAbundance]. Default: 2
+    --minAbundance    Remove OTUs with a total abundance equal or below <minAbundance>. Default: 2
     """.stripIndent()
 }
 
