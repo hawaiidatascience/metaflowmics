@@ -27,6 +27,25 @@ When running any of the pipelines, you will need to provide a few mandatory argu
 #. The path to the input reads (see corresponding section for more details)
 #. The profile defined in conf/*.config.
 
+Choosing the pipeline parameters
+--------------------------------
+
+Using the command line
+^^^^^^^^^^^^^^^^^^^^^^
+
+You can change the parameters for a given pipeline by adding flags when running the pipeline. For instance, if you want to change the parameter `reads`, you can use the following syntax:
+
+.. code-block:: bash
+
+	nextflow run Pipeline-16S --reads "/data/Hiseq01/demultiplexed/*_R{1,2}.fastq.gz"
+
+The only exception is the `profile` parameter that only requires a single hyphen (i.e. -profile <profile_name>)
+
+Using the configuration file
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Alternatively, you can change the parameters value directly in the `.nextflow.config` file located in each application folder.
+   
 Dependencies
 ------------
 

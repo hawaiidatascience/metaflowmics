@@ -14,8 +14,7 @@
    demux_app
    pipeline_16S
    pipeline_ITS
-   hpcc
-   gcp
+   nf_tower
    advanced_config
    agave_to_go
 
