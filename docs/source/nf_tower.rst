@@ -14,6 +14,7 @@ To include this monitoring tool in your runs, you will need to:
   #. Click on `New token`
 
 - Provide this token to nextflow (as described in `tower documentation <https://tower.nf/welcome>`_) by either:
+
   - Setting the environment variable `TOWER_ACCESS_TOKEN` to your token value
   - Setting the nextflow configuration variable, `tower.accessToken` to your token value
 
