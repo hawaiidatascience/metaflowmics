@@ -9,6 +9,7 @@ To include this monitoring tool in your runs, you will need to:
 
 - Create sign in `nextflow tower website <https://tower.nf/>`_
 - Generate a token:
+
   #. Once you are logged in, click on `Your tokens` on the top left of the screen
   #. Click on `New token`
 
