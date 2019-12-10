@@ -24,4 +24,4 @@ install:
   - chmod a+x nextflow-19.10.0-all && mv nextflow-19.10.0-all $NXF_HOME/nextflow
 
 script:
-  - cd metagenomics-pipelines && make test CONF=singularity_test
+  - cd metagenomics-pipelines && make test CONF=local_test
