@@ -56,6 +56,8 @@ Each of the available pipelines are were built using multiple computing language
 
 The requirements to run the pipeline with the docker instance are minimal:
 
+- `Bash(>=3.2)`
+- `java 8 up to 11 <https://www.oracle.com/technetwork/java/javase/downloads/index.html>`_
 - `Nextflow <https://www.nextflow.io/docs/latest/getstarted.html>`_ (>=19.10)
 - Singularity can be compiled from source in the `GitHub releases <https://github.com/sylabs/singularity/releases>`_ or installed via `apt-get` in the NeuroDebian repository.
 - For the 16S and ITS pipelines, downloading the microbial / fungal database is also required. Refer to the corresponding sections for more information.
