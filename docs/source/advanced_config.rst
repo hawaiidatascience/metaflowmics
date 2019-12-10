@@ -41,13 +41,13 @@ HPCC require a few more specific parameters to be set:
 
    .. code-block:: bash
 
-	  > module load path/to/singularity/module
-	  > mkdir -p ~/.singularity_images.cache
-	  > mkdir -p /tmp/sg
-	  > singularity pull --docker-login /tmp/sg/nakor-pipeline-env.img docker://nakor/pipeline-env
-	  > singularity pull --docker-login /tmp/sg/alexcoppe-fastx.img docker://alexcoppe/fastx
-	  > singularity pull --docker-login /tmp/sg/pegi3s-fasttree.img docker://pegi3s/fasttree
-	  > mv /tmp/sg/*.img ~/.singularity_images.cache
+	  module load path/to/singularity/module
+	  mkdir -p ~/.singularity_images.cache
+	  mkdir -p /tmp/sg
+	  singularity pull --docker-login /tmp/sg/nakor-pipeline-env.img docker://nakor/pipeline-env
+	  singularity pull --docker-login /tmp/sg/alexcoppe-fastx.img docker://alexcoppe/fastx
+	  singularity pull --docker-login /tmp/sg/pegi3s-fasttree.img docker://pegi3s/fasttree
+	  mv /tmp/sg/*.img ~/.singularity_images.cache
 
 .. _gcp_conf:
 
@@ -71,7 +71,7 @@ The last thing you need is to provide nextflow a way to access your account via 
 Finally define the following variable replacing the path in the example with the one of your credentials file just downloaded:
 
 .. code-block:: bash
-   
+   export NXF_MODE=google
    export GOOGLE_APPLICATION_CREDENTIALS=/path/your/file/creds.json
 
 You are almost set to use the GCP platform. The last remaining thing you need to do is set the configuration file in `conf/gcp.conf` and set your project information, the location and type of machines you want to use:
