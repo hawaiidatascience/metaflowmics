@@ -35,6 +35,19 @@ HPCC require a few more specific parameters to be set:
 - `queue`: List of queues where you wish to submit the processes. Multiple queues are separated with commas.
 - `module`: Singularity module location.
 
+.. note::
+
+   If you are working on a squashed root system, you will need to pull the repository before running the pipeline. This is likely the case if you get the error `Failed to pull singularity image` when trying to run the pipeline. You will also need to set up a docker account.
+
+   .. code-block:: bash
+
+	  > module load path/to/singularity/module
+	  > mkdir -p ~/.singularity_images.cache && mkdir -p /tmp/sg
+      > singularity pull --docker-login /tmp/sg/nakor-pipeline-env.img docker://nakor/pipeline-env
+	  > singularity pull --docker-login /tmp/sg/alexcoppe-fastx.img docker://alexcoppe/fastx
+	  > singularity pull --docker-login /tmp/sg/pegi3s-fasttree.img docker://pegi3s/fasttree
+	  > mv /tmp/sg/*.img ~/.singularity_images.cache
+
 .. _gcp_conf:
 
 Configure for Google Cloud Plateform (GCP)
