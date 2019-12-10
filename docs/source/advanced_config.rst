@@ -71,6 +71,7 @@ The last thing you need is to provide nextflow a way to access your account via 
 Finally define the following variable replacing the path in the example with the one of your credentials file just downloaded:
 
 .. code-block:: bash
+
    export NXF_MODE=google
    export GOOGLE_APPLICATION_CREDENTIALS=/path/your/file/creds.json
 

@@ -26,7 +26,7 @@ In addition, you will need to download the UNITE reference database (all eukaryo
 
 .. code-block:: bash
 
-	mkdir -p databases && cd databases
+    mkdir -p databases && cd databases
     wget https://files.plutof.ut.ee/doi/A1/C9/A1C964DFB03C2A1B37FA16784BA739C88F0941AC68560CEA54DD707F1CF00AC4.zip -O uniteDB.zip
     unzip uniteDB.zip && rm uniteDB.zip
     iconv -f utf-8 -t ascii//translit UNITE_public_all_02.02.2019.fasta > uniteDB.fasta
