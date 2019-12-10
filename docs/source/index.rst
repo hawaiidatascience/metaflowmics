@@ -14,8 +14,8 @@
    demux_app
    pipeline_16S
    pipeline_ITS
-   nf_tower
    advanced_config
+   nf_tower
    agave_to_go
 
 Indices and tables
