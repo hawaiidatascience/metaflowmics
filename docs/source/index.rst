@@ -11,9 +11,9 @@
 
    self
    getting_started
-   demux_app
-   pipeline_16S
-   pipeline_ITS
+   ../../flowmics/multithreaded-demux/README
+   ../../flowmics/Pipeline-16S/README
+   ../../flowmics/Pipeline-ITS/README
    advanced_config
    nf_tower
    agave_to_go

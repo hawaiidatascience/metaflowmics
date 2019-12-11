@@ -1,1 +1,1 @@
-.. include:: ../../metagenomics-pipelines/multithreaded-demux/README.rst
+.. include:: ../../flowmics/multithreaded-demux/README.rst

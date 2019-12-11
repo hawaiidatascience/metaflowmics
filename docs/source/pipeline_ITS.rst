@@ -1,1 +1,1 @@
-.. include:: ../../metagenomics-pipelines/Pipeline-ITS/README.rst
+.. include:: ../../flowmics/Pipeline-ITS/README.rst
