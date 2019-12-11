@@ -31,6 +31,8 @@ In addition, you will need to download the Silva reference database available on
 	tar -xvzf Silva.nr_v132.tgz
 	rm -f Silva.nr_v132.tgz && cd ..
 
+For species assignments, the database is already available in the repository at `metagenomics-pipelines/databases/silva_species_assignment_v132.fa.gz`
+	
 Usage
 -----
 
