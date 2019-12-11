@@ -17,7 +17,7 @@
 
 # -- Project information -----------------------------------------------------
 
-project = 'metagenomics-pipelines'
+project = 'Flow|mics'
 copyright = '2019, Cedric Arisdakessian'
 author = 'Cedric Arisdakessian'
 
