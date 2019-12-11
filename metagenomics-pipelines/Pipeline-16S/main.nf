@@ -291,7 +291,7 @@ process ChimeraRemoval {
     label "high_computation"
     label "mothur_script"
     publishDir params.outdir+"Misc/6-ChimeraRemoval", mode: "copy", pattern: "*.{fasta,count_table}"
-    publishDir params.outdir+"Results/raw", mode: "copy", pattern: "*.fasta"
+    publishDir params.outdir+"Results/raw/details", mode: "copy", pattern: "raw*.fasta"
 
     input:
     set file(fasta), file(count) from DEREP_CONTIGS_ALN
@@ -299,10 +299,12 @@ process ChimeraRemoval {
     output:
     file("all_chimera.{fasta,count_table}") into (NO_CHIMERA_FASTA, FASTA_FOR_REPR)
     file("all_chimera.count_table") into CHIMERA_TO_COUNT
+    file("raw*.fasta")
 
     script:
     """
     ${params.script_dir}/mothur.sh --step=chimera
+    cp all_chimera*.fasta raw_sequences.fasta
     """
 }
 
@@ -374,8 +376,6 @@ process Clustering {
     --idThreshold=${idThreshold} \
     --rename=f \
     --prefix=raw
-
-    mv raw_otuRepr_${idThreshold}.fasta raw_sequences_${idThreshold}.fasta
 
     ${params.script_dir}/mothur.sh \
     --step=postprocessing \
@@ -575,6 +575,7 @@ process RareSeqsFilter {
     label "low_computation"
     label "mothur_script"
     publishDir params.outdir+"Misc/13-RareSeqsFilter", mode:"copy", pattern:"*.shared"
+    publishDir params.outdir+"Misc/13-RareSeqsFilter", mode:"copy", pattern:"sequences_*.fasta"
 
     input:
 	set idThreshold, file(count), file(fasta), file(taxonomy), file(list) from SUBSAMPLED_NO_LIST.join(MERGED_OTUS) 
@@ -582,6 +583,7 @@ process RareSeqsFilter {
     output:
 	set idThreshold, file("all_rareSeqFilter*.{count_table,fasta,list,taxonomy}") into FOR_DB
 	file("*.summary") into RARE_SEQS_FILTER_TO_COUNT
+	file("sequences_*.fasta")
 
     script:
     """
@@ -593,6 +595,8 @@ process RareSeqsFilter {
     for f in \$(ls all_multipletonsFilter*); do
         mv \$f \${f/multipletonsFilter/rareSeqFilter}
     done
+
+    cp all_rareSeqFilter*.fasta sequences_${idThreshold}.fasta
     """
 }
 
@@ -615,7 +619,7 @@ process Database {
     set val(idThreshold), file(f) from FOR_DB
 
     output:
-    set val(idThreshold), file("sequences_*.fasta"), file("abundance_table_*.shared") into FOR_TREE
+    set val(idThreshold), file("otu_repr_*.fasta"), file("abundance_table_*.shared") into FOR_TREE
     set val(idThreshold), file("abundance_table_*.shared") into FOR_ALPHADIV, FOR_BETADIV
     set val(idThreshold), file("*.database") into FOR_PLOT
     set file("*.relabund"), file("*.taxonomy")
@@ -639,7 +643,7 @@ process Database {
     --idThreshold=${idThreshold} \
     --rename=f
 
-    mv all_otuRepr_${idThreshold}.fasta sequences_${idThreshold}.fasta
+    mv all_otuRepr_${idThreshold}.fasta otu_repr_${idThreshold}.fasta
 
     ${params.script_dir}/mothur.sh \
     --step=postprocessing \
