@@ -1,10 +1,10 @@
 MetaFlow|mics: Nextflow pipelines for metagenomics
 ==============================================
-.. image:: https://travis-ci.org/hawaiidatascience/nextflow_cmaiki.svg?branch=master
-   :target: https://travis-ci.org/hawaiidatascience/nextflow_cmaiki
+.. image:: https://travis-ci.org/hawaiidatascience/metaflowmics.svg?branch=master
+   :target: https://travis-ci.org/hawaiidatascience/metaflowmics
 .. image:: https://readthedocs.org/projects/metagenomics-pipelines/badge/?version=latest
    :target: https://metagenomics-pipelines.readthedocs.io/en/latest/?badge=latest
-			 
+
 Cite (Work in progress)
 -----------------------
 

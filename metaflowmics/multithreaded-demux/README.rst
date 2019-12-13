@@ -1,5 +1,5 @@
 Read demultiplexing
-0;95;0c===================
+===================
 
 Pre-requisites
 --------------

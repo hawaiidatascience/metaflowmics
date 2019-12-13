@@ -37,6 +37,7 @@ def helpMessage() {
 }
 
 // Show help message
+params.help = false
 if (params.help){
     helpMessage()
     exit 0
