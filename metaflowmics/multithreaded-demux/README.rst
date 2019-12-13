@@ -1,5 +1,5 @@
 Read demultiplexing
-===================
+0;95;0c===================
 
 Pre-requisites
 --------------
@@ -71,4 +71,4 @@ The pipeline provides two useful figures. First, we run the `FASTQC <https://www
 
 The second plot shows the sample size distribution (log transformed) which can be used to determine a subsampling threshold later in the analysis (see the :ref:`Subsampling` section):
 
-.. image:: ../../docs/sources/img/subsampling.pdf
+.. image:: ../../docs/source/img/subsampling.pdf
