@@ -11,9 +11,9 @@
 
    self
    getting_started
-   ../../metaflowmics/multithreaded-demux/README
-   ../../metaflowmics/Pipeline-16S/README
-   ../../metaflowmics/Pipeline-ITS/README
+   demux
+   pipeline_16s
+   pipeline_ITS
    advanced_config
    nf_tower
    agave_to_go

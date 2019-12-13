@@ -1,1 +1,1 @@
-.. include:: ../../flowmics/Pipeline-ITS/README.rst
+.. include:: ../../metaflowmics/Pipeline-ITS/README.rst
