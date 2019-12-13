@@ -11,7 +11,6 @@ trace.txt
 *.shared
 *.csv
 *.tsv
-*.pdf
 *.h5
 silva*
 unite*
