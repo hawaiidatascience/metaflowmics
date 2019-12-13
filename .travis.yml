@@ -24,4 +24,4 @@ install:
   - chmod a+x nextflow-19.10.0-all && mv nextflow-19.10.0-all $NXF_HOME/nextflow
 
 script:
-  - cd flowmics && make test CONF=local_test
+  - cd metaflowmics && make test CONF=local_test
