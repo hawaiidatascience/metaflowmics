@@ -12,7 +12,7 @@
    self
    getting_started
    ../../metaflowmics/multithreaded-demux/README
-   ../../mteaflowmics/Pipeline-16S/README
+   ../../metaflowmics/Pipeline-16S/README
    ../../metaflowmics/Pipeline-ITS/README
    advanced_config
    nf_tower
