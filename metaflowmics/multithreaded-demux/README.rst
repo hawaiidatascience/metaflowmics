@@ -66,5 +66,9 @@ Once the mapping is done, we simply move the sequencing read to their correspond
 Figures
 ^^^^^^^
 
-The pipeline provides two useful figures. First, we run the `FASTQC <https://www.bioinformatics.babraham.ac.uk/projects/fastqc/>`_ tool to provide the overall quality distribution at each read position, therefore providing the necessary information to choose the right truncation parameters when quality filtering the reads.
-The second plot shows the sample size distribution (log transformed) which can be used to determine a subsampling threshold later in the analysis (see the :ref:`Subsampling` section). 
+The pipeline provides two useful figures. First, we run the `FASTQC <https://www.bioinformatics.babraham.ac.uk/projects/fastqc/>`_ tool to provide the overall quality distribution at each read position, therefore providing the necessary information to choose the right truncation parameters when quality filtering the reads:
+
+
+The second plot shows the sample size distribution (log transformed) which can be used to determine a subsampling threshold later in the analysis (see the :ref:`Subsampling` section):
+
+.. image:: ../../docs/sources/img/subsampling.pdf

@@ -49,7 +49,7 @@ def plot(counts, display=False):
     if display:
         plt.show()
     else:
-        plt.savefig('sample_sizes.png', dpi=200)    
+        plt.savefig('sample_sizes.pdf', transparent=True)
 
 def main():
     '''
