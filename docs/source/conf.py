@@ -17,7 +17,7 @@
 
 # -- Project information -----------------------------------------------------
 
-project = 'Flow|mics'
+project = 'MetaFlow|mics'
 copyright = '2019, Cedric Arisdakessian'
 author = 'Cedric Arisdakessian'
 

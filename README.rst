@@ -1,4 +1,4 @@
-Flow|mics: Nextflow pipelines for metagenomics
+MetaFlow|mics: Nextflow pipelines for metagenomics
 ==============================================
 .. image:: https://travis-ci.org/hawaiidatascience/nextflow_cmaiki.svg?branch=master
    :target: https://travis-ci.org/hawaiidatascience/nextflow_cmaiki
@@ -8,7 +8,7 @@ Flow|mics: Nextflow pipelines for metagenomics
 Cite (Work in progress)
 -----------------------
 
-Flow|mics: Scalable and reproducible nextflow pipelines for the analysis of microbiome marker data
+MetaFlow|mics: Scalable and reproducible nextflow pipelines for the analysis of microbiome marker data
 
 Description
 -----------

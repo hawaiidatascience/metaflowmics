@@ -11,12 +11,12 @@ To download the pipelines, simply clone the repository:
 .. code-block:: bash
 
     git clone https://github.com/hawaiidatascience/nextflow_cmaiki.git
-    cd flowmics/flowmics
+    cd metaflowmics/metaflowmics
 
 Usage
 -----
 
-Each pipeline work the same way. To get the available options, you can display the help using the following command (where <pipeline-name> refers to one of the 3 folders in `flowmics/flowmics`):
+Each pipeline work the same way. To get the available options, you can display the help using the following command (where <pipeline-name> refers to one of the 3 folders in `metaflowmics/metaflowmics`):
 
 .. code-block:: bash
 

@@ -1,4 +1,4 @@
-.. flow|mics documentation master file, created by
+.. MetaFlow|mics documentation master file, created by
    sphinx-quickstart on Sun Dec  8 20:39:09 2019.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
@@ -11,9 +11,9 @@
 
    self
    getting_started
-   ../../flowmics/multithreaded-demux/README
-   ../../flowmics/Pipeline-16S/README
-   ../../flowmics/Pipeline-ITS/README
+   ../../metaflowmics/multithreaded-demux/README
+   ../../mteaflowmics/Pipeline-16S/README
+   ../../metaflowmics/Pipeline-ITS/README
    advanced_config
    nf_tower
    agave_to_go
