@@ -26,7 +26,7 @@ To run the pipeline on your data, simply enter the following command:
 
     nextflow run multithreaded-demux -profile <config> --inputdir "<path_to_reads>"
 
-For more information about the available profiles, see the :ref:`getting_started` section.
+For more information about the available profiles, see the `profiles <https://metagenomics-pipelines.readthedocs.io/en/latest/getting_started.html#configuration-profiles>`_ section.
 
 Demultiplexing steps
 --------------------
@@ -69,10 +69,11 @@ Figures
 The pipeline provides two useful figures. First, we run the `FASTQC <https://www.bioinformatics.babraham.ac.uk/projects/fastqc/>`_ tool to provide the overall quality distribution at each read position, therefore providing the necessary information to choose the right truncation parameters when quality filtering the reads:
 
 
-The second plot shows the sample size distribution (log transformed) which can be used to determine a subsampling threshold later in the analysis (see the :ref:`Subsampling` section):
+The second plot shows the sample size distribution (log transformed) which can be used to determine a subsampling threshold later in the analysis (see the `subsampling <https://metagenomics-pipelines.readthedocs.io/en/latest/pipeline_16S.html#subsampling>`_ section):
 
 .. figure:: ../../docs/source/img/subsampling.png
    :scale: 50 %
+   :align: center
    :alt: sample size distribution
 
    Distribution of log sample sizes

@@ -12,7 +12,7 @@
    self
    getting_started
    demux
-   pipeline_16s
+   pipeline_16S
    pipeline_ITS
    advanced_config
    nf_tower

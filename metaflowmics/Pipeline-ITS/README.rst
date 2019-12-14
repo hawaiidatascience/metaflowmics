@@ -43,7 +43,7 @@ To run the pipeline on your data, simply enter the following command:
 
 The input reads need to be in the `.fastq` format (preferably gzipped) in a single folder. Reads can be single or paired-end. In the latter case, the glob pattern needs to group the R1 and R2 reads using the syntax "\*R{1,2}\*", and the flag `--pairedEnd` must be set.
 	
-For more information about the available profiles, see the :ref:`getting_started` section.
+For more information about the available profiles, see the `profiles <https://metagenomics-pipelines.readthedocs.io/en/latest/getting_started.html#configuration-profiles>`_ section.
 
 ITS pipeline steps
 ------------------
@@ -75,7 +75,7 @@ Co-occurrence pattern correction (LULU)
 A daughter OTU is merged with its parent if:
 
 * they share at least *<97%>* similarity
-* *<min>* (:math:`\frac{\text{daughter_abundance}}{\text{parent_abundance}}`) < *<1>*
+* daughter_abundance < parent_abundance in all samples (*<min>*) or in average (*avg*).
 * the relative co-occurence (proportion of time the daughter is present when the parent is present) must be at least *<1>*
 
 Consensus classification (VSEARCH)
