@@ -59,7 +59,7 @@ After running the pipeline, the results are stored in the output directory you c
 	- The OTU sequences: A fasta formatted file with the representative sequences for each OTU.
 	Additionally, you will find a mothur "database" file that combines all of these 3 files.
   - The subfolder `raw` contains the same information as `main`, before the subsampling, taxa filtering, multipletons filter and lulu steps.
-  - The subfolder `postprocessing` provides alpha and beta diversity metrics. For more details, see :ref:`16S postprocessing <16Spostproc>`
+  - The subfolder `postprocessing` provides alpha and beta diversity metrics. For more details, see `16S postprocessing <https://metagenomics-pipelines.readthedocs.io/en/latest/pipeline_16S.html#postprocessing>`_
 - The folder `Misc` is mainly for troubleshooting purposes. It groups all of the intermediate results from the pipeline, one sub-folder per step. 
 
 16S pipeline steps
