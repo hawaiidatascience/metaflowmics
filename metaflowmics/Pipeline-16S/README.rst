@@ -51,20 +51,20 @@ Outputs
 
 After running the pipeline, the results are stored in the output directory you chose (default is 16S_pipeline_outputs). The results are organized the following way:
 
-- The folder `Results` groups all of pipeline final outputs:
+- The folder `Results/` groups all of pipeline final outputs:
 
-  - The subfolder `figures` provides useful insights into the data outputs.
-  - The subfolder `main` contains the pipeline data that is ready for further analysis, and includes:
+  - The subfolder `figures/` provides useful insights into the data outputs.
+  - The subfolder `main/` contains the pipeline data that is ready for further analysis, and includes:
 
 	- The abundance table: A (sample x OTU) abundance table (tsv formatted) with the `.shared` extension.
 	- The taxonomy table: A (OTU x 6 taxonomic tanks) table (tsv formatted) with the `.taxonomy` extension.
 	- The OTU sequences: A fasta formatted file with the representative sequences for each OTU.
 	- A mothur "database" file that combines all of the previous 3 files.
 
-  - The subfolder `raw` contains the same information as `main`, before the subsampling, taxa filtering, multipletons filter and lulu steps.
-  - The subfolder `postprocessing` provides alpha and beta diversity metrics. For more details, see `16S postprocessing. <https://metagenomics-pipelines.readthedocs.io/en/latest/pipeline_16S.html#postprocessing>`_
+  - The subfolder `raw/` contains the same information as `main`, before the subsampling, taxa filtering, multipletons filter and lulu steps.
+  - The subfolder `postprocessing/` provides alpha and beta diversity metrics. For more details, see `16S postprocessing. <https://metagenomics-pipelines.readthedocs.io/en/latest/pipeline_16S.html#postprocessing>`_
 
-- The folder `Misc` is mainly for troubleshooting purposes. It groups all of the intermediate results from the pipeline, one sub-folder per step. 
+- The folder `Misc/` is mainly for troubleshooting purposes. It groups all of the intermediate results from the pipeline, one sub-folder per step. 
 
 16S pipeline steps
 ------------------
@@ -76,7 +76,7 @@ Inputs
 Reads need to be demultiplexed and gzipped
 
 Read filtering and denoising (Dada2)
-^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Reads are truncated at positions *<220> / <190>* or at the first occurrence of a base of quality *<2>* or lower. Reads matching the phiX genome are *<discarded>*, as well as reads with an expected number of errrors above *<3>*. Reads shorter than *<20bp>* are filtered out. Finally, samples with less than *<50>* reads are discarded.
 Error models and denoising are then performed on each sample independently
