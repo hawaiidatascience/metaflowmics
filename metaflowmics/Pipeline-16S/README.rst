@@ -45,7 +45,23 @@ To run the pipeline on your data, simply enter the following command:
 The input reads need to be in the `.fastq` format (preferably gzipped) in a single folder. Reads can be single or paired-end. In the former case, the flag `--singleEnd` must be set and in the latter case, the glob pattern needs to group the R1 and R2 reads using the syntax `*R{1,2}*`. 
 	
 For more information about the available profiles, see the `profiles <https://metagenomics-pipelines.readthedocs.io/en/latest/getting_started.html#configuration-profiles>`_ section.
-	
+
+Outputs
+-------
+
+After running the pipeline, the results are stored in the output directory you chose (default is 16S_pipeline_outputs). The results are organized the following way:
+
+- The folder `Results` groups all of pipeline final outputs:
+  - The subfolder `figures` provides useful insights into the data outputs.
+  - The subfolder `main` contains the pipeline data that is ready for further analysis, and includes:
+	- The abundance table: A (sample x OTU) abundance table (tsv formatted) with the `.shared` extension
+	- The taxonomy table: A (OTU x 6 taxonomic tanks) table (tsv formatted) with the `.taxonomy` extension
+	- The OTU sequences: A fasta formatted file with the representative sequences for each OTU.
+	Additionally, you will find a mothur "database" file that combines all of these 3 files.
+  - The subfolder `raw` contains the same information as `main`, before the subsampling, taxa filtering, multipletons filter and lulu steps.
+  - The subfolder `postprocessing` provides alpha and beta diversity metrics. For more details, see :ref:`16S postprocessing <16Spostproc>`
+- The folder `Misc` is mainly for troubleshooting purposes. It groups all of the intermediate results from the pipeline, one sub-folder per step. 
+
 16S pipeline steps
 ------------------
 
@@ -63,7 +79,7 @@ Error models and denoising are then performed on each sample independently
 
 Read merging (Dada2)
 ^^^^^^^^^^^^^^^^^^^^
-Paired reads are merged if they overlap by at least *<20bp>* with *<2bp>* mismatch at most.
+Paired reads are merged if they overlap by at least *<20bp>* with *<1bp>* mismatch at most.
 
 Contig filtering (Mothur)
 ^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -94,7 +110,7 @@ Co-occurrence pattern correction
 A daughter OTU is merged with its parent if:
 
 * they share at least *<97%>* similarity
-* daughter_abundance < parent_abundance in all samples (*<min>*) or in average (*avg*).
+* `daughter_abundance < parent_abundance`: in all samples (*<"min">*) or in average ("avg").
 * the relative co-occurence (proportion of time the daughter is present when the parent is present) must be at least *<1>*
 
 Rare sequences filter
@@ -116,6 +132,8 @@ Summaries
   #. scatter plot of OTUs abundance vs prevalence for proteobacteria, one facet per class.
   #. barplot of relative taxonomy composition at Phylum level for each sample. In a metadata table is provided, this plots represents the composition for each level of the provided factor.
 
+.. _16Spostproc:
+	 
 Postprocessing
 ^^^^^^^^^^^^^^
 For each clustering thresho, we compute alpha and beta diversity metrics (see `mothur calculators <https://www.mothur.org/wiki/Calculators>`_ for a full description of these acronyms)
