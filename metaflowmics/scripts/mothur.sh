@@ -58,7 +58,9 @@ do
 
     --rename=*)
 	rename="${arg#*=}" ;;
-	
+
+    --uf_mode=*)
+	uf_mode="${arg#*=}" ;;	
     *)
 	echo "$arg: Unknown option";;    
     esac
@@ -162,6 +164,11 @@ elif [ $step == "postprocessing" ]; then
 	cmd=("get.relabund(shared=${shared}.shared)"
 		 "create.database(shared=${shared}.shared,label=${idThreshold},repfasta=${fasta}.fasta,count=${count}.count_table,constaxonomy=${tax}.taxonomy)")
 	outputs_mothur=("${shared}.relabund")
+
+elif [ $step == "unifrac" ]; then
+	cmd=("clearcut(fasta=${fasta}.fasta, DNA=T)"
+		 "count.seqs(shared=${shared}.shared)"
+		 "unifrac.${uf_mode}(tree=current,count=current,distance=lt)")
 	
 elif [ $step == "alphaDiversity" ]; then
 	cmd=("summary.single(shared=${shared}.shared,calc=nseqs-sobs-chao-shannon-shannoneven)")

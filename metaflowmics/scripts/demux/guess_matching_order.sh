@@ -3,6 +3,8 @@
 meta=$1
 matching=$2
 rc=$3
+fwd=$4
+rev=$5
 fastqs=($4 $5)
 
 if [ "$rc" == true ]; then
@@ -15,7 +17,7 @@ fi
 
 if [ ${#fastqs[@]} -eq 2 ]; then 
 
-	[ ${3##*.} == 'gz' ] && z='z' || z=''
+	[ ${4##*.} == 'gz' ] && z='z' || z=''
 
 	if [ ${matching} == "auto" ]; then
 		symbol=$(${z}cat ${fwd} | head -c 2)

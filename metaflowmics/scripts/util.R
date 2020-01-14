@@ -136,6 +136,22 @@ get_counts <- function(attribute) {
     return(get_counts_attr)
 }
 
+write_merge_summary <- function(merged, key, samples) {
+    ## Get a summary of matches
+    data <- lapply(merged, function(df) table(df[[key]]))
+    indices <- sort(unique(unlist(lapply(data, function(x) as.numeric(names(x))))))
+
+    summary <- as.data.frame(matrix(0, nrow=length(data), ncol=1+length(indices)))
+    summary[, 1] <- samples
+    colnames(summary) <- c('sample', indices)
+
+    for (i in 1:nrow(summary)) {
+        summary[i, names(data[[i]])] <- as.numeric(data[[i]])
+    }
+
+    write.table(summary, sprintf("%s_summary.tsv", key), sep='\t', quote=FALSE, row.names=FALSE)
+}
+
 merge_reads <- function(minOverlap, maxMismatch)
 {
     derepF <- list.files(path=".",pattern="*_R1.derep.RDS")
@@ -147,13 +163,22 @@ merge_reads <- function(minOverlap, maxMismatch)
                    derepF=lapply(derepF, readRDS),
                    dadaR=lapply(denoisedR, readRDS),
                    derepR=lapply(derepR, readRDS))
-    params <- list(minOverlap=minOverlap,maxMismatch=maxMismatch)
+    params <- list(minOverlap=minOverlap,maxMismatch=maxMismatch,returnReject=TRUE)
 
     merged <- do.call(mergePairs,append(inputs,params))
 
+    ## Get a summary of matches
+    samples <- unname(sapply(denoisedF, function(x) gsub("_R1_dada.RDS", "", x)))
+    write_merge_summary(merged, 'nmatch', samples)
+    write_merge_summary(merged, 'nmismatch', samples)
+
+    ## Save data
     saveRDS(merged,"reads_merged.RDS")
 
-    return(merged)
+    ## Removes the reads not matching the merging criteria
+    merged.accepted <- lapply(merged, function(df) df[df$accept,])
+
+    return(merged.accepted)
 }
 
 make_summary <- function(steps, patterns, attributes) {

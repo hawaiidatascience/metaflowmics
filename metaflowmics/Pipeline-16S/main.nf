@@ -138,7 +138,7 @@ process FilterAndTrim {
 
     rmphix <- !("${params.keepPhix}" == "true")
 
-    filter_reads("${pairId}", fwd, rev=rev, minLen=${params.minLength}, maxEE=${params.maxEE}, truncLen=c(${params.truncLen}),rm.phix=rmphix, truncQ=${params.truncQ})
+    filter_reads("${pairId}", fwd, rev=rev, minLen=c(${params.minLength}), maxEE=c(${params.maxEE}), truncLen=c(${params.truncLen}),rm.phix=rmphix, truncQ=c(${params.truncQ}))
     """
 }
 
@@ -230,8 +230,9 @@ process Esv {
 
     output:
     file("all_esv.{count_table,fasta}")  into DEREP_CONTIGS
-    file("*.RDS")
     file("count_summary.tsv") into COUNT_SUMMARIES
+    file("*.RDS")
+    file("{nmatch,nmismatch}_summary.tsv")
 
     script:
     """
@@ -583,7 +584,7 @@ process RareSeqsFilter {
     output:
 	set idThreshold, file("all_rareSeqFilter*.{count_table,fasta,list,taxonomy}") into FOR_DB
 	file("*.summary") into RARE_SEQS_FILTER_TO_COUNT
-	file("sequences_*.fasta")
+	file("sequences_*.fasta") into FOR_SEQ_COUNT
 
     script:
     """
@@ -619,7 +620,7 @@ process Database {
     set val(idThreshold), file(f) from FOR_DB
 
     output:
-    set val(idThreshold), file("otu_repr_*.fasta"), file("abundance_table_*.shared") into FOR_TREE
+    set val(idThreshold), file("otu_repr_*.fasta"), file("abundance_table_*.shared") into FOR_POSTPROC
     set val(idThreshold), file("abundance_table_*.shared") into FOR_ALPHADIV, FOR_BETADIV
     set val(idThreshold), file("*.database") into FOR_PLOT
     set file("*.relabund"), file("*.taxonomy")
@@ -650,6 +651,10 @@ process Database {
     --idThreshold=${idThreshold}
     """
 }
+
+(FOR_FASTTREE, FOR_CLEARCUT) = ( FOR_SEQ_COUNT.first().map{it.countFasta() < 2000}
+								? [Channel.empty(), FOR_POSTPROC ]
+								: [FOR_POSTPROC, Channel.empty()] )
 
 /*
  *
@@ -748,7 +753,7 @@ process FastTree {
     publishDir params.outdir+"Results/postprocessing/unifrac", mode: "copy", pattern: "*.tre"
 
     input:
-    set val(idThreshold), file(fasta), file(shared) from FOR_TREE
+    set val(idThreshold), file(fasta), file(shared) from FOR_FASTTREE
 
     output:
     set val(idThreshold), file(shared), file("*.tre") into CLEARCUT_TREE
@@ -760,7 +765,7 @@ process FastTree {
     """
 }
 
-process UnifracDist {
+process UnifracDistPhylo {
     tag { "Unifrac_${idThreshold}_${mode}" }
     label "high_computation"
     label "r_script"
@@ -781,6 +786,29 @@ process UnifracDist {
     calculate_unifrac("${tree}", "${shared}", method="${mode}", otu_thresh=${idThreshold}, cores=${task.cpus})
     """
 }
+
+process UnifracDistMothur {
+    tag { "Unifrac_${idThreshold}_${mode}" }
+    label "high_computation"
+    label "r_script"
+    publishDir params.outdir+"Results/postprocessing/unifrac", mode: "copy", pattern: "*.{tre,summary}"
+
+    input:
+    set val(idThreshold), file(fasta), file(shared) from FOR_CLEARCUT
+	each mode from ('weighted', 'unweighted')
+
+    output:
+    file("")
+
+    script:
+    """
+    ${params.script_dir}/mothur.sh \
+    --step=unifrac \
+    --idThreshold=${idThreshold} \
+    --uf_mode=${mode}
+    """
+}
+
 
 process AlphaDiv {
     tag { "alphaDiv_${idThreshold}" }

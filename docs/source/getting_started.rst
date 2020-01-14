@@ -10,7 +10,7 @@ To download the pipelines, simply clone the repository:
 
 .. code-block:: bash
 
-    git clone https://github.com/hawaiidatascience/nextflow_cmaiki.git
+    git clone https://github.com/hawaiidatascience/metaflowmics
     cd metaflowmics/metaflowmics
 
 Usage

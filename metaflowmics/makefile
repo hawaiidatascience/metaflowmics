@@ -20,8 +20,8 @@ clean:
 	rm -rf ITS-pipeline_outputs
 	rm -rf 16S-pipeline_outputs
 
-dockerfile:
-	sudo docker build -f pipeline-env.dockerfile -t nakor/pipeline-env scripts/
+container:
+	sudo docker build -f ../pipeline-env.dockerfile -t nakor/pipeline-env scripts/
 	sudo docker push nakor/pipeline-env
 
 gcp_wrapper_16S:

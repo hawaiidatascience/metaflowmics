@@ -198,7 +198,13 @@ def biclustering(loader, top=100, cols=['Phylum', 'Class', 'Order'], show=False)
     matrix.index = np.sum(taxa, axis=1)
 
     sns.set(font_scale=0.5)
-    g = sns.clustermap(matrix, figsize=(20, 15), row_colors=None, z_score=0)
+
+    try:
+        g = sns.clustermap(matrix, figsize=(20, 15), row_colors=None, z_score=0)
+    except FloatingPointError:
+        print('Could not compute dissimilarity matrix.')
+        return
+
     plt.subplots_adjust(bottom=0.2, right=0.7)
 
     ax = g.ax_heatmap
