@@ -213,7 +213,7 @@ process WriteSampleFastq {
     """
 }
 
-DEMUX_SEQ_SPLIT.flatten().collectFile(storeDir: "${params.outdir}/reads").set{DEMUX_SEQ}
+DEMUX_SEQ_SPLIT.flatten().collectFile(storeDir: "${params.outdir}/reads", sort: true).set{DEMUX_SEQ}
 
 process Gzip {
 	tag { "Gzip" }
