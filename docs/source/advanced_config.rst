@@ -44,6 +44,7 @@ HPCC require a few more specific parameters to be set:
 	  module load path/to/singularity/module
 	  mkdir -p ~/.singularity_images.cache
 	  mkdir -p /tmp/sg
+	  export SINGULARITY_CACHEDIR=/tmp/sg
 	  singularity pull --docker-login /tmp/sg/nakor-pipeline-env.img docker://nakor/pipeline-env
 	  singularity pull --docker-login /tmp/sg/alexcoppe-fastx.img docker://alexcoppe/fastx
 	  singularity pull --docker-login /tmp/sg/pegi3s-fasttree.img docker://pegi3s/fasttree
