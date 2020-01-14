@@ -25,6 +25,12 @@ def parse_args():
 
     return args
 
+def describe_table(data, axis=0, min_abd=0):
+    abundance = data.sum(axis=axis)
+    prevalence = (data > min_abd).sum(axis=axis)
+
+    return (abundance, prevalence)
+
 class Loader:
     '''
     Data loader object to facilitate loading and organizing data
@@ -126,33 +132,37 @@ class Loader:
         
         self.fasta = sequences
 
-    def set_prevalence(self, min_abund=0):
+    def group_by_ranks(self, ranks=['Order', 'Family', 'Genus']):
         '''
-        Computes prevalence
+        Aggregate abundance table by genus name
         '''
-        
-        self.load('db')
-        self.prevalence = (self.shared > min_abund).mean(axis=0)
 
-    def set_abundance(self):
-        '''
-        Computes abundance of each OTU
-        '''
-        
-        self.load('shared')
-        self.abundance = self.shared.sum(axis=0)
-        
+        rank_label_widths = self.tax[ranks].T.applymap(len).max(axis=1)
+        rank_labels = self.tax.loc[:, ranks]
+
+        for rank in ranks:
+            rank_labels[rank] = rank_labels[rank].apply(
+                lambda x: '{0:>{1}}'.format(x, rank_label_widths.loc[rank])
+            )
+
+        rank_labels = pd.Series({otu: ' '.join(x) for (otu, x) in rank_labels.iterrows()})
+
+        shared_by_genus = self.shared.T.groupby(rank_labels).agg(sum)
+
+        return shared_by_genus
 
 def phylum_scatter(loader, rank='Phylum', select=None, min_group_size=5, show=False):
     '''
     Abundance vs Prevalence scatter plot for each OTU. 
     Each facet corresponds to one of the possible ranks at the given level (default is Phylum)
     '''
+
+    (abundance, prevalence) = describe_table(loader.shared, axis=0)
     
     summaries = pd.DataFrame(
-        {'Prevalence': loader.prevalence,
-         'Abundance': loader.abundance,
-         rank: loader.tax.loc[loader.abundance.index, rank]})
+        {'Prevalence': prevalence,
+         'Abundance': abundance,
+         rank: loader.tax.loc[abundance.index, rank]})
 
     if select is not None:
         rank_s, label = select
@@ -178,24 +188,18 @@ def phylum_scatter(loader, rank='Phylum', select=None, min_group_size=5, show=Fa
     if show:
         plt.show()
 
-def biclustering(loader, top=100, cols=['Phylum', 'Class', 'Order'], show=False):
+def biclustering(loader, top=100, cols=['Order', 'Family', 'Genus'], show=False):
     '''
     Biclustering of sample x OTU abundance matrix (z-scores). Display {cols} on the right side.
     '''
 
-    sorted_otus = (loader.abundance * loader.prevalence).sort_values(ascending=False).index
-    selected_otus = sorted_otus[loader.shared.std() > 0][:top]
+    shared_grouped = loader.group_by_ranks(ranks=cols)
+    (abundance, prevalence) = describe_table(shared_grouped, axis=1)
 
-    matrix = loader.shared.T.loc[selected_otus]
-    taxa = loader.tax.loc[selected_otus, cols]
-    slen = taxa.applymap(len).max()
+    sorted_otus = (abundance * prevalence).sort_values(ascending=False).index
+    selected_taxa = sorted_otus[shared_grouped.std(axis=1) > 0][:top]
 
-    for i, col in enumerate(cols):
-        taxa[col] = taxa[col].str.pad(slen[col]+2, side='right', fillchar=' ')
-        formatter = '{:' + str(slen[col]) + '}'
-        cols[i] = formatter.format(col)
-
-    matrix.index = np.sum(taxa, axis=1)
+    matrix = shared_grouped.loc[selected_taxa]
 
     sns.set(font_scale=0.5)
 
@@ -208,16 +212,15 @@ def biclustering(loader, top=100, cols=['Phylum', 'Class', 'Order'], show=False)
     plt.subplots_adjust(bottom=0.2, right=0.7)
 
     ax = g.ax_heatmap
-    right_clabel_pos = ax.get_xmajorticklabels()[-1]._x
-
-    ax.text(5 + right_clabel_pos, 0, '  '.join(cols), fontsize=5, fontweight='bold')
-
+    ax.set_xticklabels(ax.get_xticklabels(), rotation=90)
+    ax.set_title('Biclustering heatmap of top {} genuses in dataset'.format(top), fontsize=12)
+    
     plt.savefig("biclustering_{}.pdf".format(loader.thresh), transparent=True)
 
     if show:
         plt.show()
 
-def stacked_bars(loader, level='Phylum', factors=None, norm=True, n_top=-1, out_prefix='bars'):
+def stacked_bars(loader, level='Phylum', factors=None, norm=True, n_top=-1, out_prefix='bars', show=False):
     '''
     Stacked bar graph showing the levels (default is Phylum).
     - x-axis is factors[0] (or sample id if empty)
@@ -251,7 +254,7 @@ def stacked_bars(loader, level='Phylum', factors=None, norm=True, n_top=-1, out_
         print('No samples with all metadata. Aborting')
         return
 
-    plot_prms = {}
+    plot_prms = {'height': 4}
     if len(factors) >= 2:
         plot_prms['row'] = factors[1]
     if len(factors) == 3:
@@ -265,8 +268,14 @@ def stacked_bars(loader, level='Phylum', factors=None, norm=True, n_top=-1, out_
     g = sns.FacetGrid(data=shared_by_tax, sharey=False, **plot_prms)
     g.map(stacked_single, factors[0], 'value', level,
           palette=palette, x_values=sorted(shared_by_tax[factors[0]].unique()))
+    g.add_legend()
+    g.set(ylabel='{} proportions in sample'.format(level))
+    g.set_xticklabels(rotation=90)
 
-    plt.savefig(f'{out_prefix}_stacked_bars.pdf', transparent=True)    
+    plt.savefig(f'{out_prefix}_stacked_bars.pdf', transparent=True)
+
+    if show:
+        plt.show()
 
 def stacked_single(x, y, hue, palette=None, x_values=None, **kwargs):
     '''
@@ -279,14 +288,13 @@ def stacked_single(x, y, hue, palette=None, x_values=None, **kwargs):
     df.columns = df.columns.get_level_values('hue')
 
     prev_bars = np.zeros(df.shape[0])
-    width = 5 / len(x_values)
+    width = 5 // len(x_values)
 
     for (label, bar) in df.T.iterrows():
         ax.bar(bar.index, bar.values, color=palette[label],
                edgecolor='k', width=width, linewidth=0.2,
                bottom=prev_bars, label=label)
-        prev_bars += bar.values
-    
+        prev_bars += bar.values    
     
 def main():
     '''
@@ -299,15 +307,12 @@ def main():
     data_loader.load('db')
     data_loader.load('meta')
     
-    data_loader.set_prevalence()
-    data_loader.set_abundance()
-
-    biclustering(data_loader, show=args.show)
-    phylum_scatter(data_loader, show=args.show)
-    phylum_scatter(data_loader, rank='Class', select=('Phylum', 'Proteobacteria'), show=args.show)
+    # biclustering(data_loader, show=args.show)
+    # phylum_scatter(data_loader, show=args.show)
+    # phylum_scatter(data_loader, rank='Class', select=('Phylum', 'Proteobacteria'), show=args.show)
 
     if not args.skip_meta:
-        stacked_bars(data_loader, level='Phylum', norm=True, n_top=-1, out_prefix='bars')
+        stacked_bars(data_loader, level='Phylum', norm=True, n_top=-1, out_prefix='bars', show=args.show)
     
 if __name__ == '__main__':
     main()

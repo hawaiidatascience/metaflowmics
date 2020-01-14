@@ -232,7 +232,7 @@ process Esv {
     file("all_esv.{count_table,fasta}")  into DEREP_CONTIGS
     file("count_summary.tsv") into COUNT_SUMMARIES
     file("*.RDS")
-    file("{nmatch,nmismatch}_summary.tsv")
+    file("{nmatch,nmismatch}_summary.tsv") optional true
 
     script:
     """
@@ -576,7 +576,7 @@ process RareSeqsFilter {
     label "low_computation"
     label "mothur_script"
     publishDir params.outdir+"Misc/13-RareSeqsFilter", mode:"copy", pattern:"*.shared"
-    publishDir params.outdir+"Misc/13-RareSeqsFilter", mode:"copy", pattern:"sequences_*.fasta"
+    publishDir params.outdir+"Results/main/details", mode:"copy", pattern:"sequences_*.fasta"
 
     input:
 	set idThreshold, file(count), file(fasta), file(taxonomy), file(list) from SUBSAMPLED_NO_LIST.join(MERGED_OTUS) 
@@ -652,7 +652,7 @@ process Database {
     """
 }
 
-(FOR_FASTTREE, FOR_CLEARCUT) = ( FOR_SEQ_COUNT.first().map{it.countFasta() < 2000}
+(FOR_FASTTREE, FOR_CLEARCUT) = ( FOR_SEQ_COUNT.first().map{it.countFasta() < 5000}
 								? [Channel.empty(), FOR_POSTPROC ]
 								: [FOR_POSTPROC, Channel.empty()] )
 
@@ -679,7 +679,7 @@ process SummaryPlot {
     script:
     """
     python3 ${params.script_dir}/visualization.py \
-        --thresh ${idThreshold} \$([ "${params.meta}" == '' ] && echo "" || echo "--meta ${params.meta}")
+        --thresh ${idThreshold} \$([ "${params.meta}" == "" ] && echo "" || echo "--meta ${params.meta}")
     """
 }
 
@@ -740,6 +740,7 @@ process SummaryFile {
     write_summary(steps,counts,clustering_thresholds)
     """
 }
+
 /*
  *
  * Generates some results with mothur
