@@ -163,7 +163,7 @@ elif [ $step == "abundanceTable" ]; then
 elif [ $step == "postprocessing" ]; then
 	cmd=("get.relabund(shared=${shared}.shared)"
 		 "create.database(shared=${shared}.shared,label=${idThreshold},repfasta=${fasta}.fasta,count=${count}.count_table,constaxonomy=${tax}.taxonomy)"
-		 "make.biom(shared=${shared.shared},constaxonomy=${tax}.taxonomy)")
+		 "make.biom(shared=${shared}.shared,constaxonomy=${tax}.taxonomy)")
 	outputs_mothur=("${shared}.relabund"
 				    "${shared}.${mothurThresh}.biom")
 
