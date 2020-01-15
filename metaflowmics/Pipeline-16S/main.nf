@@ -642,7 +642,7 @@ process Database {
     ${params.script_dir}/mothur.sh \
     --step=otuRepr \
     --idThreshold=${idThreshold} \
-    --rename=f
+    --rename=t
 
     mv all_otuRepr_${idThreshold}.fasta otu_repr_${idThreshold}.fasta
 
@@ -792,14 +792,15 @@ process UnifracDistMothur {
     tag { "Unifrac_${idThreshold}_${mode}" }
     label "high_computation"
     label "r_script"
-    publishDir params.outdir+"Results/postprocessing/unifrac", mode: "copy", pattern: "*.{tre,summary}"
+    publishDir params.outdir+"Results/postprocessing/unifrac", mode: "copy", pattern: "*{.tre,summary}"
 
     input:
     set val(idThreshold), file(fasta), file(shared) from FOR_CLEARCUT
 	each mode from ('weighted', 'unweighted')
 
     output:
-    file("")
+    file("*.tre")
+	file("*summary")
 
     script:
     """

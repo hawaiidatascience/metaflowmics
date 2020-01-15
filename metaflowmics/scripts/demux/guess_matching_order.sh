@@ -7,12 +7,12 @@ fwd=$4
 rev=$5
 fastqs=($4 $5)
 
+sed -e 's/\r//g' ${meta} > metadata.csv
+
 if [ "$rc" == true ]; then
-	cat ${meta} | rev | cut -d, -f1 | tr "ATGC" "TACG" > rev_idx_rc.csv
-	cat ${meta} | rev | cut -d, -f2- | rev > samp_idx1.csv
-	paste -d, samp_idx1.csv rev_idx_rc.csv > metadata.csv
-else
-	cp ${meta} metadata.csv
+	cat metadata.csv | rev | cut -d, -f1 | tr "ATGC" "TACG" > rev_idx_rc.csv
+	cat metadata.csv | rev | cut -d, -f2- | rev > samp_idx1.csv
+	paste -d, samp_idx1.csv rev_idx_rc.csv | sed -e 's/\r//g' > metadata.csv
 fi
 
 if [ ${#fastqs[@]} -eq 2 ]; then 

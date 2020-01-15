@@ -7,10 +7,6 @@ import h5py
 from sklearn.isotonic import IsotonicRegression
 
 import matplotlib.pyplot as plt
-from matplotlib import rc
-
-rc('font',**{'family':'sans-serif','sans-serif':['Helvetica']})
-rc('text')
 
 NUCLS = list('ACGTN')
 MAPPING_BASE5 = str.maketrans(''.join(NUCLS), '01234')
