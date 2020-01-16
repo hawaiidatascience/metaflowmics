@@ -160,7 +160,8 @@ process IndexMapping {
     tag { "IndexMapping_${split}" }
     publishDir "${params.outdir}/sample_idx_mapping", mode: "copy", pattern: "*.tsv"
     label "python_script"
-    label "medium_computation"
+    label "high_computation"
+
 	stageInMode "copy"
     
     input:

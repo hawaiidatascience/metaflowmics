@@ -82,10 +82,14 @@ def compute_transition_matrix(fastq_data, barcodes, max_dist=2, n_bases_max=1e5,
     mem = {}
     while n_bases < n_bases_max:
 
+        try:
+            (code, intlist, qual) = next(generator)
+        except StopIteration:
+            print('Warning: not enough bases for the error model ({:,}/{:,})'
+                  .format(n_bases, n_bases_max))
+
         if n_bases % 10*bc_len == 0: 
             print("{:,}/{:,}".format(n_bases, n_bases_max), end='\r')
-        
-        (code, intlist, qual) = next(generator)
 
         if code in mem:
             matching_bc = mem[code]
