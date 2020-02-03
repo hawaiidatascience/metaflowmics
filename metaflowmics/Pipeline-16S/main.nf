@@ -42,7 +42,7 @@ def helpMessage() {
                     Default: 95
     --minAlnLen     Minimum alignment length in MSA. Default: 50
     --taxaToFilter  Set of taxa to exclude from the analysis. 
-                    Default: "Bacteria;Proteobacteria;Alphaproteobacteria;Rickettsiales;Mitochondria                    ;-Bacteria;Cyanobacteria;Oxyphotobacteria;Chloroplast;-unknown;"
+                    Default: "Bacteria;Proteobacteria;Alphaproteobacteria;Rickettsiales;Mitochondri                    ;-Bacteria;Cyanobacteria;Oxyphotobacteria;Chloroplast;-unknown;"
     
     [Subsampling]
     --customSubsamplingLevel  User defined subsampling level. Ignored if <= 0
@@ -77,6 +77,45 @@ if (params.help){
     exit 0
 }
 
+def summary = [:]
+summary['database aln'] = params.referenceAln
+summary['database tax'] = params.referenceTax
+summary['single end'] = params.singleEnd
+summary['min reads per sample'] = params.minReads
+summary['min read length'] = params.minLength
+summary['read truncation'] = params.truncLen
+summary['max number of expected errors'] = params.maxEE
+summary['quality truncation'] = params.truncQ
+summary['keep phix genome'] = params.keepPhix
+summary['min overlap for merging'] = params.minOverlap
+summary['max mismatches for merging'] = params.maxMismatch
+summary['Percentile for start/end contig filtering'] = params.criteria
+summary['Minimum contig alignment length against db'] = params.minAlnLen
+summary['Filtered taxa'] = params.taxaToFilter
+summary['Skip subsampling'] = params.skipSubsampling
+if (params.customSubsamplingLevel > 0){
+	summary['Subsampling'] = params.customSubsamplingLevel
+} else if (!params.skipSubsampling){
+	summary['Percentile for automatic subsampling'] = params.subsamplingQuantile * 100
+	summary['Hard threshold for automatic subsampling'] = params.minSubsamplingLevel
+}
+summary['clustering similarity thresholds'] = params.clusteringThresholds
+summary['Min OTU abundace filter'] = params.minAbundance
+summary['Lulu ratio type'] = params.min_ratio_type
+summary['Lulu parent/daughter min similarity'] = params.min_match
+summary['Lulu parent/daughter min abundance ratio'] = params.min_ratio
+summary['Lulu parent/daughter min co-occurrence'] = params.min_rel_cooccurence
+
+file(params.outdir).mkdir()
+summary_handle = file("${params.outdir}/parameters_summary.log")
+summary_handle << summary.collect { k,v -> "${k.padRight(50)}: $v" }.join("\n")
+
+/*
+ *
+ Beginning of the pipeline
+ *
+ */
+
 def clusteringThresholds = params.clusteringThresholds.toString().split(',').collect{it as int}
 
 if ( params.singleEnd ) {
@@ -84,12 +123,6 @@ if ( params.singleEnd ) {
 } else {
     read_path = params.reads
 }
-
-/*
- *
- Beginning of the pipeline
- *
- */
 
 Channel
     .fromFilePairs( read_path, size: params.singleEnd ? 1 : 2 )
@@ -344,7 +377,7 @@ process Clustering {
     label "mothur_script"
     publishDir params.outdir+"Misc/8-Clustering", mode: "copy", pattern: "raw.*"
     publishDir params.outdir+"Results/raw/details", mode: "copy", pattern: "raw*.{shared,fasta,taxonomy}"
-    publishDir params.outdir+"Results/raw", mode: "copy", pattern: "*.database"	
+    publishDir params.outdir+"Results/raw", mode: "copy", pattern: "*.{database,biom}"	
 
     input:
     set file(count), file(fasta), file(tax) from PRE_CLASSIFIED_CONTIGS
@@ -353,7 +386,7 @@ process Clustering {
     output:
 	set val(idThreshold), file(fasta), file(count), file(tax), file("raw_clustering_*.list") into FOR_TAXA_FILTER
     file("raw_*.summary") into CLUSTERING_TO_COUNT
-	file("raw*.{fasta,shared,taxonomy,database}")
+	file("raw*.{fasta,shared,taxonomy,database,biom}")
 
     script:
     """
@@ -612,9 +645,8 @@ process Database {
     tag { "database" }
     label "medium_computation"
     label "mothur_script"
-    publishDir params.outdir+"Results/main/details", mode: "copy", pattern: "*.{taxonomy,shared,fasta}"
-    publishDir params.outdir+"Results/main", mode: "copy", pattern: "*.database"	
-    publishDir params.outdir+"Results/postprocessing", mode: "copy", pattern: "*.relabund"
+    publishDir params.outdir+"Results/main/details", mode: "copy", pattern: "*.{taxonomy,shared,fasta,relabund}"
+    publishDir params.outdir+"Results/main", mode: "copy", pattern: "*.{database,biom}"	
 
     input:
     set val(idThreshold), file(f) from FOR_DB
@@ -622,8 +654,8 @@ process Database {
     output:
     set val(idThreshold), file("otu_repr_*.fasta"), file("abundance_table_*.shared") into FOR_POSTPROC
     set val(idThreshold), file("abundance_table_*.shared") into FOR_ALPHADIV, FOR_BETADIV
-    set val(idThreshold), file("*.database") into FOR_PLOT
-    set file("*.relabund"), file("*.taxonomy")
+    set val(idThreshold), file("*.shared"), file("*.taxonomy") into FOR_PLOT
+    set file("*.relabund"), file("*.taxonomy"), file("*.biom"), file("*.database")
 
     script:
     """
@@ -668,18 +700,17 @@ process SummaryPlot {
     tag { "SummaryPlot.${idThreshold}" }
     label "medium_computation"
     label "python_script"
-    publishDir params.outdir+"Results/figures", mode:"copy", pattern:"*.pdf"
+    publishDir params.outdir+"Results/figures", mode:"copy", pattern:"*.html"
 
     input:
-    set idThreshold, file(db) from FOR_PLOT
+    set idThreshold, file(shared), file(tax) from FOR_PLOT
 
     output:
-    file("*.pdf")
+    file("*.html")
 
     script:
     """
-    python3 ${params.script_dir}/visualization.py \
-        --thresh ${idThreshold} \$([ "${params.meta}" == "" ] && echo "" || echo "--meta ${params.meta}")
+    python3 ${params.script_dir}/bokeh_viz.py --shared ${shared} --tax ${tax} --thresh ${idThreshold}
     """
 }
 
@@ -851,3 +882,4 @@ process BetaDiv {
     --idThreshold=${idThreshold}
     """
 }
+

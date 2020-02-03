@@ -50,7 +50,7 @@ def idx2seq(nb):
     return nucl
 
 def from_h5(filename, field=None):
-    handle = h5py.File(filename)
+    handle = h5py.File(filename, 'r')
     keys = handle.keys()
 
     if field is not None:

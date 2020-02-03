@@ -44,6 +44,32 @@ if (params.help){
     exit 0
 }
 
+def summary = [:]
+summary['database'] = params.uniteDB
+summary['paired end'] = params.pairedEnd
+summary['locus'] = params.locus
+summary['min read quality'] = params.minQuality
+summary['% of bases with {read quality}'] = params.minPercentHighQ
+summary['min read length'] = params.minLen
+summary['min reads per sample'] = params.minReads
+summary['min unique sequence per sample'] = params.minDerep
+summary['clustering similarity thresholds'] = params.clusteringThresholds
+summary['Lulu ratio type'] = params.min_ratio_type
+summary['Lulu parent/daughter min similarity'] = params.min_match
+summary['Lulu parent/daughter min abundance ratio'] = params.min_ratio
+summary['Lulu parent/daughter min co-occurrence'] = params.min_rel_cooccurence
+
+file(params.outdir).mkdir()
+summary_handle = file("${params.outdir}/parameters_summary.log")
+summary_handle << summary.collect { k,v -> "${k.padRight(50)}: $v" }.join("\n")
+
+
+/*
+ *
+ Beginning of the pipeline
+ *
+ */
+
 def clusteringThresholds = params.clusteringThresholds.toString().split(',').collect{it as int}
 
 if ( !params.pairedEnd ) {
@@ -51,12 +77,6 @@ if ( !params.pairedEnd ) {
 } else {
     read_path = params.reads
 }
-
-/*
- *
- Beginning of the pipeline
- *
- */
 
 Channel
     .fromFilePairs( read_path, size: params.pairedEnd ? 2 : 1, flat: true )

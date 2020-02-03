@@ -219,7 +219,7 @@ def main():
 
     transition_h5 = h5py.File('transition_probs.h5', 'w')
     for (orient, val) in fastq_data.items():
-        transition_h5.create_dataset(orient, data=compute_error_models(val, barcodes[orient].unique(), args, orient=orient))
+        transition_h5.create_dataset(orient, data=compute_error_models(val, barcodes[orient].unique(), args, orient=orient), dtype='f4')
     transition_h5.close()
         
 if __name__ == '__main__':

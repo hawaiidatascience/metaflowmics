@@ -43,6 +43,25 @@ if (params.help){
     exit 0
 }
 
+def summary = [:]
+summary['Single barcoded'] = params.singleBarcoded
+summary['Single end'] = params.singleEnd
+summary['Reverse complement the reverse index'] = params.reverseComplement
+summary['Max mismatches with barcode'] = params.max_mismatches
+summary['Nb of bases for error model'] = params.n_bases
+summary['Reads per file (for multithreading)'] = params.n_per_file
+summary['Mapping order between (fwd, rev) indexes and (fwd, rev) barcodes'] = params.matching
+
+file(params.outdir).mkdir()
+summary_handle = file("${params.outdir}/parameters_summary.log")
+summary_handle << summary.collect { k,v -> "${k.padRight(50)}: $v" }.join("\n")
+
+/*
+ *
+ Beginning of the pipeline
+ *
+ */
+
 Channel
     .fromFilePairs("${params.inputdir}/*_R{1,2}*.fastq*", size: params.singleEnd ? 1 : 2, flat: true)
     .ifEmpty { error "Cannot find any sequencing read in ${params.inputdir}/" }
@@ -179,7 +198,7 @@ process IndexMapping {
 
 process SampleSizeDistribution {
     tag { "SampleSizeDistribution" }
-    publishDir params.outdir, mode: "copy", pattern: "*.pdf"
+    publishDir params.outdir, mode: "copy", pattern: "*.{html,csv}"
 
     label "python_script"
     label "medium_computation"
@@ -188,7 +207,8 @@ process SampleSizeDistribution {
 	file f from SAMPLE_COUNTS.collect()
 	
     output:
-    file("*.pdf")
+    file("*.html")
+	file("sample_sizes.csv")
 
     script:
     """

@@ -162,7 +162,7 @@ elif [ $step == "abundanceTable" ]; then
 	
 elif [ $step == "postprocessing" ]; then
 	cmd=("get.relabund(shared=${shared}.shared)"
-		 "create.database(shared=${shared}.shared,label=${idThreshold},repfasta=${fasta}.fasta,count=${count}.count_table,constaxonomy=${tax}.taxonomy)"
+		 "create.database(relabund=current,label=${mothurThresh},repfasta=${fasta}.fasta,count=${count}.count_table,constaxonomy=${tax}.taxonomy)"
 		 "make.biom(shared=${shared}.shared,constaxonomy=${tax}.taxonomy)")
 	outputs_mothur=("${shared}.relabund"
 				    "${shared}.${mothurThresh}.biom")
@@ -225,5 +225,4 @@ done
 if [ -f "${out}.list" ] && [ -f "${out}.count_table" ] && [ ! -f "${out}.shared" ]; then
 	echo "Calculating summary for ${output_renamed} and ${out}.count_table"
 	mothur "#make.shared(list=${out}.list, count=${out}.count_table); summary.single(shared=current, calc=nseqs-sobs)"
-	# python $(dirname $0)/count_summary.py --list ${output_renamed} --count "${out}.count_table"
 fi

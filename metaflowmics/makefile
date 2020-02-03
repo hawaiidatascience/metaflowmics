@@ -23,6 +23,7 @@ clean:
 container:
 	sudo docker build -f ../pipeline-env.dockerfile -t nakor/pipeline-env scripts/
 	sudo docker push nakor/pipeline-env
+	rm -f ~/.singularity_images.cache/nakor-pipeline-env.img
 
 gcp_wrapper_16S:
 	@ make gcp16S NXF_MODE=google GOOGLE_APPLICATION_CREDENTIALS="${HOME}/.gcp_credentials.json"

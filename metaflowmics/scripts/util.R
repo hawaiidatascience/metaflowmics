@@ -336,10 +336,10 @@ lulu_curate <- function(abundanceFile,matchListFile,threshold,min_ratio_type,min
 
 merge_otu_list <- function(list_file, merge_list, otu_thresh=100, cores=1) {
     list <- fast_table_load(list_file, row.label=-1, cores=cores)
-    to_merge <- read.csv(merge_list, sep=' ', row.names=1)[,'parent_id']
+    to_merge <- read.csv(merge_list, sep=' ', row.names=1, as.is=TRUE)
 
     for (daughter in rownames(to_merge)) {
-        parent <- to_merge[daughter]
+        parent <- to_merge[daughter, 'parent_id']
         list[, parent] <- paste(list[, parent], list[, daughter], sep=',')
         list[, daughter] <- NULL
     }
