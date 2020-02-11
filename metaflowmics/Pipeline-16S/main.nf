@@ -510,6 +510,7 @@ process Subsampling {
     output:
     set val(idThreshold), file("all_subsampling*.{count_table,fasta,list,taxonomy}") into SUBSAMPLED_OUT
     file("all_subsampling*.summary") into SUBSAMPLING_TO_COUNT
+	file("all_subsampling*.fasta") into FOR_SEQ_COUNT
 
     script:
     """
@@ -598,45 +599,6 @@ process Lulu {
 
 /*
  *
- * Filter out fasta sequences that LULU merged with the most abundant sequence
- * Remove OTUs with an abundance lower than {minAbundance}
- * Convert the abundance table to .shared format
- *
- */
-
-process RareSeqsFilter {
-    tag { "RareSeqsFilter.${idThreshold}" }
-    label "low_computation"
-    label "mothur_script"
-    publishDir params.outdir+"Misc/13-RareSeqsFilter", mode:"copy", pattern:"*.shared"
-    publishDir params.outdir+"Results/main/details", mode:"copy", pattern:"sequences_*.fasta"
-
-    input:
-	set idThreshold, file(count), file(fasta), file(taxonomy), file(list) from SUBSAMPLED_NO_LIST.join(MERGED_OTUS) 
-
-    output:
-	set idThreshold, file("all_rareSeqFilter*.{count_table,fasta,list,taxonomy}") into FOR_DB
-	file("*.summary") into RARE_SEQS_FILTER_TO_COUNT
-	file("sequences_*.fasta") into FOR_SEQ_COUNT
-
-    script:
-    """
-    ${params.script_dir}/mothur.sh \
-    --step=multipletonsFilter \
-    --idThreshold=${idThreshold} \
-    --minAbundance=${params.minAbundance}
-
-    for f in \$(ls all_multipletonsFilter*); do
-        mv \$f \${f/multipletonsFilter/rareSeqFilter}
-    done
-
-    cp all_rareSeqFilter*.fasta sequences_${idThreshold}.fasta
-    """
-}
-
-
-/*
- *
  * Collect all results into mothur database before moving on
  *
  */
@@ -649,7 +611,7 @@ process Database {
     publishDir params.outdir+"Results/main", mode: "copy", pattern: "*.{database,biom}"	
 
     input:
-    set val(idThreshold), file(f) from FOR_DB
+    set val(idThreshold), file(count), file(fasta), file(tax), file(list) from SUBSAMPLED_NO_LIST.join(MERGED_OTUS)
 
     output:
     set val(idThreshold), file("otu_repr_*.fasta"), file("abundance_table_*.shared") into FOR_POSTPROC
@@ -736,7 +698,6 @@ process SummaryFile {
         .mix(SUBSAMPLING_TO_COUNT)
         .mix(TAXA_FILTER_TO_COUNT)
         .mix(LULU_TO_COUNT)
-        .mix(RARE_SEQS_FILTER_TO_COUNT)
         .collect()
 
     output:
@@ -764,8 +725,7 @@ process SummaryFile {
              ("9-TaxaFilter","all_taxaFilter_*.groups.summary"),
              ("10-MultipletonsFilter","all_multipletonsFilter_*.groups.summary"),
              ("11-Subsampling","all_subsampling_*.groups.summary"),
-             ("12-Lulu","all_lulu_*.csv"),
-             ("13-RareSeqsFilter","all_rareSeqFilter_*.groups.summary")
+             ("12-Lulu","all_lulu_*.csv")
     ]
 
     write_summary(steps,counts,clustering_thresholds)

@@ -62,7 +62,7 @@ def scatter(shared, tax, thresh=100, rank='Phylum'):
 
     plots = []
     for name, otus in otu_groups.iteritems():
-        p = figure(title=name.capitalize(), tooltips=tooltips)
+        p = figure(title=name.capitalize(), tooltips=tooltips, tools=TOOLS)
         p.circle(x="prevalence", y="abundance", size=5, alpha=0.5, hover_color="red", source=data.loc[otus])
         plots.append(p)
 

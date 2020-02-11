@@ -344,6 +344,8 @@ merge_otu_list <- function(list_file, merge_list, otu_thresh=100, cores=1) {
         list[, daughter] <- NULL
     }
 
+    list[, 'numOtus'] <- dim(list)[2] - 2
+
     write.table(list, sprintf('all_lulu_%s.list', otu_thresh), sep='\t', quote=F, row.names=F)
 }
 

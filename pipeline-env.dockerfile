@@ -47,7 +47,7 @@ RUN Rscript -e "remotes::install_github('tobiasgf/lulu')"
 
 RUN apt-get install -y python3 python3-pip
 RUN pip3 install --upgrade pip
-RUN	pip3 install ipython biopython numpy pandas itsxpress matplotlib seaborn h5py scikit-learn fastcluster
+RUN pip3 install ipython biopython numpy pandas itsxpress matplotlib seaborn h5py scikit-learn bokeh scipy fastcluster
 
 #-------------------------------------------------#
 #                   Mothur v1.43                  #
