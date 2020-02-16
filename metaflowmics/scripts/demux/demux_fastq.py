@@ -42,7 +42,7 @@ def main():
     print('Preparing handles.')
     handles = {}
     for sample in demux_info['sample_name'].unique():
-        if sample != '_UNKNOWN_':
+        if not pd.isnull(sample):
             for i, orient in enumerate(read_orient, 1):
                 handles[sample+orient] = open('{}_R{}.fastq'.format(sample, i), 'w')
 
@@ -60,14 +60,14 @@ def main():
 
         sample_assignment = demux_info.loc[ids[0], "sample_name"]
 
-        if sample_assignment == '_UNKNOWN_':
+        if pd.isnull(sample_assignment):
             continue
 
         for orient, seq in zip(read_orient, sequences):
             handles[sample_assignment + orient].write('@{}\n{}\n+\n{}\n'.format(*seq))
 
     for sample in demux_info['sample_name'].unique():
-        if sample != '_UNKNOWN_':
+        if not pd.isnull(sample):
             for orient in read_orient:
                 handles[sample + orient].close()
 

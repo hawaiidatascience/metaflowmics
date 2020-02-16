@@ -92,7 +92,7 @@ def calc_probs(sequences, qualities, error_model, barcodes, max_mismatches=2):
 
     assignments = barcodes.iloc[assignments].reset_index()
     assignments.insert(1, 'mismatches', diffs)
-    assignments.loc[diffs > max_mismatches, 'sample_name'] = "_UNKNOWN_"
+    assignments.loc[diffs > max_mismatches, 'sample_name'] = np.nan
     
     return assignments.values
 
@@ -106,7 +106,7 @@ def format_result(assignments, rids, seq):
     result = np.vstack([rids[None, :], index_string, assignments[:, [0, 1]].T]).T
 
     return pd.DataFrame(result)
-    
+
 def main():
     '''
     '''
@@ -129,9 +129,9 @@ def main():
     sample_sizes = result[result.columns[-2]].astype(str).value_counts()
 
     (
-        sample_sizes[sample_sizes.index != '_UNKNOWN_']
+        sample_sizes[~sample_sizes.index.isnull()]
         .to_csv("sample_counts_{}.csv".format(args.split), header=False)
     )
-    
+
 if __name__ == '__main__':
     main()
