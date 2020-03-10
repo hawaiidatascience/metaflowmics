@@ -51,7 +51,7 @@ def plot_bokeh(counts):
     x_min = int(min(edges))
     x_max = max(4, 1+int(max(edges)))
     
-    p = figure(plot_height=600, plot_width=600,
+    p = figure(plot_height=800, plot_width=800,
                x_range=[x_min, x_max], tools='hover,box_zoom',
                tooltips=[('Size range', '@interval'),
                          ('#Samples in interval', str("@count"))],
@@ -69,8 +69,11 @@ def plot_bokeh(counts):
     
     p.xaxis.ticker = tickers.FixedTicker(ticks=ticks, minor_ticks=minor_ticks)
     p.xaxis.major_label_overrides = {tick: "{:,}".format(int(10**tick)) for tick in ticks}
-
     p.yaxis.minor_tick_line_color = None
+
+    p.axis.major_label_text_font_size = "12pt"
+    p.axis.axis_label_text_font_size = "14pt"
+    p.title.text_font_size = '18pt'
 
     output_file('sample_sizes.html')
     save(p)

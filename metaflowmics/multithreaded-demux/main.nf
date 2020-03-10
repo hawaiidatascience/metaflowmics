@@ -157,7 +157,7 @@ process To_h5 {
 
 process ErrorModel {
     tag { "ErrorModel" }
-    publishDir "${params.outdir}/other", mode: "copy", pattern: "*.{h5,pdf}"
+    publishDir "${params.outdir}/other", mode: "copy", pattern: "*.{h5,html}"
     label "python_script"
     label "high_computation"
     
@@ -167,7 +167,7 @@ process ErrorModel {
 
     output:
     file("transition_probs.h5") into ERROR_MODEL
-	file("*.pdf")
+	file("*.html")
 
     script:
     """
