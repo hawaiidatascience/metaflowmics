@@ -107,7 +107,7 @@ process ExtractITS {
     label "low_computation"
 	label "python_script"
     
-    publishDir params.outdir+"Misc/1-ITSxpress", mode: "copy"
+    publishDir params.outdir+"/Misc/1-ITSxpress", mode: "copy"
     
     input:
         set val(pairId), file(reads) from INPUT_FASTQ_OK    
@@ -142,7 +142,7 @@ process RemoveSmallAndNseqs {
     label "low_computation"        
     label "python_script"
 
-    publishDir params.outdir+"Misc/2-NandSmallSeqsFiltering", mode: "copy"
+    publishDir params.outdir+"/Misc/2-NandSmallSeqsFiltering", mode: "copy"
 
     input:
     set val(pairId), file(itsFile) from ITS_FASTQ
@@ -176,7 +176,7 @@ process QcFilter {
     tag { "filteredITS.${pairId}" }
     label "low_computation"
 
-    publishDir params.outdir+"Misc/3-QualityFiltering", mode: "copy"
+    publishDir params.outdir+"/Misc/3-QualityFiltering", mode: "copy"
 
     input:
     set val(pairId), file(itsFile) from NO_N_FASTQ.filter{ it[1].size() > 0 }
@@ -212,7 +212,7 @@ process Dereplication {
     label "low_computation"        
     label "r_script"
 
-    publishDir params.outdir+"Misc/4-Dereplication", mode: "copy"
+    publishDir params.outdir+"/Misc/4-Dereplication", mode: "copy"
 
     input:
         set val(pairId), file(filtRead) from FILTERED_FASTQ
@@ -243,7 +243,7 @@ process ChimeraRemoval {
     label "low_computation"        
     label "require_vsearch"
 
-    publishDir params.outdir+"Misc/5-ChimeraRemoval", mode: "copy"
+    publishDir params.outdir+"/Misc/5-ChimeraRemoval", mode: "copy"
 
     input:
         set val(pairId),file(derepFa) from DEREP_FASTA.filter{ it[1].size() > 0 }
@@ -275,7 +275,7 @@ process LearnErrors {
     label "medium_computation"
     label "r_script"
     
-    publishDir params.outdir+"Misc/6-Denoising", mode: "copy", pattern: "*{.RDS,.png}"
+    publishDir params.outdir+"/Misc/6-Denoising", mode: "copy", pattern: "*{.RDS,.png}"
     
     input:
         set val(pairId), file(derepRDS), file(sample_nochim) \
@@ -308,7 +308,7 @@ process Denoise {
     label "medium_computation"
     label "r_script"
     
-    publishDir params.outdir+"Misc/6-Denoising", mode: "copy"
+    publishDir params.outdir+"/Misc/6-Denoising", mode: "copy"
 
     input:
         set pairId, file(err), file(nochimera) from ERRORS_AND_DEREP
@@ -334,7 +334,7 @@ process MakeEsvTable {
     label "high_computation"
     label "r_script"
     
-    publishDir params.outdir+"Misc/7-Clustering", mode: "copy"
+    publishDir params.outdir+"/Misc/7-Clustering", mode: "copy"
     
     input:
 	file denoised from DADA_RDS.collect()
@@ -366,7 +366,7 @@ process Clustering {
     label "high_computation"
     label "require_vsearch"
     
-    publishDir params.outdir+"Misc/7-Clustering", mode: "copy"
+    publishDir params.outdir+"/Misc/7-Clustering", mode: "copy"
     
     input:
         each idThreshold from clusteringThresholds.findAll{ it != 100}
@@ -409,7 +409,7 @@ process PreLulu {
     label "high_computation"
     label "require_vsearch"
     
-    publishDir params.outdir+"Misc/8-LULU_correction", mode: "copy"
+    publishDir params.outdir+"/Misc/8-LULU_correction", mode: "copy"
 
     input:
 	set val(idThreshold),file(fasta) from LULU_ALL_SAMPLES
@@ -442,7 +442,7 @@ process Lulu {
     label "medium_computation"
     label "r_script"
     
-    publishDir params.outdir+"Misc/8-LULU_correction", mode: "copy", pattern: "{abundance_table_*.csv}"
+    publishDir params.outdir+"/Misc/8-LULU_correction", mode: "copy", pattern: "{abundance_table_*.csv}"
 
     input:
 	set val(idThreshold),file(matchlist),file(table) from MATCH_LISTS.join(ABUNDANCE_TABLES)
@@ -472,7 +472,7 @@ process ExtractFastaLulu {
     label "high_computation"
     label "python_script"
 
-    publishDir params.outdir+"Results", mode: "copy", pattern: "*.fasta"    
+    publishDir params.outdir+"/Results", mode: "copy", pattern: "*.fasta"    
     
     input:
 	set idThreshold,file(ids),file(fasta) from IDS_LULU.join(ALL_SAMPLES)
@@ -497,7 +497,7 @@ process ClassificationSintax {
     label "high_computation"
     label "require_vsearch"
     
-    publishDir params.outdir+"Results", mode: "copy", pattern: "annotations*.tsv"
+    publishDir params.outdir+"/Results", mode: "copy", pattern: "annotations*.tsv"
 
     input:
     set idThreshold,file(fasta) from FASTA_LULU
@@ -527,7 +527,7 @@ process SummaryFile {
     label "medium_computation"
     label "python_script"
 
-    publishDir params.outdir+"Results", mode: "copy", pattern: "*.tsv"
+    publishDir params.outdir+"/Results", mode: "copy", pattern: "*.tsv"
     
     input:
         file f1 from DENOISING_SUMMARY

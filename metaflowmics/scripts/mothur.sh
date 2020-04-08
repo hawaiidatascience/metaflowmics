@@ -177,7 +177,7 @@ elif [ $step == "alphaDiversity" ]; then
 	outputs_mothur=("${shared}.groups.summary")
 
 elif [ $step == "betaDiversity" ]; then
-    cmd=("summary.shared(shared=${shared}.shared,calc=braycurtis-thetayc-sharedsobs-sharedchao)")
+    cmd=("summary.shared(shared=${shared}.shared,calc=braycurtis-thetayc-sharedsobs-sharedchao, distance=lt)")
 	outputs_mothur=("${shared}.summary")
 fi;
 

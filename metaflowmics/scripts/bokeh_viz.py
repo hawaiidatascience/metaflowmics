@@ -123,7 +123,7 @@ def stackplot(shared, tax, thresh=100, rank='Phylum', top=20):
     save(p)
 
 
-def preproc_for_heatmap(shared, tax, meta=None, top=100):
+def preproc_for_heatmap(shared, tax, meta=None, factor='sampleID', top=100):
 
     (data, _) = group_otus(shared, tax, 'Genus', top=top)
 
@@ -148,14 +148,14 @@ def preproc_for_heatmap(shared, tax, meta=None, top=100):
               .reset_index()
               .melt(id_vars=['Genus'])
               .merge(abd_data)
-              .rename(columns={'value': 'z_score', 'Group': 'sampleID', 'Genus': 'otu'})
-              .set_index('sampleID')
+              .rename(columns={'value': 'z_score', 'Group': factor, 'Genus': 'otu'})
+              .set_index(factor)
     )
 
     info = {'otu': tax.groupby('Genus').agg('first')}
 
     if meta is not None:
-        info['sample'] = meta[np.isin(meta.index, data.sampleID.unique())]
+        info['sample'] = meta[np.isin(meta.index, z_data.index.unique())]
 
     return (z_data, info)
 

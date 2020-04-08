@@ -349,6 +349,23 @@ merge_otu_list <- function(list_file, merge_list, otu_thresh=100, cores=1) {
     write.table(list, sprintf('all_lulu_%s.list', otu_thresh), sep='\t', quote=F, row.names=F)
 }
 
+get_species <- function(fasta_file, tax_file, db) {
+    sequences <- read.fasta(fasta_file, 'DNA')
+    sequences <- sapply(sequences, function(x) toupper(paste0(x[x!='-' & x!='.'], collapse='')))
+    names(sequences) <- gsub('\t.*', '', names(sequences))
+
+    tax <- read.table(tax_file, row.names=1, header=TRUE)$Size
+    names(tax) <- sequences
+
+    res <- assignSpecies(tax, db, allowMultiple=TRUE)
+    res <- unname(res)
+
+    rownames(res) <- names(sequences)
+    colnames(res) <- c('Genus', 'Species')
+
+    return(res)
+}
+
 calculate_unifrac <- function(tree_file, abundance_file, method='weighted', otu_thresh=100, cores=1) {
 
     registerDoParallel(cores=cores)

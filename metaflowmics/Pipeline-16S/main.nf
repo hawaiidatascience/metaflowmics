@@ -146,7 +146,7 @@ process FilterAndTrim {
     tag { "FilterAndTrim.${pairId}" }
     label "medium_computation"
     label "r_script"
-    publishDir params.outdir+"Misc/1-FilterAndTrim", mode: "copy", pattern: "*.{fastq.gz,png}"
+    publishDir params.outdir+"/Misc/1-FilterAndTrim", mode: "copy", pattern: "*.{fastq.gz,png}"
 
     input:
     set val(pairId), file(fastq) from INPUT_FASTQ_PREFILT
@@ -193,7 +193,7 @@ process LearnErrors {
     tag { "LearnErrors.${pairId}" }
     label "medium_computation"
     label "r_script"
-    publishDir params.outdir+"Misc/2-ErrorModel", mode: "copy", pattern: "*.{RDS,png}"
+    publishDir params.outdir+"/Misc/2-ErrorModel", mode: "copy", pattern: "*.{RDS,png}"
 
     input:
     set val(pairId), file(fastq) from FASTQ_TRIMMED_FOR_MODEL
@@ -222,7 +222,7 @@ process Denoise {
     tag { "Denoising.${pairId}" }
     label "medium_computation"
     label "r_script"
-    publishDir params.outdir+"Misc/3-Denoising", mode: "copy", pattern: "*.RDS"
+    publishDir params.outdir+"/Misc/3-Denoising", mode: "copy", pattern: "*.RDS"
 
     input:
     set val(pairId), file(err), file(fastq) from ERROR_MODEL.join(FASTQ_TRIMMED)
@@ -256,7 +256,7 @@ process Esv {
     tag { "Esv" }
     label "high_computation"
     label "r_script"
-    publishDir params.outdir+"Misc/4-ESV", mode: "copy"
+    publishDir params.outdir+"/Misc/4-ESV", mode: "copy"
 
     input:
     file dadas from DADA_RDS.collect()
@@ -287,7 +287,7 @@ process MultipleSequenceAlignment {
     tag { "MSA" }
     label "high_computation"
     label "mothur_script"
-    publishDir params.outdir+"Misc/5-MultipleSequenceAlignment", mode: "copy"
+    publishDir params.outdir+"/Misc/5-MultipleSequenceAlignment", mode: "copy"
 
     input:
     set file(count), file(fasta) from DEREP_CONTIGS
@@ -324,8 +324,8 @@ process ChimeraRemoval {
     tag { "chimeraRemoval" }
     label "high_computation"
     label "mothur_script"
-    publishDir params.outdir+"Misc/6-ChimeraRemoval", mode: "copy", pattern: "*.{fasta,count_table}"
-    publishDir params.outdir+"Results/raw/details", mode: "copy", pattern: "raw*.fasta"
+    publishDir params.outdir+"/Misc/6-ChimeraRemoval", mode: "copy", pattern: "*.{fasta,count_table}"
+    publishDir params.outdir+"/Results/raw/details", mode: "copy", pattern: "raw*.fasta"
 
     input:
     set file(fasta), file(count) from DEREP_CONTIGS_ALN
@@ -346,7 +346,7 @@ process PreClassification {
     tag { "preClassification" }
     label "high_computation"
     label "mothur_script"
-    publishDir params.outdir+"Misc/7-PreClassification", mode: "copy", pattern: "*.taxonomy"
+    publishDir params.outdir+"/Misc/7-PreClassification", mode: "copy", pattern: "*.taxonomy"
 
     input:
     set file(count), file(fasta) from NO_CHIMERA_FASTA
@@ -375,9 +375,9 @@ process Clustering {
     tag { "clustering.${idThreshold}" }
     label "high_computation"
     label "mothur_script"
-    publishDir params.outdir+"Misc/8-Clustering", mode: "copy", pattern: "raw.*"
-    publishDir params.outdir+"Results/raw/details", mode: "copy", pattern: "raw*.{shared,fasta,taxonomy}"
-    publishDir params.outdir+"Results/raw", mode: "copy", pattern: "*.{database,biom}"	
+    publishDir params.outdir+"/Misc/8-Clustering", mode: "copy", pattern: "raw.*"
+    publishDir params.outdir+"/Results/raw/details", mode: "copy", pattern: "raw*.{shared,fasta,taxonomy}"
+    publishDir params.outdir+"/Results/raw", mode: "copy", pattern: "*.{database,biom}"	
 
     input:
     set file(count), file(fasta), file(tax) from PRE_CLASSIFIED_CONTIGS
@@ -425,7 +425,7 @@ process TaxaFilter {
     tag { "taxaFilter.${idThreshold}" }
     label "medium_computation"
     label "mothur_script"
-    publishDir params.outdir+"Misc/9-TaxaFilter", mode: "copy"
+    publishDir params.outdir+"/Misc/9-TaxaFilter", mode: "copy"
 
     input:
     set val(idThreshold), file(fasta), file(count), file(tax), file(list) from FOR_TAXA_FILTER
@@ -449,7 +449,7 @@ process MultipletonsFilter {
     tag { "MultipletonsFilter.${idThreshold}" }
     label "medium_computation"
     label "mothur_script"
-    publishDir params.outdir+"Misc/10-MultipletonsFilter", mode: "copy"
+    publishDir params.outdir+"/Misc/10-MultipletonsFilter", mode: "copy"
 
     input:
     set val(idThreshold), file(f) from FOR_MULTIPLETONS_FILTER
@@ -502,7 +502,7 @@ process Subsampling {
     tag { "subsampling" }
     label "medium_computation"
     label "mothur_script"
-    publishDir params.outdir+"Misc/11-Subsampling", mode: "copy"
+    publishDir params.outdir+"/Misc/11-Subsampling", mode: "copy"
 
     input:
     set val(idThreshold), file(f), val(subSampThresh) from SUBSAMPLING_IN.join(SUBSAMPLING_THRESHOLDS)
@@ -538,7 +538,7 @@ process PreLulu {
     tag { "preLulus.${idThreshold}" }
     label "medium_computation"
     label "mothur_script"
-    publishDir params.outdir+"Misc/12-Lulu", mode: "copy"
+    publishDir params.outdir+"/Misc/12-Lulu", mode: "copy"
 
     input:
     set val(idThreshold), file(f) from FOR_PRELULU
@@ -576,7 +576,7 @@ process Lulu {
     tag { "Lulu.${idThreshold}" }
     label "high_computation"
     label "r_script"
-    publishDir params.outdir+"Misc/12-Lulu", mode: "copy"
+    publishDir params.outdir+"/Misc/12-Lulu", mode: "copy"
 
     input:
     set val(idThreshold), file(matchlist), file(table), file(list) from FOR_LULU
@@ -607,17 +607,18 @@ process Database {
     tag { "database" }
     label "medium_computation"
     label "mothur_script"
-    publishDir params.outdir+"Results/main/details", mode: "copy", pattern: "*.{taxonomy,shared,fasta,relabund}"
-    publishDir params.outdir+"Results/main", mode: "copy", pattern: "*.{database,biom}"	
+    publishDir params.outdir+"/Results/main/details", mode: "copy", pattern: "*.{taxonomy,shared,fasta,relabund}"
+    publishDir params.outdir+"/Results/main", mode: "copy", pattern: "*.{database,biom}"	
 
     input:
     set val(idThreshold), file(count), file(fasta), file(tax), file(list) from SUBSAMPLED_NO_LIST.join(MERGED_OTUS)
 
     output:
     set val(idThreshold), file("otu_repr_*.fasta"), file("abundance_table_*.shared") into FOR_POSTPROC
+	set val(idThreshold), file("otu_repr_*.fasta"), file("*.taxonomy") into FOR_SPECIES_ASSGN
     set val(idThreshold), file("abundance_table_*.shared") into FOR_ALPHADIV, FOR_BETADIV
     set val(idThreshold), file("*.shared"), file("*.taxonomy") into FOR_PLOT
-    set file("*.relabund"), file("*.taxonomy"), file("*.biom"), file("*.database")
+    set file("*.relabund"), file("*.taxonomy"), file("*.biom"), file("*.database"), file("all_esv.fasta")
 
     script:
     """
@@ -643,6 +644,8 @@ process Database {
     ${params.script_dir}/mothur.sh \
     --step=postprocessing \
     --idThreshold=${idThreshold}
+
+    cp ${fasta} all_esv.fasta
     """
 }
 
@@ -662,7 +665,7 @@ process SummaryPlot {
     tag { "SummaryPlot.${idThreshold}" }
     label "medium_computation"
     label "python_script"
-    publishDir params.outdir+"Results/figures", mode:"copy", pattern:"*.html"
+    publishDir params.outdir+"/Results/figures", mode:"copy", pattern:"*.html"
 
     input:
     set idThreshold, file(shared), file(tax) from FOR_PLOT
@@ -685,7 +688,7 @@ process SummaryFile {
     tag { "SummaryFile" }
     label "medium_computation"
     label "python_script"
-    publishDir params.outdir+"Results", mode: "copy"
+    publishDir params.outdir+"/Results", mode: "copy"
 
     input:
     file f from COUNT_SUMMARIES
@@ -742,7 +745,7 @@ process FastTree {
     tag { "FastTree_${idThreshold}" }
     label "high_computation"
     // label "mothur_script"
-    publishDir params.outdir+"Results/postprocessing/unifrac", mode: "copy", pattern: "*.tre"
+    publishDir params.outdir+"/Results/postprocessing/unifrac", mode: "copy", pattern: "*.tre"
 
     input:
     set val(idThreshold), file(fasta), file(shared) from FOR_FASTTREE
@@ -761,7 +764,7 @@ process UnifracDistPhylo {
     tag { "Unifrac_${idThreshold}_${mode}" }
     label "high_computation"
     label "r_script"
-    publishDir params.outdir+"Results/postprocessing/unifrac", mode: "copy", pattern: "*.csv"
+    publishDir params.outdir+"/Results/postprocessing/unifrac", mode: "copy", pattern: "*.csv"
 
     input:
     set val(idThreshold), file(shared), file(tree) from CLEARCUT_TREE
@@ -783,7 +786,7 @@ process UnifracDistMothur {
     tag { "Unifrac_${idThreshold}_${mode}" }
     label "high_computation"
     label "r_script"
-    publishDir params.outdir+"Results/postprocessing/unifrac", mode: "copy", pattern: "*{.tre,summary}"
+    publishDir params.outdir+"/Results/postprocessing/unifrac", mode: "copy", pattern: "*{.tre,summary}"
 
     input:
     set val(idThreshold), file(fasta), file(shared) from FOR_CLEARCUT
@@ -807,7 +810,7 @@ process AlphaDiv {
     tag { "alphaDiv_${idThreshold}" }
     label "high_computation"
     label "mothur_script"
-    publishDir params.outdir+"Results/postprocessing/alpha_diversity", mode: "copy", pattern: "*.summary"
+    publishDir params.outdir+"/Results/postprocessing/alpha_diversity", mode: "copy", pattern: "*.summary"
 
     input:
     set val(idThreshold), file(shared) from FOR_ALPHADIV
@@ -827,7 +830,7 @@ process BetaDiv {
     tag { "betaDiv_${idThreshold}" }
     label "high_computation"
     label "mothur_script"
-    publishDir params.outdir+"Results/postprocessing/beta_diversity", mode: "copy", pattern: "*.summary"
+    publishDir params.outdir+"/Results/postprocessing/beta_diversity", mode: "copy", pattern: "*.summary"
 
     input:
     set val(idThreshold), file(shared) from FOR_BETADIV
@@ -843,3 +846,25 @@ process BetaDiv {
     """
 }
 
+process SpeciesAssignment {
+    tag { "species_${idThreshold}" }
+    label "high_computation"
+    label "r_script"
+    publishDir params.outdir+"/Results/postprocessing/", mode: "copy", pattern: "*.csv"
+
+    input:
+    set val(idThreshold), file(fasta), file(tax) from FOR_SPECIES_ASSGN
+
+    output:
+    file("*.csv")
+
+    script:
+    """
+    #!/usr/bin/env Rscript
+    source("${params.script_dir}/util.R")
+
+    res <- get_species("${fasta}", "${tax}", "${params.speciesDB}")
+
+    write.csv(res, "species_${idThreshold}.csv")
+    """
+}
