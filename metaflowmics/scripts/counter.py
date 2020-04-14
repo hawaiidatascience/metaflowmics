@@ -28,7 +28,11 @@ class SequenceCounter:
             
     def countTable(self, filename):                    
         if self.path.suffix == ".shared":
-            table = (pd.read_csv(filename, sep='\t', dtype={'Group': str})
+            header = open(filename).readline().split('t')
+            dtype = dict([(x, str) if x == 'Group' else (x, int) for x in header])
+
+            table = (pd.read_csv(filename, sep='\t', dtype=dtype,
+                                 keep_default_na=False, low_memory=False)
                      .drop(["label","numOtus"],axis=1)
                      .set_index('Group').T)
         elif self.path.suffix == ".count_table":
