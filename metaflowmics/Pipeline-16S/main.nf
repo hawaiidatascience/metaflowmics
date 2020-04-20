@@ -510,7 +510,6 @@ process Subsampling {
     output:
     set val(idThreshold), file("all_subsampling*.{count_table,fasta,list,taxonomy}") into SUBSAMPLED_OUT
     file("all_subsampling*.summary") into SUBSAMPLING_TO_COUNT
-	file("all_subsampling*.fasta") into FOR_SEQ_COUNT
 
     script:
     """
@@ -604,7 +603,7 @@ process Lulu {
  */
 
 process Database {
-    tag { "database" }
+    tag { "database_${idThreshold}" }
     label "medium_computation"
     label "mothur_script"
     publishDir params.outdir+"/Results/main/details", mode: "copy", pattern: "*.{taxonomy,shared,fasta,relabund}"
@@ -619,6 +618,7 @@ process Database {
     set val(idThreshold), file("abundance_table_*.shared") into FOR_ALPHADIV, FOR_BETADIV
     set val(idThreshold), file("*.shared"), file("*.taxonomy") into FOR_PLOT
     set file("*.relabund"), file("*.taxonomy"), file("*.biom"), file("*.database"), file("all_esv.fasta")
+	file("all_esv.fasta") into FOR_SEQ_COUNT
 
     script:
     """
@@ -751,7 +751,7 @@ process FastTree {
     set val(idThreshold), file(fasta), file(shared) from FOR_FASTTREE
 
     output:
-    set val(idThreshold), file(shared), file("*.tre") into CLEARCUT_TREE
+    set val(idThreshold), file(shared), file("*.tre") into FASTTREE
 
     script:
     """
@@ -767,7 +767,7 @@ process UnifracDistPhylo {
     publishDir params.outdir+"/Results/postprocessing/unifrac", mode: "copy", pattern: "*.csv"
 
     input:
-    set val(idThreshold), file(shared), file(tree) from CLEARCUT_TREE
+    set val(idThreshold), file(shared), file(tree) from FASTTREE
 	each mode from ('weighted', 'unweighted')
 
     output:
