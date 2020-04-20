@@ -468,7 +468,7 @@ process MultipletonsFilter {
     """
 }
 
-FILTERED_TABLE.branch{off: (params.customSubsampling>0) || params.skipSubsampling
+FILTERED_TABLE.branch{off: (params.customSubsamplingLevel>0) || params.skipSubsampling
 					  on: true}
 	.set{TABLE_FOR_SUBSAMPLING}
 
@@ -521,7 +521,7 @@ process Subsampling {
     """
     #!/usr/bin/env bash
 
-	[ "${subSampThresh}" == "null" ] && subsampling_level=${params.customSubsampling} || subsampling_level=${subSampThresh}
+	[ "${subSampThresh}" == "null" ] && subsampling_level=${params.customSubsamplingLevel} || subsampling_level=${subSampThresh}
 
     ${params.script_dir}/mothur.sh \
     --step=subsampling \
