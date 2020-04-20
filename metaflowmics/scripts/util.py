@@ -5,7 +5,7 @@ def get_subsampling_threshold(sharedFile, quantile, minValue, customValue):
     if customValue > 0:
         print(customValue)
         return
-        
+
     table = (pd.read_csv(sharedFile, sep="\t", index_col=0)
              .drop(["total"],axis=1))
     

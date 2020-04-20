@@ -455,8 +455,8 @@ process MultipletonsFilter {
     set val(idThreshold), file(f) from FOR_MULTIPLETONS_FILTER
 
     output:
-    set val(idThreshold), file("all_multipletonsFilter*.count_table") into SUBSAMPLING_EST
-	set val(idThreshold), file("all_multipletonsFilter*.{count_table,fasta,list,taxonomy}") into FOR_SUBSAMPLING
+    set val(idThreshold), file("all_multipletonsFilter*.count_table") into FILTERED_TABLE
+	set val(idThreshold), file("all_multipletonsFilter*.{count_table,fasta,list,taxonomy}") into FILTERED_OTU_DATA
     file("all_multipletonsFilter*.summary") into MULTIPLETONS_FILTER_TO_COUNT
 
     script:
@@ -468,13 +468,17 @@ process MultipletonsFilter {
     """
 }
 
+FILTERED_TABLE.branch{off: (params.customSubsampling>0) || params.skipSubsampling
+					  on: true}
+	.set{TABLE_FOR_SUBSAMPLING}
+
 process GetSubsamlingValue {
     tag "getSubsamplingValue_${idThreshold}"
     label "low_computation"
     label "python_script"
 
     input:
-    set val(idThreshold), file(count) from SUBSAMPLING_EST
+    set val(idThreshold), file(count) from TABLE_FOR_SUBSAMPLING.on
 
     output:
     set val(idThreshold), stdout into SUBSAMPLING_THRESHOLDS
@@ -489,9 +493,11 @@ process GetSubsamlingValue {
     """
 }
 
-(SUBSAMPLING_IN, ALT_CHANNEL) = ( params.skipSubsampling
-                  ? [Channel.empty(), FOR_SUBSAMPLING ]
-                  : [FOR_SUBSAMPLING, Channel.empty()] )
+FILTERED_OTU_DATA
+	.branch {off: params.skipSubsampling
+			 on: true}
+	.set { FOR_SUBSAMPLING }
+
 /*
  *
  * Subsampling the samples to the 10th percentile or 1k/sample if the 10th pct is below 1k (in scripts/mothur.sh)
@@ -505,7 +511,7 @@ process Subsampling {
     publishDir params.outdir+"/Misc/11-Subsampling", mode: "copy"
 
     input:
-    set val(idThreshold), file(f), val(subSampThresh) from SUBSAMPLING_IN.join(SUBSAMPLING_THRESHOLDS)
+    set val(idThreshold), file(f), val(subSampThresh) from FOR_SUBSAMPLING.on.join(SUBSAMPLING_THRESHOLDS, remainder: true)
 
     output:
     set val(idThreshold), file("all_subsampling*.{count_table,fasta,list,taxonomy}") into SUBSAMPLED_OUT
@@ -515,14 +521,16 @@ process Subsampling {
     """
     #!/usr/bin/env bash
 
+	[ "${subSampThresh}" == "null" ] && subsampling_level=${params.customSubsampling} || subsampling_level=${subSampThresh}
+
     ${params.script_dir}/mothur.sh \
     --step=subsampling \
     --idThreshold=${idThreshold} \
-    --subsamplingNb=${subSampThresh}
+    --subsamplingNb=\$subsampling_level
     """
 }
 
-SUBSAMPLED_OUT.mix(ALT_CHANNEL).into{FOR_PRELULU ; SUBSAMPLED_ALL}
+SUBSAMPLED_OUT.mix(FOR_SUBSAMPLING.off).into{FOR_PRELULU ; SUBSAMPLED_ALL}
 SUBSAMPLED_ALL.map{it -> [it[0], it[1][0], it[1][1], it[1][3]]}.set{SUBSAMPLED_NO_LIST}
 
 /*
@@ -613,12 +621,11 @@ process Database {
     set val(idThreshold), file(count), file(fasta), file(tax), file(list) from SUBSAMPLED_NO_LIST.join(MERGED_OTUS)
 
     output:
-    set val(idThreshold), file("otu_repr_*.fasta"), file("abundance_table_*.shared") into FOR_POSTPROC
+    set val(idThreshold), file("all_esv.fasta"), file("otu_repr_*.fasta"), file("abundance_table_*.shared") into FOR_POSTPROC
 	set val(idThreshold), file("otu_repr_*.fasta"), file("*.taxonomy") into FOR_SPECIES_ASSGN
     set val(idThreshold), file("abundance_table_*.shared") into FOR_ALPHADIV, FOR_BETADIV
     set val(idThreshold), file("*.shared"), file("*.taxonomy") into FOR_PLOT
     set file("*.relabund"), file("*.taxonomy"), file("*.biom"), file("*.database"), file("all_esv.fasta")
-	file("all_esv.fasta") into FOR_SEQ_COUNT
 
     script:
     """
@@ -648,10 +655,6 @@ process Database {
     cp ${fasta} all_esv.fasta
     """
 }
-
-(FOR_FASTTREE, FOR_CLEARCUT) = ( FOR_SEQ_COUNT.first().map{it.countFasta() < 5000}
-								? [Channel.empty(), FOR_POSTPROC ]
-								: [FOR_POSTPROC, Channel.empty()] )
 
 /*
  *
@@ -735,6 +738,13 @@ process SummaryFile {
     """
 }
 
+FOR_POSTPROC
+	.branch {clearcut: it[1].countFasta() <= 5000
+			 return [it[0], it[2], it[3]]
+			 fasttree: it[1].countFasta() > 5000
+			 return [it[0], it[2], it[3]]}
+	.set { FOR_TREE }
+
 /*
  *
  * Generates some results with mothur
@@ -748,7 +758,7 @@ process FastTree {
     publishDir params.outdir+"/Results/postprocessing/unifrac", mode: "copy", pattern: "*.tre"
 
     input:
-    set val(idThreshold), file(fasta), file(shared) from FOR_FASTTREE
+    set val(idThreshold), file(fasta), file(shared) from FOR_TREE.fasttree
 
     output:
     set val(idThreshold), file(shared), file("*.tre") into FASTTREE
@@ -756,7 +766,7 @@ process FastTree {
     script:
     """
     sed -r 's/.*(Otu[0-9]+)\\|.*/\\>\\1/' ${fasta} > relabeled_${fasta}
-    FastTree relabeled_${fasta} > FastTree_${idThreshold}.tre
+    FastTree -nt relabeled_${fasta} > FastTree_${idThreshold}.tre
     """
 }
 
@@ -789,7 +799,7 @@ process UnifracDistMothur {
     publishDir params.outdir+"/Results/postprocessing/unifrac", mode: "copy", pattern: "*{.tre,summary}"
 
     input:
-    set val(idThreshold), file(fasta), file(shared) from FOR_CLEARCUT
+    set val(idThreshold), file(fasta), file(shared) from FOR_TREE.clearcut
 	each mode from ('weighted', 'unweighted')
 
     output:
