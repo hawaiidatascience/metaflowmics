@@ -283,13 +283,11 @@ lulu_curate <- function(abundanceFile,matchListFile,threshold,min_ratio_type,min
     if(tools::file_ext(abundanceFile)=='shared'){
         otutab <- t(fast_table_load(abundanceFile, cores=cores,
                                     drop=c('label', 'numOtus'), row.label='Group'))
-        abundance_table_name <- sprintf("all_lulu_%s.csv",threshold)
     } else {
-        otutab <- fast_table_load(abundanceFile, cores=cores, row.label=1)
-        
-        abundance_table_name <- sprintf("abundance_table_%s.csv",threshold)
+        otutab <- fast_table_load(abundanceFile, cores=cores, row.label=1)        
     }
         
+    abundance_table_name <- sprintf("all_lulu_%s.csv",threshold)
     curated_ids_name <- sprintf("lulu_ids_%s.csv",threshold)
     mapping_discarded_name <- sprintf("mapping_discarded_%s.txt", threshold)
     

@@ -34,6 +34,15 @@ def helpMessage() {
 
     [Taxonomy assignment]
       --taxaMinId        The minimum identity for calling a taxonomy. Default 50%
+
+    [Co-occurence pattern correction]
+	--skipLulu               Skip the Lulu step
+    --min_ratio_type         Function to compare the abundance of a parent OTU and its daughter.
+                             Default: min
+    --min_ratio              Minimum abundance ratio between parent and daughter
+                             (across all samples). Default: 1
+    --min_rel_cooccurence    Proportion of the parent samples where daughter occurs. Default: 1
+
     """.stripIndent()
 }
 
@@ -54,6 +63,7 @@ summary['min read length'] = params.minLen
 summary['min reads per sample'] = params.minReads
 summary['min unique sequence per sample'] = params.minDerep
 summary['clustering similarity thresholds'] = params.clusteringThresholds
+summary['Skip LULU'] = params.skipLulu
 summary['Lulu ratio type'] = params.min_ratio_type
 summary['Lulu parent/daughter min similarity'] = params.min_match
 summary['Lulu parent/daughter min abundance ratio'] = params.min_ratio
@@ -104,15 +114,15 @@ INPUT_FASTQ_OK = INPUT_FASTQ
 
 process ExtractITS {
     tag { "ITSextraction.${pairId}" }
-    label "low_computation"
+    label "medium_computation"
 	label "python_script"
     
     publishDir params.outdir+"/Misc/1-ITSxpress", mode: "copy"
     
     input:
-        set val(pairId), file(reads) from INPUT_FASTQ_OK    
+        tuple val(pairId), file(reads) from INPUT_FASTQ_OK    
     output:
-        set val(pairId), file("${pairId}_${params.locus}.fastq") \
+        tuple val(pairId), file("${pairId}_${params.locus}.fastq") \
     into (ITS_FASTQ, ITS_FASTQ_FOR_COUNT)
     	
     script:
@@ -145,10 +155,10 @@ process RemoveSmallAndNseqs {
     publishDir params.outdir+"/Misc/2-NandSmallSeqsFiltering", mode: "copy"
 
     input:
-    set val(pairId), file(itsFile) from ITS_FASTQ
+    tuple val(pairId), file(itsFile) from ITS_FASTQ
     
     output:
-    set val(pairId), file("${pairId}_noN.fastq") into (NO_N_FASTQ,NO_N_FASTQ_FOR_COUNT)
+    tuple val(pairId), file("${pairId}_noN.fastq") into (NO_N_FASTQ,NO_N_FASTQ_FOR_COUNT)
 
     script:
     """
@@ -179,10 +189,10 @@ process QcFilter {
     publishDir params.outdir+"/Misc/3-QualityFiltering", mode: "copy"
 
     input:
-    set val(pairId), file(itsFile) from NO_N_FASTQ.filter{ it[1].size() > 0 }
+    tuple val(pairId), file(itsFile) from NO_N_FASTQ.filter{ it[1].size() > 0 }
     
     output:
-	set val(pairId), file("${pairId}_filtered.fastq.gz") into FILTERED_FASTQ_ALL
+	tuple val(pairId), file("${pairId}_filtered.fastq.gz") into FILTERED_OUT
 
     script:
     """
@@ -194,12 +204,17 @@ process QcFilter {
 }
 
 // Remove files with less than params.minReads
-(FILTERED_SAMPLE_COUNTS, FILTERED_FASTQ) = FILTERED_FASTQ_ALL
-    .map { [it[1].countFastq(), it[0], it[1]] }
-    .filter{ it[0] > params.minReads }
-    .separate(2) { it -> [[it[1],it[0]], [it[1],it[2]]] }
+FILTERED_OUT
+	.map { [it[1].countFastq(), it[0], it[1]] }
+	.filter{ it[0] > params.minReads }
+	.multiMap { it ->
+	counts: [it[1],it[0]]
+	all: [it[1], it[2]]}
+	.set{FILTERED_FASTQ}
 
-FILTERED_COUNTS = FILTERED_SAMPLE_COUNTS.collect{ ["'${it[0]}': ${it[1]}"] }
+FILTERED_FASTQ.counts
+	.collect{ ["'${it[0]}': ${it[1]}"]}
+	.set{FILTERED_COUNTS}
 
 /*
  *
@@ -215,12 +230,13 @@ process Dereplication {
     publishDir params.outdir+"/Misc/4-Dereplication", mode: "copy"
 
     input:
-        set val(pairId), file(filtRead) from FILTERED_FASTQ
+    tuple val(pairId), file(filtRead) from FILTERED_FASTQ.all
     
     output:
-	set val(pairId), file("*_derep.RDS") into DEREP_RDS
-        set val(pairId), file("*_derep.fasta") into DEREP_FASTA
-        file("*derep.RDS") into DEREP_FOR_COUNT_SUMMARY
+	tuple val(pairId), file("*_derep.RDS") into DEREP_RDS
+    tuple val(pairId), file("*_derep.fasta") into DEREP_FASTA
+    file("*derep.RDS") into DEREP_FOR_COUNT_SUMMARY
+	
     script:
 	"""
 	#!/usr/bin/env Rscript 
@@ -246,18 +262,20 @@ process ChimeraRemoval {
     publishDir params.outdir+"/Misc/5-ChimeraRemoval", mode: "copy"
 
     input:
-        set val(pairId),file(derepFa) from DEREP_FASTA.filter{ it[1].size() > 0 }
+    tuple val(pairId),file(derepFa) from DEREP_FASTA.filter{ it[1].size() > 0 }
+	
     output:
-        set val(pairId),file("*_noChimeras.fasta") into DEREP_FASTA_NO_CHIMERA
+    tuple val(pairId),file("*_noChimeras.fasta") into DEREP_FASTA_NO_CHIMERA
+	
     script:
-        """
+    """
 	vsearch --threads ${task.cpus} \
 		--uchime3_denovo ${derepFa} \
 		--sizein \
 		--sizeout \
 		--fasta_width 0 \
 		--nonchimeras ${pairId}_R12_noChimeras.fasta \
-        """
+    """
 }
 
 DEREP_FASTA_NO_CHIMERA
@@ -278,11 +296,11 @@ process LearnErrors {
     publishDir params.outdir+"/Misc/6-Denoising", mode: "copy", pattern: "*{.RDS,.png}"
     
     input:
-        set val(pairId), file(derepRDS), file(sample_nochim) \
+    tuple val(pairId), file(derepRDS), file(sample_nochim) \
     from DEREP_RDS.join(DEREP_FASTA_NO_CHIMERA_FILT)
     
     output:
-        set val(pairId), file("*_errors.RDS"), file("*_nochimera.RDS") into ERRORS_AND_DEREP
+    tuple val(pairId), file("*_errors.RDS"), file("*_nochimera.RDS") into ERRORS_AND_DEREP
 
     script:
     """
@@ -311,9 +329,11 @@ process Denoise {
     publishDir params.outdir+"/Misc/6-Denoising", mode: "copy"
 
     input:
-        set pairId, file(err), file(nochimera) from ERRORS_AND_DEREP
+    tuple pairId, file(err), file(nochimera) from ERRORS_AND_DEREP
+	
     output:
-        set file(nochimera),file("*_dada.RDS") into DADA_RDS
+    tuple file(nochimera),file("*_dada.RDS") into DADA_RDS
+	
     script:
     """
     #!/usr/bin/env Rscript
@@ -337,14 +357,15 @@ process MakeEsvTable {
     publishDir params.outdir+"/Misc/7-Clustering", mode: "copy"
     
     input:
-	file denoised from DADA_RDS.collect()
-        file derep from DEREP_FOR_COUNT_SUMMARY.collect()
+	file(denoised) from DADA_RDS.collect()
+	file(derep) from DEREP_FOR_COUNT_SUMMARY.collect()
+	
     output:
-    	file("raw_sequence_table.csv") into ESV_TABLE_TO_CLUSTER
-        file("count_summary.tsv") into DENOISING_SUMMARY
-        set val(100),file("clustering_100.csv") into ABUNDANCE_TABLES_ESV
-        set val(100),file("all_esv.fasta") into ESV_ALL_SAMPLES,ESV_ALL_SAMPLES_LULU
-        file("esv_merged_to_cluster.fasta") into ESV_ALL_SAMPLES_TO_CLUSTER
+    file("esv_merged_to_cluster.fasta") into ESV_ALL_SAMPLES_TO_CLUSTER
+    tuple val(100), file("all_esv.fasta"), file("clustering_100.csv") into ESV_OUT
+    file("count_summary.tsv") into DENOISING_SUMMARY
+	file('clustering_100.csv') into ESV_TO_COUNT
+	
     script:
     """
     #!/usr/bin/env Rscript
@@ -369,11 +390,12 @@ process Clustering {
     publishDir params.outdir+"/Misc/7-Clustering", mode: "copy"
     
     input:
-        each idThreshold from clusteringThresholds.findAll{ it != 100}
-        file(esvFasta) from ESV_ALL_SAMPLES_TO_CLUSTER
+    each idThreshold from clusteringThresholds.findAll{ it != 100}
+    file(esvFasta) from ESV_ALL_SAMPLES_TO_CLUSTER
+	
     output:
-    	set val(idThreshold),file("OTUs_${idThreshold}.fasta") into OTU_ALL_SAMPLES,OTU_ALL_SAMPLES_LULU
-        set val(idThreshold),file("clustering_${idThreshold}.csv") into ABUNDANCE_TABLES_OTU
+	tuple val(idThreshold), file("OTUs_*.fasta"), file("clustering*.csv") into CLUSTERING_OUT
+	file("clustering*.csv") into CLUSTERING_TO_COUNT
     
     script:
     """
@@ -393,10 +415,11 @@ process Clustering {
     """
 }
 
-// Mix channels with OTU and ESVs
-(ABUNDANCE_TABLES,ABUNDANCE_TABLES_TO_COUNT) = ABUNDANCE_TABLES_OTU.mix(ABUNDANCE_TABLES_ESV).separate(2){ [it,it[1]] }
-LULU_ALL_SAMPLES = OTU_ALL_SAMPLES_LULU.mix(ESV_ALL_SAMPLES_LULU)
-ALL_SAMPLES = OTU_ALL_SAMPLES.mix(ESV_ALL_SAMPLES)
+CLUSTERING_OUT
+	.mix(ESV_OUT)
+	.branch{off: params.skipLulu
+			on: true}
+	.set{FOR_PRELULU}
 
 /*
  *
@@ -412,11 +435,12 @@ process PreLulu {
     publishDir params.outdir+"/Misc/8-LULU_correction", mode: "copy"
 
     input:
-	set val(idThreshold),file(fasta) from LULU_ALL_SAMPLES
-    output:
-	set val(idThreshold),file("match_list_${idThreshold}.txt") into MATCH_LISTS
-    script:
+	tuple val(idThreshold), file(fasta), file(abundance) from FOR_PRELULU.on
 	
+    output:
+	tuple val(idThreshold), file("match_list_${idThreshold}.txt"), file(fasta), file(abundance) into FOR_LULU
+	
+    script:	
     """
     vsearch --usearch_global ${fasta} \
             --threads ${task.cpus} \
@@ -445,19 +469,19 @@ process Lulu {
     publishDir params.outdir+"/Misc/8-LULU_correction", mode: "copy", pattern: "{abundance_table_*.csv}"
 
     input:
-	set val(idThreshold),file(matchlist),file(table) from MATCH_LISTS.join(ABUNDANCE_TABLES)
-    output:
-        set val(idThreshold),file("abundance_table_${idThreshold}.csv") into ABUNDANCE_LULU
-        file("abundance_table_${idThreshold}.csv") into ABUNDANCE_LULU_TO_COUNT
-        set val(idThreshold),file("lulu_ids_${idThreshold}.csv") into IDS_LULU
-        file("lulu*.log_*") optional true
-    script:
+	tuple val(idThreshold), file(matchlist), file(fasta), file(abundance) from FOR_LULU
 	
+    output:
+	tuple val(idThreshold), file("lulu_ids_${idThreshold}.csv"), file(fasta), file("all_lulu_${idThreshold}.csv") into FOR_LULU_FILTER
+    file("all_lulu_*.csv") into ABUNDANCE_LULU_TO_COUNT
+    file("lulu*.log_*") optional true
+
+	script:
     """
     #!/usr/bin/env Rscript
     source("${params.script_dir}/util.R")
 
-    lulu_curate("${table}","${matchlist}","${idThreshold}","${params.min_ratio_type}","${params.min_ratio}","${params.min_match}","${params.min_rel_cooccurence}")
+    lulu_curate("${abundance}","${matchlist}","${idThreshold}","${params.min_ratio_type}","${params.min_ratio}","${params.min_match}","${params.min_rel_cooccurence}")
     """
 }
 
@@ -472,12 +496,12 @@ process ExtractFastaLulu {
     label "high_computation"
     label "python_script"
 
-    publishDir params.outdir+"/Results", mode: "copy", pattern: "*.fasta"    
-    
     input:
-	set idThreshold,file(ids),file(fasta) from IDS_LULU.join(ALL_SAMPLES)
+	tuple idThreshold, file(ids), file(fasta), file(abundance) from FOR_LULU_FILTER
+	
     output:
-	set idThreshold,file("sequences_${idThreshold}.fasta") into FASTA_LULU //, FASTA_LULU_FOR_SUMMARY
+	tuple idThreshold, file("lulu_${idThreshold}.fasta"), file(abundance) into LULU_OUT
+	
     script:
 	
     """
@@ -487,24 +511,24 @@ process ExtractFastaLulu {
 
     ids = pd.read_csv("${ids}", header=None)[0].values
     sequences = [ seq for seq in SeqIO.parse("${fasta}","fasta") if seq.id.split(";")[0] in ids ]
-    SeqIO.write(sequences,"sequences_${idThreshold}.fasta","fasta")
+    SeqIO.write(sequences,"lulu_${idThreshold}.fasta","fasta")
     """
 }
 
+LULU_OUT.mix(FOR_PRELULU.off).set{FOR_CLASSIFICATION}
 
 process ClassificationSintax {
     tag { "classification.${idThreshold}" }
     label "high_computation"
     label "require_vsearch"
-    
-    publishDir params.outdir+"/Results", mode: "copy", pattern: "annotations*.tsv"
+	publishDir "${params.outdir}/Results", mode: "copy"
 
     input:
-    set idThreshold,file(fasta) from FASTA_LULU
+	tuple idThreshold, file(fasta), file(abundance) from FOR_CLASSIFICATION
 	file(db) from Channel.fromPath(params.uniteDB)
 	
     output:
-    set idThreshold,file("annotations_sintax_${idThreshold}.tsv") into TAXONOMY
+    tuple file(fasta), file(abundance), file("annotations_sintax_${idThreshold}.tsv")
 	
     script:
 	
@@ -512,6 +536,9 @@ process ClassificationSintax {
     vsearch --threads ${task.cpus} --db ${db} \
             --sintax ${fasta} --sintax_cutoff ${params.confidenceThresh} \
             --tabbedout annotations_sintax_${idThreshold}.tsv
+
+	cp ${fasta} sequences_${idThreshold}.fasta
+	cp ${abundance} abundance_table_${idThreshold}.fasta
     """
 }
 
@@ -527,19 +554,22 @@ process SummaryFile {
     label "medium_computation"
     label "python_script"
 
-    publishDir params.outdir+"/Results", mode: "copy", pattern: "*.tsv"
+    publishDir "${params.outdir}/Results", mode: "copy", pattern: "*.tsv"
     
     input:
-        file f1 from DENOISING_SUMMARY
-        val(raw_counts) from RAW_COUNTS
-	    val(its_counts) from ITS_FASTQ_COUNTS
-	    val(no_n_counts) from NO_N_COUNTS
-	    val(filtered_counts) from FILTERED_COUNTS
-        file f1 from ABUNDANCE_TABLES_TO_COUNT
-		  .mix(ABUNDANCE_LULU_TO_COUNT)
-		  .collect()
+    file(f) from DENOISING_SUMMARY
+    val(raw_counts) from RAW_COUNTS
+	val(its_counts) from ITS_FASTQ_COUNTS
+	val(no_n_counts) from NO_N_COUNTS
+	val(filtered_counts) from FILTERED_COUNTS
+    file(f) from CLUSTERING_TO_COUNT
+		.mix(ESV_TO_COUNT)
+		.mix(ABUNDANCE_LULU_TO_COUNT)
+		.collect()
+	
     output:
-        file("sequences_per_sample_per_step_*.tsv") into STEPS_SUMMARY
+    file("sequences_per_sample_per_step_*.tsv") into STEPS_SUMMARY
+	
     script:
     """
     #!/usr/bin/env python3

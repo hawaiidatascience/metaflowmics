@@ -42,7 +42,7 @@ def helpMessage() {
                     Default: 95
     --minAlnLen     Minimum alignment length in MSA. Default: 50
     --taxaToFilter  Set of taxa to exclude from the analysis. 
-                    Default: "Bacteria;Proteobacteria;Alphaproteobacteria;Rickettsiales;Mitochondri                    ;-Bacteria;Cyanobacteria;Oxyphotobacteria;Chloroplast;-unknown;"
+                    Default: "Bacteria;Proteobacteria;Alphaproteobacteria;Rickettsiales;Mitochondria;-Bacteria;Cyanobacteria;Oxyphotobacteria;Chloroplast;-unknown;"
     
     [Subsampling]
     --customSubsamplingLevel  User defined subsampling level. Ignored if <= 0
@@ -59,6 +59,7 @@ def helpMessage() {
                              Default: 100,97
 
     [Co-occurence pattern correction]
+	--skipLulu               Skip the Lulu step
     --min_ratio_type         Function to compare the abundance of a parent OTU and its daughter.
                              Default: min
     --min_ratio              Minimum abundance ratio between parent and daughter
@@ -93,6 +94,7 @@ summary['Percentile for start/end contig filtering'] = params.criteria
 summary['Minimum contig alignment length against db'] = params.minAlnLen
 summary['Filtered taxa'] = params.taxaToFilter
 summary['Skip subsampling'] = params.skipSubsampling
+
 if (params.customSubsamplingLevel > 0){
 	summary['Subsampling'] = params.customSubsamplingLevel
 } else if (!params.skipSubsampling){
@@ -101,10 +103,14 @@ if (params.customSubsamplingLevel > 0){
 }
 summary['clustering similarity thresholds'] = params.clusteringThresholds
 summary['Min OTU abundace filter'] = params.minAbundance
-summary['Lulu ratio type'] = params.min_ratio_type
-summary['Lulu parent/daughter min similarity'] = params.min_match
-summary['Lulu parent/daughter min abundance ratio'] = params.min_ratio
-summary['Lulu parent/daughter min co-occurrence'] = params.min_rel_cooccurence
+
+summary['Skip LULU'] = params.skipLulu
+if (!params.skipLulu){
+	summary['Lulu ratio type'] = params.min_ratio_type
+	summary['Lulu parent/daughter min similarity'] = params.min_match
+	summary['Lulu parent/daughter min abundance ratio'] = params.min_ratio
+	summary['Lulu parent/daughter min co-occurrence'] = params.min_rel_cooccurence
+}
 
 file(params.outdir).mkdir()
 summary_handle = file("${params.outdir}/parameters_summary.log")
@@ -149,10 +155,10 @@ process FilterAndTrim {
     publishDir params.outdir+"/Misc/1-FilterAndTrim", mode: "copy", pattern: "*.{fastq.gz,png}"
 
     input:
-    set val(pairId), file(fastq) from INPUT_FASTQ_PREFILT
+    tuple val(pairId), file(fastq) from INPUT_FASTQ_PREFILT
 
     output:
-    set val(pairId), file("${pairId}*_trimmed.fastq.gz") optional true into FASTQ_TRIMMED_RAW
+    tuple val(pairId), file("${pairId}*_trimmed.fastq.gz") optional true into FASTQ_TRIMMED_RAW
     file("*.png") optional true
 
     script:
@@ -196,10 +202,10 @@ process LearnErrors {
     publishDir params.outdir+"/Misc/2-ErrorModel", mode: "copy", pattern: "*.{RDS,png}"
 
     input:
-    set val(pairId), file(fastq) from FASTQ_TRIMMED_FOR_MODEL
+    tuple val(pairId), file(fastq) from FASTQ_TRIMMED_FOR_MODEL
 
     output:
-    set val(pairId), file("*.RDS") into ERROR_MODEL
+    tuple val(pairId), file("*.RDS") into ERROR_MODEL
     file "*.png"
 
     script:
@@ -225,7 +231,7 @@ process Denoise {
     publishDir params.outdir+"/Misc/3-Denoising", mode: "copy", pattern: "*.RDS"
 
     input:
-    set val(pairId), file(err), file(fastq) from ERROR_MODEL.join(FASTQ_TRIMMED)
+    tuple val(pairId), file(err), file(fastq) from ERROR_MODEL.join(FASTQ_TRIMMED)
 
     output:
     file("*.RDS") into DADA_RDS
@@ -290,8 +296,8 @@ process MultipleSequenceAlignment {
     publishDir params.outdir+"/Misc/5-MultipleSequenceAlignment", mode: "copy"
 
     input:
-    set file(count), file(fasta) from DEREP_CONTIGS
-    file refAln from Channel.fromPath(params.referenceAln)
+    tuple file(count), file(fasta) from DEREP_CONTIGS
+    file(refAln) from Channel.fromPath(params.referenceAln)
 
     output:
     file("all_MSA.{count_table,fasta}") into DEREP_CONTIGS_ALN
@@ -328,7 +334,7 @@ process ChimeraRemoval {
     publishDir params.outdir+"/Results/raw/details", mode: "copy", pattern: "raw*.fasta"
 
     input:
-    set file(fasta), file(count) from DEREP_CONTIGS_ALN
+    tuple file(fasta), file(count) from DEREP_CONTIGS_ALN
 
     output:
     file("all_chimera.{fasta,count_table}") into (NO_CHIMERA_FASTA, FASTA_FOR_REPR)
@@ -349,12 +355,12 @@ process PreClassification {
     publishDir params.outdir+"/Misc/7-PreClassification", mode: "copy", pattern: "*.taxonomy"
 
     input:
-    set file(count), file(fasta) from NO_CHIMERA_FASTA
-    file refAln from Channel.fromPath(params.referenceAln)
-    file refTax from Channel.fromPath(params.referenceTax)
+    tuple file(count), file(fasta) from NO_CHIMERA_FASTA
+    file(refAln) from Channel.fromPath(params.referenceAln)
+    file(refTax) from Channel.fromPath(params.referenceTax)
 
     output:
-    set file(count), file(fasta), file("all_preClassification.taxonomy") into PRE_CLASSIFIED_CONTIGS
+    tuple file(count), file(fasta), file("all_preClassification.taxonomy") into PRE_CLASSIFIED_CONTIGS
 
     script:
     """
@@ -380,11 +386,11 @@ process Clustering {
     publishDir params.outdir+"/Results/raw", mode: "copy", pattern: "*.{database,biom}"	
 
     input:
-    set file(count), file(fasta), file(tax) from PRE_CLASSIFIED_CONTIGS
+    tuple file(count), file(fasta), file(tax) from PRE_CLASSIFIED_CONTIGS
     each idThreshold from clusteringThresholds
 
     output:
-	set val(idThreshold), file(fasta), file(count), file(tax), file("raw_clustering_*.list") into FOR_TAXA_FILTER
+	tuple val(idThreshold), file(fasta), file(count), file(tax), file("raw_clustering_*.list") into FOR_TAXA_FILTER
     file("raw_*.summary") into CLUSTERING_TO_COUNT
 	file("raw*.{fasta,shared,taxonomy,database,biom}")
 
@@ -428,11 +434,11 @@ process TaxaFilter {
     publishDir params.outdir+"/Misc/9-TaxaFilter", mode: "copy"
 
     input:
-    set val(idThreshold), file(fasta), file(count), file(tax), file(list) from FOR_TAXA_FILTER
+    tuple val(idThreshold), file(fasta), file(count), file(tax), file(list) from FOR_TAXA_FILTER
 
     output:
     file("all_taxaFilter*.summary") into TAXA_FILTER_TO_COUNT
-    set val(idThreshold), file("all_taxaFilter*.{list,taxonomy,fasta,count_table}") into FOR_MULTIPLETONS_FILTER
+    tuple val(idThreshold), file("all_taxaFilter*.{list,taxonomy,fasta,count_table}") into FOR_MULTIPLETONS_FILTER
 
     script:
     """
@@ -452,11 +458,11 @@ process MultipletonsFilter {
     publishDir params.outdir+"/Misc/10-MultipletonsFilter", mode: "copy"
 
     input:
-    set val(idThreshold), file(f) from FOR_MULTIPLETONS_FILTER
+    tuple val(idThreshold), file(f) from FOR_MULTIPLETONS_FILTER
 
     output:
-    set val(idThreshold), file("all_multipletonsFilter*.count_table") into FILTERED_TABLE
-	set val(idThreshold), file("all_multipletonsFilter*.{count_table,fasta,list,taxonomy}") into FILTERED_OTU_DATA
+    tuple val(idThreshold), file("all_multipletons*.count_table") into FILTERED_TABLE
+	tuple val(idThreshold), file("all_multipletons*.count_table"), file("all_multipletons*.fasta"), file("all_multipletons*.taxonomy"), file("all_multipletons*.list") into FILTERED_OTU_DATA
     file("all_multipletonsFilter*.summary") into MULTIPLETONS_FILTER_TO_COUNT
 
     script:
@@ -478,10 +484,10 @@ process GetSubsamlingValue {
     label "python_script"
 
     input:
-    set val(idThreshold), file(count) from TABLE_FOR_SUBSAMPLING.on
+    tuple val(idThreshold), file(count) from TABLE_FOR_SUBSAMPLING.on
 
     output:
-    set val(idThreshold), stdout into SUBSAMPLING_THRESHOLDS
+    tuple val(idThreshold), stdout into SUBSAMPLING_THRESHOLDS
 
     script:
     """
@@ -511,10 +517,10 @@ process Subsampling {
     publishDir params.outdir+"/Misc/11-Subsampling", mode: "copy"
 
     input:
-    set val(idThreshold), file(f), val(subSampThresh) from FOR_SUBSAMPLING.on.join(SUBSAMPLING_THRESHOLDS, remainder: true)
+    tuple val(idThreshold), file(count), file(fasta), file(tax), file(list), val(subSampThresh) from FOR_SUBSAMPLING.on.join(SUBSAMPLING_THRESHOLDS, remainder: true)
 
     output:
-    set val(idThreshold), file("all_subsampling*.{count_table,fasta,list,taxonomy}") into SUBSAMPLED_OUT
+    tuple val(idThreshold), file("all_subsampling*.count_table"), file("all_subsampling*.fasta"), file("all_subsampling*.taxonomy"), file("all_subsampling*.list") into SUBSAMPLED_OUT
     file("all_subsampling*.summary") into SUBSAMPLING_TO_COUNT
 
     script:
@@ -530,8 +536,11 @@ process Subsampling {
     """
 }
 
-SUBSAMPLED_OUT.mix(FOR_SUBSAMPLING.off).into{FOR_PRELULU ; SUBSAMPLED_ALL}
-SUBSAMPLED_ALL.map{it -> [it[0], it[1][0], it[1][1], it[1][3]]}.set{SUBSAMPLED_NO_LIST}
+SUBSAMPLED_OUT
+	.mix(FOR_SUBSAMPLING.off)
+	.branch {off: params.skipLulu
+			 on: true}
+	.set {FOR_PRELULU}
 
 /*
  *
@@ -548,10 +557,10 @@ process PreLulu {
     publishDir params.outdir+"/Misc/12-Lulu", mode: "copy"
 
     input:
-    set val(idThreshold), file(f) from FOR_PRELULU
+    	tuple val(idThreshold), file(count), file(fasta), file(tax), file(list) from FOR_PRELULU.on
 
     output:
-    set val(idThreshold), file("match_list_*.txt"), file("all_abundanceTable_*.shared"), file("${f[2]}") into FOR_LULU
+		tuple val(idThreshold), file("match_list_*.txt"), file("all_abundanceTable_*.shared"), file(list), file(count), file(fasta), file(tax) into FOR_LULU
 
     script:
     """
@@ -586,11 +595,11 @@ process Lulu {
     publishDir params.outdir+"/Misc/12-Lulu", mode: "copy"
 
     input:
-    set val(idThreshold), file(matchlist), file(table), file(list) from FOR_LULU
+		tuple val(idThreshold), file(matchlist), file(table), file(list), file(count), file(fasta), file(tax) from FOR_LULU
 
     output:
-    set val(idThreshold), file("all_lulu*.list") into MERGED_OTUS
-	file("all_lulu_*.csv") into LULU_TO_COUNT
+ 		tuple val(idThreshold), file(count), file(fasta), file(tax), file("all_lulu*.list") into LULU_OUT
+    	file("all_lulu_*.csv") into LULU_TO_COUNT
 
     script:
     """
@@ -603,6 +612,8 @@ process Lulu {
     merge_otu_list("${list}", "mapping_discarded_${idThreshold}.txt", ${idThreshold}, cores=${task.cpus})
     """
 }
+
+LULU_OUT.mix(FOR_PRELULU.off).set{FINAL_OTU_DATA}
 
 /*
  *
@@ -618,14 +629,11 @@ process Database {
     publishDir params.outdir+"/Results/main", mode: "copy", pattern: "*.{database,biom}"	
 
     input:
-    set val(idThreshold), file(count), file(fasta), file(tax), file(list) from SUBSAMPLED_NO_LIST.join(MERGED_OTUS)
+    tuple val(idThreshold), file(count), file(fasta), file(tax), file(list) from FINAL_OTU_DATA
 
     output:
-    set val(idThreshold), file("all_esv.fasta"), file("otu_repr_*.fasta"), file("abundance_table_*.shared") into FOR_POSTPROC
-	set val(idThreshold), file("otu_repr_*.fasta"), file("*.taxonomy") into FOR_SPECIES_ASSGN
-    set val(idThreshold), file("abundance_table_*.shared") into FOR_ALPHADIV, FOR_BETADIV
-    set val(idThreshold), file("*.shared"), file("*.taxonomy") into FOR_PLOT
-    set file("*.relabund"), file("*.taxonomy"), file("*.biom"), file("*.database"), file("all_esv.fasta")
+	tuple val(idThreshold), file("otu_repr_*.fasta"), file("abundance_*.shared"), file("*.taxonomy") into DB_OUT
+    tuple file("*.relabund"), file("*.biom"), file("*.database"), file("all_esv.fasta")
 
     script:
     """
@@ -656,6 +664,16 @@ process Database {
     """
 }
 
+// order: [thresh, fasta, shared, tax]
+DB_OUT
+	.multiMap{ it ->
+	plot: [it[0], it[2], it[3]]
+	alpha_div: [it[0], it[2]]
+	beta_div: [it[0], it[2]]
+	tree: [it[0], it[1], it[2]]
+	species_assign: [it[0], it[1], it[3]] }
+	.set{MAIN_OUTPUTS}
+
 /*
  *
  * Filter out fasta sequences that LULU merged with the most abundant sequence
@@ -671,7 +689,7 @@ process SummaryPlot {
     publishDir params.outdir+"/Results/figures", mode:"copy", pattern:"*.html"
 
     input:
-    set idThreshold, file(shared), file(tax) from FOR_PLOT
+    tuple idThreshold, file(shared), file(tax) from MAIN_OUTPUTS.plot
 
     output:
     file("*.html")
@@ -694,10 +712,10 @@ process SummaryFile {
     publishDir params.outdir+"/Results", mode: "copy"
 
     input:
-    file f from COUNT_SUMMARIES
+    file(f) from COUNT_SUMMARIES
     val(raw_counts) from RAW_COUNTS
     val(filtered_counts) from FILTERED_COUNTS
-    file f from MSA_TO_COUNT
+    file(f) from MSA_TO_COUNT
         .mix(CHIMERA_TO_COUNT)
         .mix(CLUSTERING_TO_COUNT)
         .mix(MULTIPLETONS_FILTER_TO_COUNT)
@@ -738,13 +756,6 @@ process SummaryFile {
     """
 }
 
-FOR_POSTPROC
-	.branch {clearcut: it[1].countFasta() <= 5000
-			 return [it[0], it[2], it[3]]
-			 fasttree: it[1].countFasta() > 5000
-			 return [it[0], it[2], it[3]]}
-	.set { FOR_TREE }
-
 /*
  *
  * Generates some results with mothur
@@ -758,10 +769,10 @@ process FastTree {
     publishDir params.outdir+"/Results/postprocessing/unifrac", mode: "copy", pattern: "*.tre"
 
     input:
-    set val(idThreshold), file(fasta), file(shared) from FOR_TREE.fasttree
+    tuple val(idThreshold), file(fasta), file(shared) from MAIN_OUTPUTS.tree
 
     output:
-    set val(idThreshold), file(shared), file("*.tre") into FASTTREE
+    tuple val(idThreshold), file(shared), file("*.tre") into FOR_UNIFRAC
 
     script:
     """
@@ -777,7 +788,7 @@ process UnifracDistPhylo {
     publishDir params.outdir+"/Results/postprocessing/unifrac", mode: "copy", pattern: "*.csv"
 
     input:
-    set val(idThreshold), file(shared), file(tree) from FASTTREE
+    tuple val(idThreshold), file(shared), file(tree) from FOR_UNIFRAC
 	each mode from ('weighted', 'unweighted')
 
     output:
@@ -792,30 +803,6 @@ process UnifracDistPhylo {
     """
 }
 
-process UnifracDistMothur {
-    tag { "Unifrac_${idThreshold}_${mode}" }
-    label "high_computation"
-    label "r_script"
-    publishDir params.outdir+"/Results/postprocessing/unifrac", mode: "copy", pattern: "*{.tre,summary}"
-
-    input:
-    set val(idThreshold), file(fasta), file(shared) from FOR_TREE.clearcut
-	each mode from ('weighted', 'unweighted')
-
-    output:
-    file("*.tre")
-	file("*summary")
-
-    script:
-    """
-    ${params.script_dir}/mothur.sh \
-    --step=unifrac \
-    --idThreshold=${idThreshold} \
-    --uf_mode=${mode}
-    """
-}
-
-
 process AlphaDiv {
     tag { "alphaDiv_${idThreshold}" }
     label "high_computation"
@@ -823,7 +810,7 @@ process AlphaDiv {
     publishDir params.outdir+"/Results/postprocessing/alpha_diversity", mode: "copy", pattern: "*.summary"
 
     input:
-    set val(idThreshold), file(shared) from FOR_ALPHADIV
+    tuple val(idThreshold), file(shared) from MAIN_OUTPUTS.alpha_div
 
     output:
     file("*.summary")
@@ -843,7 +830,7 @@ process BetaDiv {
     publishDir params.outdir+"/Results/postprocessing/beta_diversity", mode: "copy", pattern: "*.summary"
 
     input:
-    set val(idThreshold), file(shared) from FOR_BETADIV
+    tuple val(idThreshold), file(shared) from MAIN_OUTPUTS.beta_div
 
     output:
     file("*.summary")
@@ -863,7 +850,7 @@ process SpeciesAssignment {
     publishDir params.outdir+"/Results/postprocessing/", mode: "copy", pattern: "*.csv"
 
     input:
-    set val(idThreshold), file(fasta), file(tax) from FOR_SPECIES_ASSGN
+    tuple val(idThreshold), file(fasta), file(tax) from MAIN_OUTPUTS.species_assign
 
     output:
     file("*.csv")

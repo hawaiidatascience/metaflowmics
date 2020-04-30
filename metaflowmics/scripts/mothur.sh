@@ -167,11 +167,6 @@ elif [ $step == "postprocessing" ]; then
 	outputs_mothur=("${shared}.relabund"
 				    "${shared}.${mothurThresh}.biom")
 
-elif [ $step == "unifrac" ]; then
-	cmd=("clearcut(fasta=${fasta}.fasta, DNA=T)"
-		 "count.seqs(shared=${shared}.shared)"
-		 "unifrac.${uf_mode}(tree=current,count=current,distance=lt)")
-	
 elif [ $step == "alphaDiversity" ]; then
 	cmd=("summary.single(shared=${shared}.shared,calc=nseqs-sobs-chao-shannon-shannoneven)")
 	outputs_mothur=("${shared}.groups.summary")

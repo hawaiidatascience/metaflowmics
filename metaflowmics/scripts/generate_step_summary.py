@@ -25,7 +25,9 @@ def write_summary(steps,prelim_counts,clustering_thresholds):
         if pattern == -1:
             # Already calculated
             continue
-        if (pattern is None) or ('subsampling' in name.lower() and len(glob(pattern))==0):
+
+        allow_missing = any(x in name.lower() for x in ['subsampling', 'lulu'])
+        if (pattern is None) or (allow_missing and len(glob(pattern))==0):
             # Step doesnt loose any reads/sample (special case when subsampling is deactivated)
             summary_i = [ pd.Series("N/A", index=sample_names, name=name) ]
         elif type(pattern) is str:
