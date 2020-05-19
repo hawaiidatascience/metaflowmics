@@ -788,27 +788,68 @@ process SummaryFile {
 
 /*
  *
- * Generates some results with mothur
+ * Postprocessing
  *
  */
 
+
+process AlphaDiversity {
+    tag { "alphaDiv_${otuId}" }
+    label "high_computation"
+    label "mothur_script"
+    publishDir params.outdir+"/Results/postprocessing/alpha_diversity", mode: "copy", pattern: "*.summary"
+
+    input:
+    tuple val(otuId), file(shared) from MAIN_OUTPUTS.alpha_div
+
+    output:
+    file("*.summary")
+
+    script:
+    """
+    ${params.script_dir}/mothur.sh \
+    --step=alphaDiversity \
+    --otuId=${otuId}
+    """
+}
+
+process FastTree {
+	tag { "FastTree_${otuId}" }
+	label "high_computation"
+	// label "mothur_script"
+	publishDir params.outdir+"/Results/postprocessing/unifrac", mode: "copy", pattern: "*.tre"
+
+	input:
+	tuple val(otuId), file(fasta), file(shared) from MAIN_OUTPUTS.tree
+
+	output:
+	tuple val(otuId), file(shared), file("*.tre") into FOR_UNIFRAC
+
+	script:
+	"""
+	sed -r 's/.*(Otu[0-9]+)\\|.*/\\>\\1/' ${fasta} > relabeled_${fasta}
+	FastTree -nt relabeled_${fasta} > FastTree_${otuId}.tre
+	"""
+}
+
 if (!params.skipBetaDiversity) {
-	process FastTree {
-		tag { "FastTree_${otuId}" }
+	process BetaDiv {
+		tag { "betaDiv_${idThreshold}" }
 		label "high_computation"
-		// label "mothur_script"
-		publishDir params.outdir+"/Results/postprocessing/unifrac", mode: "copy", pattern: "*.tre"
+		label "mothur_script"
+		publishDir params.outdir+"/Results/postprocessing/beta_diversity", mode: "copy", pattern: "*.summary"
 
 		input:
-		tuple val(otuId), file(fasta), file(shared) from MAIN_OUTPUTS.tree
+		tuple val(idThreshold), file(shared) from MAIN_OUTPUTS.beta_div
 
 		output:
-		tuple val(otuId), file(shared), file("*.tre") into FOR_UNIFRAC
+		file("*.summary")
 
 		script:
 		"""
-		sed -r 's/.*(Otu[0-9]+)\\|.*/\\>\\1/' ${fasta} > relabeled_${fasta}
-		FastTree -nt relabeled_${fasta} > FastTree_${otuId}.tre
+		${params.script_dir}/mothur.sh \
+			--step=betaDiversity \
+			--idThreshold=${idThreshold}
 		"""
 	}
 
@@ -833,26 +874,6 @@ if (!params.skipBetaDiversity) {
 		calculate_unifrac("${tree}", "${shared}", method="${mode}", otu_thresh=${otuId}, cores=${task.cpus})
 		"""
 	}
-}
-
-process AlphaDiversity {
-    tag { "alphaDiv_${otuId}" }
-    label "high_computation"
-    label "mothur_script"
-    publishDir params.outdir+"/Results/postprocessing/alpha_diversity", mode: "copy", pattern: "*.summary"
-
-    input:
-    tuple val(otuId), file(shared) from MAIN_OUTPUTS.alpha_div
-
-    output:
-    file("*.summary")
-
-    script:
-    """
-    ${params.script_dir}/mothur.sh \
-    --step=alphaDiversity \
-    --otuId=${otuId}
-    """
 }
 
 process SpeciesAssignment {
