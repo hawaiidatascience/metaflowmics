@@ -26,8 +26,14 @@ def parse_args():
     return args
 
 def load_shared(path):
-    df = pd.read_csv(path, index_col='Group', sep='\t').drop(['label', 'numOtus'], axis=1)
-    return df
+    header = next(open(path)).split('\t')
+    dtypes = dict((col, str) if col in ['Group'] else (col, int)
+                  for col in header)
+    data = pd.read_csv(path, index_col='Group',
+                       sep='\t', dtype=dtypes,
+                       keep_default_na=False, low_memory=False,
+                       usecols=lambda x: x not in ['label', 'numOtus'])
+    return data
 
 def load_tax(path):
     df = (pd.read_csv(path, index_col='OTU', sep='\t').drop('Size', axis=1).Taxonomy

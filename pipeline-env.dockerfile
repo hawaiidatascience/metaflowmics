@@ -38,22 +38,22 @@ RUN wget -qO- https://sourceforge.net/projects/bbmap/files/latest/download \
 
 RUN Rscript -e "install.packages(c('BiocManager','stringr','seqinr','ggplot2','remotes','doParallel', 'stringi', 'igraph', 'vegan'), dependencies=TRUE, repos='http://cran.rstudio.com/')"
 RUN Rscript -e "BiocManager::install('phyloseq')"
-RUN Rscript -e "remotes::install_github('benjjneb/dada2', ref='v1.14')"
+RUN Rscript -e "remotes::install_github('benjjneb/dada2', ref='v1.16')"
 RUN Rscript -e "remotes::install_github('tobiasgf/lulu')"
 
 #-------------------------------------------------#
 #                  python packages                #
 #-------------------------------------------------#
 
-RUN apt-get install -y python3 python3-pip
+RUN apt-get update && apt-get install -y python3 python3-pip
 RUN pip3 install --upgrade pip
-RUN pip3 install ipython biopython numpy pandas itsxpress matplotlib seaborn h5py scikit-learn bokeh scipy fastcluster
+RUN pip3 install ipython biopython numpy pandas itsxpress matplotlib seaborn h5py scikit-learn bokeh scipy
 
 #-------------------------------------------------#
 #                   Mothur v1.43                  #
 #-------------------------------------------------#
 
-RUN wget "https://github.com/mothur/mothur/releases/download/v.1.43.0/Mothur.Ubuntu_18.zip"
+RUN wget "https://github.com/mothur/mothur/releases/download/v.1.44.1/Mothur.Ubuntu_18.zip"
 RUN unzip Mothur.Ubuntu_18.zip \
 	&& rm -rf __MACOSX Mothur.Ubuntu_18.zip\
 	&& mv mothur /usr/local/bin

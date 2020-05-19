@@ -1,3 +1,11 @@
+ifndef CONF
+override CONF = local_test
+endif
+
+ifndef RELEASE
+override RELEASE = latest
+endif
+
 test:
 	nextflow run multithreaded-demux --inputdir "../tests/demux" -profile $(CONF) --n_per_file 100 --n_bases 1e3
 	nextflow run Pipeline-ITS --reads "../tests/ITS/*R1.fastq.gz" -profile $(CONF) --uniteDB databases/test/test_unite.fasta
@@ -21,8 +29,8 @@ clean:
 	rm -rf 16S-pipeline_outputs
 
 container:
-	sudo docker build -f ../pipeline-env.dockerfile -t nakor/pipeline-env scripts/
-	sudo docker push nakor/pipeline-env
+	sudo docker build -f ../pipeline-env.dockerfile -t nakor/pipeline-env:$(RELEASE) scripts/
+	sudo docker push nakor/pipeline-env:$(RELEASE)
 	rm -f ~/.singularity_images.cache/nakor-pipeline-env.img
 
 gcp_wrapper_16S:

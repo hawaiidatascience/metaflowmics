@@ -383,162 +383,165 @@ process MakeEsvTable {
  */
 
 process Clustering {
-    tag { "clustering.${idThreshold}" }
+    tag { "clustering.${otuId}" }
     label "high_computation"
     label "require_vsearch"
     
     publishDir params.outdir+"/Misc/7-Clustering", mode: "copy"
     
     input:
-    each idThreshold from clusteringThresholds.findAll{ it != 100}
+    each otuId from clusteringThresholds.findAll{ it != 100}
     file(esvFasta) from ESV_ALL_SAMPLES_TO_CLUSTER
 	
     output:
-	tuple val(idThreshold), file("OTUs_*.fasta"), file("clustering*.csv") into CLUSTERING_OUT
+	tuple val(otuId), file("OTUs_*.fasta"), file("clustering*.csv") into CLUSTERING_OUT
 	file("clustering*.csv") into CLUSTERING_TO_COUNT
     
     script:
     """
     vsearch --threads ${task.cpus} \
             --cluster_size ${esvFasta} \
-            --id 0.${idThreshold} \
+            --id 0.${otuId} \
             --strand plus \
             --sizein \
             --sizeout \
             --fasta_width 0 \
-            --uc clusters${idThreshold}.uc \
-            --relabel OTU${idThreshold}_ \
-            --centroids OTUs_${idThreshold}.fasta \
-            --otutabout clustering_${idThreshold}.tsv
+            --uc clusters${otuId}.uc \
+            --relabel OTU${otuId}_ \
+            --centroids OTUs_${otuId}.fasta \
+            --otutabout clustering_${otuId}.tsv
 
-    cat clustering_${idThreshold}.tsv | tr "\\t" "," > clustering_${idThreshold}.csv
+    cat clustering_${otuId}.tsv | tr "\\t" "," > clustering_${otuId}.csv
     """
 }
-
-CLUSTERING_OUT
-	.mix(ESV_OUT)
-	.branch{off: params.skipLulu
-			on: true}
-	.set{FOR_PRELULU}
 
 /*
  *
  * Preliminary step before LULU: blast each contig against the others to look for sequence similarities
-1 *
+ *
  */
 
-process PreLulu {
-    tag { "preLulus.${idThreshold}" }
-    label "high_computation"
-    label "require_vsearch"
-    
-    publishDir params.outdir+"/Misc/8-LULU_correction", mode: "copy"
+if (!params.skipLulu) {
+	process PreLulu {
+		tag { "preLulus.${otuId}" }
+		label "high_computation"
+		label "require_vsearch"
+		
+		publishDir params.outdir+"/Misc/8-LULU_correction", mode: "copy"
 
-    input:
-	tuple val(idThreshold), file(fasta), file(abundance) from FOR_PRELULU.on
-	
-    output:
-	tuple val(idThreshold), file("match_list_${idThreshold}.txt"), file(fasta), file(abundance) into FOR_LULU
-	
-    script:	
-    """
-    vsearch --usearch_global ${fasta} \
+		input:
+		tuple val(otuId), file(fasta), file(abundance) from CLUSTERING_OUT.mix(ESV_OUT)
+		
+		output:
+		tuple val(otuId), file("match_list_${otuId}.txt"), file(fasta), file(abundance) into FOR_LULU
+		
+		script:	
+		"""
+		vsearch --usearch_global ${fasta} \
             --threads ${task.cpus} \
             --db ${fasta} --self \
             --id .84 \
             --iddef 1 \
-            --userout match_list_${idThreshold}.txt \
+            --userout match_list_${otuId}.txt \
             -userfields query+target+id \
             --maxaccepts 0 \
             --query_cov .9 \
             --maxhits 10
-    """
+		"""
+	}
+
+	/*
+	 *
+	 * LULU
+	 *
+	 */
+
+	process Lulu {
+		tag { "Lulu.${otuId}" }
+		label "medium_computation"
+		label "r_script"
+
+		publishDir params.outdir+"/Misc/8-LULU_correction", mode: "copy", pattern: "{abundance_table_*.csv}"
+
+		input:
+		tuple val(otuId), file(matchlist), file(fasta), file(abundance) from FOR_LULU
+
+		output:
+		tuple val(otuId), file("lulu_ids_${otuId}.csv"), file(fasta), file("all_lulu_${otuId}.csv") into FOR_LULU_FILTER
+		file("all_lulu_*.csv") into ABUNDANCE_LULU_TO_COUNT
+		file("lulu*.log_*") optional true
+
+		script:
+		"""
+		#!/usr/bin/env Rscript
+		source("${params.script_dir}/util.R")
+
+		lulu_curate("${abundance}","${matchlist}","${otuId}","${params.min_ratio_type}","${params.min_ratio}","${params.min_match}","${params.min_rel_cooccurence}")
+		"""
+	}
+
+	/*
+	 *
+	 * Filter out FASTA sequences that LULU merged with a more abundant sequence
+	 *
+	 */
+
+	process ExtractFastaLulu {
+		tag { "extractFastaLulu.${otuId}" }
+		label "high_computation"
+		label "python_script"
+
+		input:
+		tuple otuId, file(ids), file(fasta), file(abundance) from FOR_LULU_FILTER
+
+		output:
+		tuple otuId, file("lulu_${otuId}.fasta"), file(abundance) into LULU_FILTERED
+
+		script:
+
+		"""
+		#!/usr/bin/env python3
+		from Bio import SeqIO
+		import pandas as pd
+
+		ids = pd.read_csv("${ids}", header=None)[0].values
+		sequences = [ seq for seq in SeqIO.parse("${fasta}","fasta") if seq.id.split(";")[0] in ids ]
+		SeqIO.write(sequences,"lulu_${otuId}.fasta","fasta")
+		"""
+	}
+
+} else {
+	CLUSTERING_OUT.mix(ESV_OUT).set{LULU_FILTERED}
+	Channel.empty().set{ABUNDANCE_LULU_TO_COUNT}
 }
 
-/*
- *
- * LULU
- *
- */
-
-process Lulu {
-    tag { "Lulu.${idThreshold}" }
-    label "medium_computation"
-    label "r_script"
-    
-    publishDir params.outdir+"/Misc/8-LULU_correction", mode: "copy", pattern: "{abundance_table_*.csv}"
-
-    input:
-	tuple val(idThreshold), file(matchlist), file(fasta), file(abundance) from FOR_LULU
-	
-    output:
-	tuple val(idThreshold), file("lulu_ids_${idThreshold}.csv"), file(fasta), file("all_lulu_${idThreshold}.csv") into FOR_LULU_FILTER
-    file("all_lulu_*.csv") into ABUNDANCE_LULU_TO_COUNT
-    file("lulu*.log_*") optional true
-
-	script:
-    """
-    #!/usr/bin/env Rscript
-    source("${params.script_dir}/util.R")
-
-    lulu_curate("${abundance}","${matchlist}","${idThreshold}","${params.min_ratio_type}","${params.min_ratio}","${params.min_match}","${params.min_rel_cooccurence}")
-    """
-}
-
-/*
- *
- * Filter out FASTA sequences that LULU merged with a more abundant sequence
- *
- */
-
-process ExtractFastaLulu {
-    tag { "extractFastaLulu.${idThreshold}" }
-    label "high_computation"
-    label "python_script"
-
-    input:
-	tuple idThreshold, file(ids), file(fasta), file(abundance) from FOR_LULU_FILTER
-	
-    output:
-	tuple idThreshold, file("lulu_${idThreshold}.fasta"), file(abundance) into LULU_OUT
-	
-    script:
-	
-    """
-    #!/usr/bin/env python3
-    from Bio import SeqIO
-    import pandas as pd
-
-    ids = pd.read_csv("${ids}", header=None)[0].values
-    sequences = [ seq for seq in SeqIO.parse("${fasta}","fasta") if seq.id.split(";")[0] in ids ]
-    SeqIO.write(sequences,"lulu_${idThreshold}.fasta","fasta")
-    """
-}
-
-LULU_OUT.mix(FOR_PRELULU.off).set{FOR_CLASSIFICATION}
+Channel.fromPath(params.uniteDB)
+	.combine(Channel.from(clusteringThresholds))
+	.map{it[0]}
+	.set{DB_CHANNEL}
 
 process ClassificationSintax {
-    tag { "classification.${idThreshold}" }
+    tag { "classification.${otuId}" }
     label "high_computation"
     label "require_vsearch"
 	publishDir "${params.outdir}/Results", mode: "copy"
 
     input:
-	tuple idThreshold, file(fasta), file(abundance) from FOR_CLASSIFICATION
-	file(db) from Channel.fromPath(params.uniteDB)
+	tuple otuId, file(fasta), file(abundance) from LULU_FILTERED
+	file(db) from DB_CHANNEL
 	
     output:
-    tuple file(fasta), file(abundance), file("annotations_sintax_${idThreshold}.tsv")
+    tuple file("sequences*.fasta"), file("abundance_table*.tsv"), file("annotations_*.tsv")
 	
     script:
 	
     """
     vsearch --threads ${task.cpus} --db ${db} \
             --sintax ${fasta} --sintax_cutoff ${params.confidenceThresh} \
-            --tabbedout annotations_sintax_${idThreshold}.tsv
+            --tabbedout annotations_sintax_${otuId}.tsv
 
-	cp ${fasta} sequences_${idThreshold}.fasta
-	cp ${abundance} abundance_table_${idThreshold}.fasta
+	cp ${fasta} sequences_${otuId}.fasta
+	cp ${abundance} abundance_table_${otuId}.tsv
     """
 }
 

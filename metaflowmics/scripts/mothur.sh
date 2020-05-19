@@ -14,6 +14,7 @@ shared=`getRad .shared`
 count=`getRad .count_table`
 tax=`getRad .taxonomy`
 list=`getRad .list`
+relabund=`getRad .relabund`
 
 set +o xtrace
 
@@ -50,8 +51,8 @@ do
     --minAbundance=*)
 	minAbundance="${arg#*=}" ;;
 
-    --idThreshold=*)
-	idThreshold="${arg#*=}" ;;
+    --otuId=*)
+	otuId="${arg#*=}" ;;
     
     --subsamplingNb=*)
 	subsamplingNb="${arg#*=}" ;;
@@ -69,19 +70,19 @@ done
 # General prefix for output names
 out="${prefix}_${step}"
 
-if [ ! -z $idThreshold ]; then
-    if [ $idThreshold -eq 100 ]; then
+if [ ! -z $otuId ]; then
+    if [ $otuId -eq 100 ]; then
 	mothurThresh=0
     else
-	mothurThresh=0.0"$((100-${idThreshold}))"	
+	mothurThresh=0.0"$((100-${otuId}))"	
     fi
-    out="${out}_${idThreshold}"
+    out="${out}_${otuId}"
 fi
 
 if [ $step == "MSA" ]; then
     
     cmd=("align.seqs(fasta=${fasta}.fasta, reference=${refAln})"
-		 "filter.seqs(fasta=${fasta}.align)"
+		 "filter.seqs(fasta=${fasta}.align, vertical=T)"
 		 "screen.seqs(fasta=${fasta}.filter.fasta, count=${count}.count_table, minlength=${minAlnLen})"
 		 "screen.seqs(fasta=current, count=current, optimize=${optimize}, criteria=${criteria})"
 		 "summary.seqs(fasta=current)")
@@ -106,7 +107,7 @@ elif [ $step == "preClassification" ]; then
     outputs_mothur=("${fasta}.${suffixTax}.taxonomy")
     
 elif [ $step == "clustering" ]; then
-    method=`[ ${idThreshold} -eq 100 ] && echo 'unique' || echo 'dgc'`
+    method=`[ ${otuId} -eq 100 ] && echo 'unique' || echo 'dgc'`
 	
     cmd=("cluster(count=${count}.count_table, fasta=${fasta}.fasta, method=${method}, cutoff=${mothurThresh})")
 	
@@ -160,12 +161,17 @@ elif [ $step == "abundanceTable" ]; then
 	cmd=("make.shared(count=${count}.count_table, list=${list}.list)")
 	outputs_mothur=("${list}.shared")
 	
-elif [ $step == "postprocessing" ]; then
-	cmd=("get.relabund(shared=${shared}.shared)"
-		 "create.database(relabund=current,label=${mothurThresh},repfasta=${fasta}.fasta,count=${count}.count_table,constaxonomy=${tax}.taxonomy)"
-		 "make.biom(shared=${shared}.shared,constaxonomy=${tax}.taxonomy)")
-	outputs_mothur=("${shared}.relabund"
-				    "${shared}.${mothurThresh}.biom")
+elif [ $step == "relabund" ]; then
+	cmd=("get.relabund(shared=${shared}.shared)")
+	outputs_mothur=("${shared}.relabund")
+
+elif [ $step == "database" ]; then
+	cmd=("create.database(relabund=${relabund}.relabund,label=${mothurThresh},repfasta=${fasta}.fasta,count=${count}.count_table,constaxonomy=${tax}.taxonomy)")
+	outputs_mothur=("${shared}.${mothurThresh}.database")
+
+elif [ $step == "biom" ]; then
+	cmd=("make.biom(shared=${shared}.shared,constaxonomy=${tax}.taxonomy)")
+	outputs_mothur=("${shared}.${mothurThresh}.biom")
 
 elif [ $step == "alphaDiversity" ]; then
 	cmd=("summary.single(shared=${shared}.shared,calc=nseqs-sobs-chao-shannon-shannoneven)")

@@ -17,7 +17,7 @@ def helpMessage() {
     --referenceAln  Path to the SILVA reference database (fasta format)
     --referenceTax  Path to the SILVA reference database (taxonomy file)
 
----------------------------------- Optional arguments ----------------------------------------
+	---------------------------------- Optional arguments ----------------------------------------
 
     --outdir        Path to output directory. Default: "./16S-pipeline_outputs"
     --singleEnd     If your data is single end
@@ -68,6 +68,10 @@ def helpMessage() {
 
     [Other]
     --minAbundance    Remove OTUs with a total abundance equal or below <minAbundance>. Default: 2
+	--mothurDb        Compute mothur database summary file. Can be memory intensive. Default: false
+	--biom            Compute biom summary file. Default: false
+	--skipBetaDiv     Skip beta diversity calculation. Recommended if your memory is limited and
+	                  your have a significant amount of OTUs. Default: false
     """.stripIndent()
 }
 
@@ -314,9 +318,6 @@ process MultipleSequenceAlignment {
     --criteria=${params.criteria} \
     --minAlnLen=${params.minAlnLen} \
     --optimize=start-end
-
-    mothur "#make.table(count=all_MSA.count_table, compress=f)"
-    mv all_MSA.full.count_table all_MSA.count_table
     """
 }
 
@@ -378,48 +379,60 @@ process PreClassification {
  */
 
 process Clustering {
-    tag { "clustering.${idThreshold}" }
+    tag { "clustering.${otuId}" }
     label "high_computation"
     label "mothur_script"
     publishDir params.outdir+"/Misc/8-Clustering", mode: "copy", pattern: "raw.*"
     publishDir params.outdir+"/Results/raw/details", mode: "copy", pattern: "raw*.{shared,fasta,taxonomy}"
-    publishDir params.outdir+"/Results/raw", mode: "copy", pattern: "*.{database,biom}"	
+    publishDir params.outdir+"/Results/raw", mode: "copy", pattern: "*.biom"	
 
     input:
     tuple file(count), file(fasta), file(tax) from PRE_CLASSIFIED_CONTIGS
-    each idThreshold from clusteringThresholds
+    each otuId from clusteringThresholds
 
     output:
-	tuple val(idThreshold), file(fasta), file(count), file(tax), file("raw_clustering_*.list") into FOR_TAXA_FILTER
+	tuple val(otuId), file(fasta), file(count), file(tax), file("raw_clustering_*.list") into FOR_TAXA_FILTER
     file("raw_*.summary") into CLUSTERING_TO_COUNT
-	file("raw*.{fasta,shared,taxonomy,database,biom}")
+	file("raw*.{fasta,shared,taxonomy}")
+	file("*.{biom,database}") optional true
 
     script:
     """
     ${params.script_dir}/mothur.sh \
     --step=clustering \
-    --idThreshold=${idThreshold} \
+    --otuId=${otuId} \
     --prefix=raw
 
     ${params.script_dir}/mothur.sh \
     --step=consensusClassification \
-    --idThreshold=${idThreshold} \
+    --otuId=${otuId} \
     --prefix=raw
 
     ${params.script_dir}/mothur.sh \
     --step=abundanceTable \
-    --idThreshold=${idThreshold} \
+    --otuId=${otuId} \
     --prefix=raw
 
     ${params.script_dir}/mothur.sh \
     --step=otuRepr \
-    --idThreshold=${idThreshold} \
+    --otuId=${otuId} \
     --rename=f \
     --prefix=raw
 
     ${params.script_dir}/mothur.sh \
-    --step=postprocessing \
-    --idThreshold=${idThreshold}
+    --step=relabund \
+    --otuId=${otuId}
+
+	[ "${params.biom}" == "true" ] &&
+    ${params.script_dir}/mothur.sh \
+    --step=biom \
+    --otuId=${otuId} || echo "Skipping biom"
+
+	[ "${params.mothurDb}" == "true" ] &&
+    ${params.script_dir}/mothur.sh \
+    --step=database \
+    --otuId=${otuId} || echo "Skipping mothur db"
+
     """
 }
 
@@ -428,23 +441,23 @@ process Clustering {
 */
 
 process TaxaFilter {
-    tag { "taxaFilter.${idThreshold}" }
+    tag { "taxaFilter.${otuId}" }
     label "medium_computation"
     label "mothur_script"
     publishDir params.outdir+"/Misc/9-TaxaFilter", mode: "copy"
 
     input:
-    tuple val(idThreshold), file(fasta), file(count), file(tax), file(list) from FOR_TAXA_FILTER
+    tuple val(otuId), file(fasta), file(count), file(tax), file(list) from FOR_TAXA_FILTER
 
     output:
     file("all_taxaFilter*.summary") into TAXA_FILTER_TO_COUNT
-    tuple val(idThreshold), file("all_taxaFilter*.{list,taxonomy,fasta,count_table}") into FOR_MULTIPLETONS_FILTER
+    tuple val(otuId), file("all_taxaFilter*.{list,taxonomy,fasta,count_table}") into FOR_MULTIPLETONS_FILTER
 
     script:
     """
     ${params.script_dir}/mothur.sh \
     --step=taxaFilter \
-    --idThreshold=${idThreshold} \
+    --otuId=${otuId} \
     --taxaToFilter='${params.taxaToFilter}' \
     --refAln=${params.referenceAln} \
     --refTax=${params.referenceTax}
@@ -452,57 +465,59 @@ process TaxaFilter {
 }
 
 process MultipletonsFilter {
-    tag { "MultipletonsFilter.${idThreshold}" }
+    tag { "MultipletonsFilter.${otuId}" }
     label "medium_computation"
     label "mothur_script"
     publishDir params.outdir+"/Misc/10-MultipletonsFilter", mode: "copy"
 
     input:
-    tuple val(idThreshold), file(f) from FOR_MULTIPLETONS_FILTER
+    tuple val(otuId), file(f) from FOR_MULTIPLETONS_FILTER
 
     output:
-    tuple val(idThreshold), file("all_multipletons*.count_table") into FILTERED_TABLE
-	tuple val(idThreshold), file("all_multipletons*.count_table"), file("all_multipletons*.fasta"), file("all_multipletons*.taxonomy"), file("all_multipletons*.list") into FILTERED_OTU_DATA
+    tuple val(otuId), file("all_multipletons*.count_table") into FILTERED_TABLE
+	tuple val(otuId), file("all_multipletons*.count_table"), file("all_multipletons*.fasta"), file("all_multipletons*.taxonomy"), file("all_multipletons*.list") into FILTERED_OTUS
     file("all_multipletonsFilter*.summary") into MULTIPLETONS_FILTER_TO_COUNT
 
     script:
     """
     ${params.script_dir}/mothur.sh \
     --step=multipletonsFilter \
-    --idThreshold=${idThreshold} \
+    --otuId=${otuId} \
     --minAbundance=${params.minAbundance}
     """
 }
 
-FILTERED_TABLE.branch{off: (params.customSubsamplingLevel>0) || params.skipSubsampling
-					  on: true}
-	.set{TABLE_FOR_SUBSAMPLING}
+// FILTERED_TABLE.branch{off: (params.customSubsamplingLevel>0) || params.skipSubsampling
+// 					  on: true}
+// 	.set{TABLE_FOR_SUBSAMPLING}
 
-process GetSubsamlingValue {
-    tag "getSubsamplingValue_${idThreshold}"
-    label "low_computation"
-    label "python_script"
+if (params.customSubsamplingLevel<=0 && !params.skipSubsampling) {
+	process GetSubsamlingValue {
+		tag "getSubsamplingValue_${otuId}"
+		label "low_computation"
+		label "python_script"
 
-    input:
-    tuple val(idThreshold), file(count) from TABLE_FOR_SUBSAMPLING.on
+		input:
+		tuple val(otuId), file(count) from FILTERED_TABLE
 
-    output:
-    tuple val(idThreshold), stdout into SUBSAMPLING_THRESHOLDS
+		output:
+		tuple val(otuId), stdout into SUBSAMPLING_THRESHOLDS
 
-    script:
-    """
-    #!/usr/bin/env python3
+		script:
+		"""
+		#!/usr/bin/env python3
 
-    from util import get_subsampling_threshold
-
-    get_subsampling_threshold("${count}", ${params.subsamplingQuantile}, ${params.minSubsamplingLevel}, ${params.customSubsamplingLevel})
-    """
+		from util import get_subsampling_threshold
+		
+		get_subsampling_threshold("${count}", ${params.subsamplingQuantile}, ${params.minSubsamplingLevel}, ${params.customSubsamplingLevel})
+		"""
+	}
 }
 
-FILTERED_OTU_DATA
-	.branch {off: params.skipSubsampling
-			 on: true}
-	.set { FOR_SUBSAMPLING }
+// FILTERED_OTU_DATA
+// 	.branch {off: params.skipSubsampling
+// 			 on: true}
+// 	.set { FOR_SUBSAMPLING }
 
 /*
  *
@@ -510,37 +525,36 @@ FILTERED_OTU_DATA
  *
  */
 
-process Subsampling {
-    tag { "subsampling" }
-    label "medium_computation"
-    label "mothur_script"
-    publishDir params.outdir+"/Misc/11-Subsampling", mode: "copy"
+if (!params.skipSubsampling) {
+	process Subsampling {
+		tag { "subsampling" }
+		label "medium_computation"
+		label "mothur_script"
+		publishDir params.outdir+"/Misc/11-Subsampling", mode: "copy"
+		
+		input:
+		tuple val(otuId), file(count), file(fasta), file(tax), file(list), val(subSampThresh) from FILTERED_OTUS.join(SUBSAMPLING_THRESHOLDS, remainder: true)
 
-    input:
-    tuple val(idThreshold), file(count), file(fasta), file(tax), file(list), val(subSampThresh) from FOR_SUBSAMPLING.on.join(SUBSAMPLING_THRESHOLDS, remainder: true)
+		output:
+		tuple val(otuId), file("all_subsampling*.count_table"), file("all_subsampling*.fasta"), file("all_subsampling*.taxonomy"), file("all_subsampling*.list") into SUBSAMPLED_DATA
+		file("all_subsampling*.summary") into SUBSAMPLING_TO_COUNT
 
-    output:
-    tuple val(idThreshold), file("all_subsampling*.count_table"), file("all_subsampling*.fasta"), file("all_subsampling*.taxonomy"), file("all_subsampling*.list") into SUBSAMPLED_OUT
-    file("all_subsampling*.summary") into SUBSAMPLING_TO_COUNT
+		script:
+		"""
+		#!/usr/bin/env bash
 
-    script:
-    """
-    #!/usr/bin/env bash
+		[ "${subSampThresh}" == "null" ] && subsampling_level=${params.customSubsamplingLevel} || subsampling_level=${subSampThresh}
 
-	[ "${subSampThresh}" == "null" ] && subsampling_level=${params.customSubsamplingLevel} || subsampling_level=${subSampThresh}
-
-    ${params.script_dir}/mothur.sh \
-    --step=subsampling \
-    --idThreshold=${idThreshold} \
-    --subsamplingNb=\$subsampling_level
-    """
+		${params.script_dir}/mothur.sh \
+			--step=subsampling \
+			--otuId=${otuId} \
+			--subsamplingNb=\$subsampling_level
+		"""
+	}
+} else {
+	FILTERED_OTUS.set{SUBSAMPLED_DATA}
+	Channel.empty().set{SUBSAMPLING_TO_COUNT}
 }
-
-SUBSAMPLED_OUT
-	.mix(FOR_SUBSAMPLING.off)
-	.branch {off: params.skipLulu
-			 on: true}
-	.set {FOR_PRELULU}
 
 /*
  *
@@ -550,70 +564,73 @@ SUBSAMPLED_OUT
  *
  */
 
-process PreLulu {
-    tag { "preLulus.${idThreshold}" }
-    label "medium_computation"
-    label "mothur_script"
-    publishDir params.outdir+"/Misc/12-Lulu", mode: "copy"
+if (!params.skipLulu) {
+	process PreLulu {
+		tag { "preLulus.${otuId}" }
+		label "medium_computation"
+		label "mothur_script"
+		publishDir params.outdir+"/Misc/12-Lulu", mode: "copy"
 
-    input:
-    	tuple val(idThreshold), file(count), file(fasta), file(tax), file(list) from FOR_PRELULU.on
+		input:
+    	tuple val(otuId), file(count), file(fasta), file(tax), file(list) from SUBSAMPLED_DATA
 
-    output:
-		tuple val(idThreshold), file("match_list_*.txt"), file("all_abundanceTable_*.shared"), file(list), file(count), file(fasta), file(tax) into FOR_LULU
+		output:
+		tuple val(otuId), file("match_list_*.txt"), file("all_abundanceTable_*.shared"), file(list), file(count), file(fasta), file(tax) into FOR_LULU
 
-    script:
-    """
-    ${params.script_dir}/mothur.sh --step=abundanceTable --idThreshold=${idThreshold}
-    ${params.script_dir}/mothur.sh --step=otuRepr --idThreshold=${idThreshold} --rename=t
+		script:
+		"""
+		${params.script_dir}/mothur.sh --step=abundanceTable --otuId=${otuId}
+		${params.script_dir}/mothur.sh --step=otuRepr --otuId=${otuId} --rename=t
 
-    sed -i '/^>/! s/[\\.-]//g' all_otuRepr_${idThreshold}.fasta
+		sed -i '/^>/! s/[\\.-]//g' all_otuRepr_${otuId}.fasta
 
-    vsearch --usearch_global all_otuRepr_${idThreshold}.fasta \
+		vsearch --usearch_global all_otuRepr_${otuId}.fasta \
             --threads ${task.cpus} \
-            --self --db all_otuRepr_${idThreshold}.fasta \
+            --self --db all_otuRepr_${otuId}.fasta \
             --id 0.${params.min_match} \
             --iddef 1 \
-            --userout match_list_${idThreshold}.txt \
+            --userout match_list_${otuId}.txt \
             -userfields query+target+id \
             --maxaccepts 0 \
             --query_cov .9 \
             --maxhits 10
-    """
-}
+		"""
+	}
 
-/*
- *
- * Lulu
- *
- */
+	/*
+	 *
+	 * Lulu
+	 *
+	 */
 
-process Lulu {
-    tag { "Lulu.${idThreshold}" }
-    label "high_computation"
-    label "r_script"
-    publishDir params.outdir+"/Misc/12-Lulu", mode: "copy"
+	process Lulu {
+		tag { "Lulu.${otuId}" }
+		label "high_computation"
+		label "r_script"
+		publishDir params.outdir+"/Misc/12-Lulu", mode: "copy"
+		
+		input:
+		tuple val(otuId), file(matchlist), file(table), file(list), file(count), file(fasta), file(tax) from FOR_LULU
 
-    input:
-		tuple val(idThreshold), file(matchlist), file(table), file(list), file(count), file(fasta), file(tax) from FOR_LULU
-
-    output:
- 		tuple val(idThreshold), file(count), file(fasta), file(tax), file("all_lulu*.list") into LULU_OUT
+		output:
+ 		tuple val(otuId), file(count), file(fasta), file(tax), file("all_lulu*.list") into LULU_FILTERED
     	file("all_lulu_*.csv") into LULU_TO_COUNT
 
-    script:
-    """
-    #!/usr/bin/env Rscript
-    source("${params.script_dir}/util.R")
+		script:
+		"""
+		#!/usr/bin/env Rscript
+		source("${params.script_dir}/util.R")
 
-    lulu_curate("${table}","${matchlist}","${idThreshold}",
-                "${params.min_ratio_type}","${params.min_ratio}","${params.min_match}","${params.min_rel_cooccurence}",
-                cores=${task.cpus})
-    merge_otu_list("${list}", "mapping_discarded_${idThreshold}.txt", ${idThreshold}, cores=${task.cpus})
-    """
+		lulu_curate("${table}","${matchlist}","${otuId}",
+            "${params.min_ratio_type}","${params.min_ratio}","${params.min_match}","${params.min_rel_cooccurence}",
+            cores=${task.cpus})
+		merge_otu_list("${list}", "mapping_discarded_${otuId}.txt", ${otuId}, cores=${task.cpus})
+		"""
+	}
+} else {
+	SUBSAMPLED_DATA.set{LULU_FILTERED}
+	Channel.empty().set{LULU_TO_COUNT}
 }
-
-LULU_OUT.mix(FOR_PRELULU.off).set{FINAL_OTU_DATA}
 
 /*
  *
@@ -622,43 +639,55 @@ LULU_OUT.mix(FOR_PRELULU.off).set{FINAL_OTU_DATA}
  */
 
 process Database {
-    tag { "database_${idThreshold}" }
+    tag { "database_${otuId}" }
     label "medium_computation"
     label "mothur_script"
     publishDir params.outdir+"/Results/main/details", mode: "copy", pattern: "*.{taxonomy,shared,fasta,relabund}"
-    publishDir params.outdir+"/Results/main", mode: "copy", pattern: "*.{database,biom}"	
+    publishDir params.outdir+"/Results/main", mode: "copy", pattern: "*.biom"	
 
     input:
-    tuple val(idThreshold), file(count), file(fasta), file(tax), file(list) from FINAL_OTU_DATA
+    tuple val(otuId), file(count), file(fasta), file(tax), file(list) from LULU_FILTERED
 
     output:
-	tuple val(idThreshold), file("otu_repr_*.fasta"), file("abundance_*.shared"), file("*.taxonomy") into DB_OUT
-    tuple file("*.relabund"), file("*.biom"), file("*.database"), file("all_esv.fasta")
+	tuple val(otuId), file("otu_repr_*.fasta"), file("abundance_*.shared"), file("*.taxonomy") into DB_OUT
+    file("all_esv.fasta")
+	file("*.relabund")
+	file("*.{biom,database}") optional true
 
     script:
     """
     ${params.script_dir}/mothur.sh \
     --step=consensusClassification \
-    --idThreshold=${idThreshold}
+    --otuId=${otuId}
 
-    mv all_consensusClassification_${idThreshold}.taxonomy annotations_${idThreshold}.taxonomy
+    mv all_consensusClassification_${otuId}.taxonomy annotations_${otuId}.taxonomy
 
     ${params.script_dir}/mothur.sh \
     --step=abundanceTable \
-    --idThreshold=${idThreshold}
+    --otuId=${otuId}
 
-    mv all_abundanceTable_${idThreshold}.shared abundance_table_${idThreshold}.shared
+    mv all_abundanceTable_${otuId}.shared abundance_table_${otuId}.shared
 
     ${params.script_dir}/mothur.sh \
     --step=otuRepr \
-    --idThreshold=${idThreshold} \
+    --otuId=${otuId} \
     --rename=t
 
-    mv all_otuRepr_${idThreshold}.fasta otu_repr_${idThreshold}.fasta
+    mv all_otuRepr_${otuId}.fasta otu_repr_${otuId}.fasta
 
     ${params.script_dir}/mothur.sh \
-    --step=postprocessing \
-    --idThreshold=${idThreshold}
+    --step=relabund \
+    --otuId=${otuId}
+
+	[ "${params.biom}" == "true" ] &&
+    ${params.script_dir}/mothur.sh \
+    --step=biom \
+    --otuId=${otuId} || echo "Skipping biom"
+
+	[ "${params.mothurDb}" == "true" ] &&
+    ${params.script_dir}/mothur.sh \
+    --step=database \
+    --otuId=${otuId} || echo "Skipping mothur db"
 
     cp ${fasta} all_esv.fasta
     """
@@ -683,20 +712,20 @@ DB_OUT
  */
 
 process SummaryPlot {
-    tag { "SummaryPlot.${idThreshold}" }
+    tag { "SummaryPlot.${otuId}" }
     label "medium_computation"
     label "python_script"
     publishDir params.outdir+"/Results/figures", mode:"copy", pattern:"*.html"
 
     input:
-    tuple idThreshold, file(shared), file(tax) from MAIN_OUTPUTS.plot
+    tuple otuId, file(shared), file(tax) from MAIN_OUTPUTS.plot
 
     output:
     file("*.html")
 
     script:
     """
-    python3 ${params.script_dir}/bokeh_viz.py --shared ${shared} --tax ${tax} --thresh ${idThreshold}
+    python3 ${params.script_dir}/bokeh_viz.py --shared ${shared} --tax ${tax} --thresh ${otuId}
     """
 }
 
@@ -762,55 +791,57 @@ process SummaryFile {
  *
  */
 
-process FastTree {
-    tag { "FastTree_${idThreshold}" }
-    label "high_computation"
-    // label "mothur_script"
-    publishDir params.outdir+"/Results/postprocessing/unifrac", mode: "copy", pattern: "*.tre"
+if (!params.skipBetaDiversity) {
+	process FastTree {
+		tag { "FastTree_${otuId}" }
+		label "high_computation"
+		// label "mothur_script"
+		publishDir params.outdir+"/Results/postprocessing/unifrac", mode: "copy", pattern: "*.tre"
 
-    input:
-    tuple val(idThreshold), file(fasta), file(shared) from MAIN_OUTPUTS.tree
+		input:
+		tuple val(otuId), file(fasta), file(shared) from MAIN_OUTPUTS.tree
 
-    output:
-    tuple val(idThreshold), file(shared), file("*.tre") into FOR_UNIFRAC
+		output:
+		tuple val(otuId), file(shared), file("*.tre") into FOR_UNIFRAC
 
-    script:
-    """
-    sed -r 's/.*(Otu[0-9]+)\\|.*/\\>\\1/' ${fasta} > relabeled_${fasta}
-    FastTree -nt relabeled_${fasta} > FastTree_${idThreshold}.tre
-    """
+		script:
+		"""
+		sed -r 's/.*(Otu[0-9]+)\\|.*/\\>\\1/' ${fasta} > relabeled_${fasta}
+		FastTree -nt relabeled_${fasta} > FastTree_${otuId}.tre
+		"""
+	}
+
+	process UnifracDistPhylo {
+		tag { "Unifrac_${otuId}_${mode}" }
+		label "high_computation"
+		label "r_script"
+		publishDir params.outdir+"/Results/postprocessing/unifrac", mode: "copy", pattern: "*.csv"
+
+		input:
+		tuple val(otuId), file(shared), file(tree) from FOR_UNIFRAC
+		each mode from ('weighted', 'unweighted')
+
+		output:
+		file("unifrac*.csv")
+
+		script:
+		"""
+		#!/usr/bin/env Rscript
+		source("${params.script_dir}/util.R")
+		
+		calculate_unifrac("${tree}", "${shared}", method="${mode}", otu_thresh=${otuId}, cores=${task.cpus})
+		"""
+	}
 }
 
-process UnifracDistPhylo {
-    tag { "Unifrac_${idThreshold}_${mode}" }
-    label "high_computation"
-    label "r_script"
-    publishDir params.outdir+"/Results/postprocessing/unifrac", mode: "copy", pattern: "*.csv"
-
-    input:
-    tuple val(idThreshold), file(shared), file(tree) from FOR_UNIFRAC
-	each mode from ('weighted', 'unweighted')
-
-    output:
-    file("unifrac*.csv")
-
-    script:
-    """
-    #!/usr/bin/env Rscript
-    source("${params.script_dir}/util.R")
- 
-    calculate_unifrac("${tree}", "${shared}", method="${mode}", otu_thresh=${idThreshold}, cores=${task.cpus})
-    """
-}
-
-process AlphaDiv {
-    tag { "alphaDiv_${idThreshold}" }
+process AlphaDiversity {
+    tag { "alphaDiv_${otuId}" }
     label "high_computation"
     label "mothur_script"
     publishDir params.outdir+"/Results/postprocessing/alpha_diversity", mode: "copy", pattern: "*.summary"
 
     input:
-    tuple val(idThreshold), file(shared) from MAIN_OUTPUTS.alpha_div
+    tuple val(otuId), file(shared) from MAIN_OUTPUTS.alpha_div
 
     output:
     file("*.summary")
@@ -819,38 +850,18 @@ process AlphaDiv {
     """
     ${params.script_dir}/mothur.sh \
     --step=alphaDiversity \
-    --idThreshold=${idThreshold}
-    """
-}
-
-process BetaDiv {
-    tag { "betaDiv_${idThreshold}" }
-    label "high_computation"
-    label "mothur_script"
-    publishDir params.outdir+"/Results/postprocessing/beta_diversity", mode: "copy", pattern: "*.summary"
-
-    input:
-    tuple val(idThreshold), file(shared) from MAIN_OUTPUTS.beta_div
-
-    output:
-    file("*.summary")
-
-    script:
-    """
-    ${params.script_dir}/mothur.sh \
-    --step=betaDiversity \
-    --idThreshold=${idThreshold}
+    --otuId=${otuId}
     """
 }
 
 process SpeciesAssignment {
-    tag { "species_${idThreshold}" }
+    tag { "species_${otuId}" }
     label "high_computation"
     label "r_script"
     publishDir params.outdir+"/Results/postprocessing/", mode: "copy", pattern: "*.csv"
 
     input:
-    tuple val(idThreshold), file(fasta), file(tax) from MAIN_OUTPUTS.species_assign
+    tuple val(otuId), file(fasta), file(tax) from MAIN_OUTPUTS.species_assign
 
     output:
     file("*.csv")
@@ -862,6 +873,6 @@ process SpeciesAssignment {
 
     res <- get_species("${fasta}", "${tax}", "${params.speciesDB}")
 
-    write.csv(res, "species_${idThreshold}.csv")
+    write.csv(res, "species_${otuId}.csv")
     """
 }
