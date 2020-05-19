@@ -716,6 +716,7 @@ process SummaryPlot {
     label "medium_computation"
     label "python_script"
     publishDir params.outdir+"/Results/figures", mode:"copy", pattern:"*.html"
+	errorStrategy 'ignore'
 
     input:
     tuple otuId, file(shared), file(tax) from MAIN_OUTPUTS.plot
@@ -859,6 +860,7 @@ process SpeciesAssignment {
     label "high_computation"
     label "r_script"
     publishDir params.outdir+"/Results/postprocessing/", mode: "copy", pattern: "*.csv"
+	errorStrategy 'ignore'
 
     input:
     tuple val(otuId), file(fasta), file(tax) from MAIN_OUTPUTS.species_assign

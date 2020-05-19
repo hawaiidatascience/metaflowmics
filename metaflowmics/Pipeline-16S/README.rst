@@ -1,13 +1,21 @@
 Microbial 16S pipeline
 ======================
 
+This pipeline 
+
 Pre-requisites
 --------------
 
 - `Nextflow <https://www.nextflow.io/docs/latest/getstarted.html>`_
-- python(>=3.6) + libraries: Biopython, pandas, matplotlib, seaborn
-- R(>=3.5) + libraries: ggplot2, lulu, dada2, seqinr, stringr, ShortRead, doParallel, ape, phyloseq
-- `Mothur <https://github.com/mothur/mothur>`_ (tested with v1.43) 
+- `Docker <https://www.docker.com/get-started>`_ or `Singularity <https://sylabs.io/docs/>`_
+
+If using the available containers, no additional tool is required. However, in case such containerization tool are not available, the following dependencies need to be installed:
+  
+- python(>=3.6) + libraries: biopython, pandas, matplotlib, seaborn, bokeh, h5py, scikit-learn, scipy
+- R(>=3.5) + libraries: ggplot2, lulu, dada2, seqinr, stringr, ShortRead, doParallel, ape, phyloseq, vegan, igraph
+- `Mothur <https://github.com/mothur/mothur>`_ (tested with v1.44) 
+
+For more details, see the `dockerfile <https://github.com/hawaiidatascience/metaflowmics/blob/master/pipeline-env.dockerfile>`_.
 
 Download the software
 ^^^^^^^^^^^^^^^^^^^^^
@@ -16,8 +24,7 @@ Clone the repository:
 
 .. code-block:: bash
 
-    git clone https://github.com/hawaiidatascience/nextflow_cmaiki.git
-    cd nextflow_cmaiki/metagenomics-pipelines
+    git clone https://github.com/hawaiidatascience/metaflowmics.git
 
 Silva Database
 ^^^^^^^^^^^^^^
@@ -58,7 +65,7 @@ After running the pipeline, the results are stored in the output directory you c
 	- The abundance table: A (sample x OTU) abundance table (tsv formatted) with the `.shared` extension.
 	- The taxonomy table: A (OTU x 6 taxonomic tanks) table (tsv formatted) with the `.taxonomy` extension.
 	- The OTU sequences: A fasta formatted file with the representative sequences for each OTU.
-	- A mothur "database" file that combines all of the previous 3 files.
+	- Optionally, a mothur "database" file that combines all of the previous 3 files and a `.biom` file.
 
   - The subfolder `raw/` contains the same information as `main`, before the subsampling, taxa filtering, multipletons filter and lulu steps.
   - The subfolder `postprocessing/` provides alpha and beta diversity metrics. For more details, see `16S postprocessing. <https://metagenomics-pipelines.readthedocs.io/en/latest/pipeline_16S.html#postprocessing>`_
@@ -115,10 +122,6 @@ A daughter OTU is merged with its parent if:
 * they share at least *<97%>* similarity
 * `daughter_abundance < parent_abundance`: in all samples (*<"min">*) or in average ("avg").
 * the relative co-occurence (proportion of time the daughter is present when the parent is present) must be at least *<1>*
-
-Rare sequences filter
-^^^^^^^^^^^^^^^^^^^^^
-OTU with a total abundance of *<2>* or below are discarded.
 
 Consensus classification and representative sequences extraction
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

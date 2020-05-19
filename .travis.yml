@@ -20,8 +20,8 @@ env:
 install:
   - sudo apt-get -qq update
   - mkdir $NXF_HOME && export PATH="$NXF_HOME:$PATH"
-  - wget https://github.com/nextflow-io/nextflow/releases/download/v19.10.0/nextflow-19.10.0-all
-  - chmod a+x nextflow-19.10.0-all && mv nextflow-19.10.0-all $NXF_HOME/nextflow
+  - wget https://github.com/nextflow-io/nextflow/releases/download/v20.04.1/nextflow-20.04.1-all
+  - chmod a+x nextflow-20.04.1-all && mv nextflow-20.04.1 $NXF_HOME/nextflow
 
 script:
   - cd metaflowmics && make test CONF=local_test

@@ -5,10 +5,10 @@ MetaFlow|mics: Nextflow pipelines for metagenomics
 .. image:: https://readthedocs.org/projects/metagenomics-pipelines/badge/?version=latest
    :target: https://metagenomics-pipelines.readthedocs.io/en/latest/?badge=latest
 
-Cite (Work in progress)
------------------------
+Cite
+----
 
-MetaFlow|mics: Scalable and reproducible nextflow pipelines for the analysis of microbiome marker data
+Cédric Arisdakessian, Sean B. Cleveland, and Mahdi Belcaid. 2020. MetaFlow|mics: Scalable and Reproducible Nextflow Pipelines forthe Analysis of Microbiome Marker Data. InPractice and Experience in Advanced Research Computing (PEARC ’20), July 26–30, 2020,Portland, OR, USA.ACM, New York, NY, USA, 9 pages.
 
 Description
 -----------
@@ -28,8 +28,8 @@ See the `documentation <https://metagenomics-pipelines.readthedocs.io>`_ for mor
 
 Contribute
 ----------
-- Issue tracker: `GitHub <https://github.com/hawaiidatascience/nextflow_cmaiki/issues>`_
-- Source Code: `GitHub <https://github.com/hawaiidatascience/nextflow_cmaiki>`_
+- Issue tracker: `GitHub <https://github.com/hawaiidatascience/metaflowmics/issues>`_
+- Source Code: `GitHub <https://github.com/hawaiidatascience/metaflowmics/tree/master/metaflowmics>`_
 
 License
 -------
