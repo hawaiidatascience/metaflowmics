@@ -67,11 +67,11 @@ def helpMessage() {
     --min_rel_cooccurence    Proportion of the parent samples where daughter occurs. Default: 1
 
     [Other]
-    --minAbundance    Remove OTUs with a total abundance equal or below <minAbundance>. Default: 2
-	--mothurDb        Compute mothur database summary file. Can be memory intensive. Default: false
-	--biom            Compute biom summary file. Default: false
-	--skipBetaDiv     Skip beta diversity calculation. Recommended if your memory is limited and
-	                  your have a significant amount of OTUs. Default: false
+    --minAbundance         Remove OTUs with a total abundance equal or below <minAbundance>. Default: 2
+	--mothurDb             Compute mothur database summary file. Can be memory intensive. Default: false
+	--biom                 Compute biom summary file. Default: false
+	--skipBetaDiversity    Skip beta diversity calculation. Recommended if your memory is limited and
+	                       your have a significant amount of OTUs. Default: false
     """.stripIndent()
 }
 
@@ -726,7 +726,7 @@ process SummaryPlot {
 
     script:
     """
-    python3 ${params.script_dir}/bokeh_viz.py --shared ${shared} --tax ${tax} --thresh ${otuId}
+    python3 ${params.script_dir}/bokeh_viz.py --shared ${shared} --tax ${tax} --thresh ${otuId} --min-abund 0.01 --max-samples 500
     """
 }
 

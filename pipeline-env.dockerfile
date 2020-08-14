@@ -68,7 +68,7 @@ RUN wget https://www.bioinformatics.babraham.ac.uk/projects/fastqc/fastqc_v0.11.
 	&& mv FastQC /usr/local/bin
 
 #-------------------------------------------------#
-#    Environment variables and work directoy      #
+#    Environment variables and work directory      #
 #-------------------------------------------------#
 
 ENV PATH /usr/local/bin/mothur:/usr/local/bin/bbmap:/usr/local/bin/FastQC:$PATH
