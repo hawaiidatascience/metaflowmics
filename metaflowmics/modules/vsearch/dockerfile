@@ -1,0 +1,8 @@
+FROM ubuntu:18.04
+LABEL author="carisdak@hawaii.edu"
+
+RUN apt-get update && apt-get install -y wget
+RUN wget -qO- https://github.com/torognes/vsearch/releases/download/v2.15.0/vsearch-2.15.0-linux-x86_64.tar.gz | tar xz \
+    && mv vsearch-2.15.0-linux-x86_64 /opt
+
+ENV PATH /opt/vsearch-2.15.0-linux-x86_64/bin:$PATH

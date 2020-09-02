@@ -1,0 +1,7 @@
+FROM r-base:3.6.2
+LABEL author="carisdak@hawaii.edu"
+
+RUN apt-get update && apt-get install -y libcurl4-openssl-dev libxml2-dev libssl-dev libssh2-1-dev libcairo2-dev libgeos-dev libudunits2-0 libudunits2-dev libgdal-dev
+RUN Rscript -e "install.packages(c('ggplot2','BiocManager'), dependencies=TRUE, repos='http://cran.rstudio.com/')"
+RUN Rscript -e "BiocManager::install('dada2')"
+

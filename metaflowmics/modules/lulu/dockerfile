@@ -1,0 +1,8 @@
+FROM r-base:3.6.2
+LABEL author="carisdak@hawaii.edu"
+
+RUN apt-get update && apt-get install -y libcurl4-openssl-dev libssl-dev libssh2-1-dev libxml2-dev
+RUN Rscript -e "install.packages(c('devtools'), dependencies=TRUE, repos='http://cran.rstudio.com/')"
+RUN Rscript -e "devtools::install_github('tobiasgf/lulu')"
+RUN Rscript -e "install.packages('data.table', dependencies=TRUE, repos='http://cran.rstudio.com/')"
+RUN Rscript -e "install.packages('dplyr', dependencies=TRUE, repos='http://cran.rstudio.com/')"
