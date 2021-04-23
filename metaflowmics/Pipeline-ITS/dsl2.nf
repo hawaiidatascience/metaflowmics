@@ -66,7 +66,8 @@ File f = new File("${params.outdir}/parameters_summary.log")
 f.write("====== Parameter summary =====\n")
 summary.each { key, val -> f.append("\n${key.padRight(50)}: ${val}") }
 
-include{ DOWNLOAD_UNITE } from '../modules/other/download/main.nf'
+include{ DOWNLOAD_UNITE } from '../modules/other/download/main.nf' \
+    addParams( release: 'fungi' )
 include{ ITSXPRESS } from '../modules/itsxpress/main.nf' \
     addParams( options: [publish_dir: '1-ITSxpress'] )
 include{ DADA2_FILTERANDTRIM } from '../modules/dada2/filterAndTrim/main.nf' \
