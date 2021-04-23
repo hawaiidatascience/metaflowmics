@@ -208,8 +208,8 @@ FILTERED_OUT
 	.map { [it[1].countFastq(), it[0], it[1]] }
 	.filter{ it[0] > params.minReads }
 	.multiMap { it ->
-	counts: [it[1],it[0]]
-	all: [it[1], it[2]]}
+	    all: [it[1], it[2]]
+        counts: [it[1],it[0]] }
 	.set{FILTERED_FASTQ}
 
 FILTERED_FASTQ.counts
@@ -426,12 +426,12 @@ if (!params.skipLulu) {
 		tag { "preLulus.${otuId}" }
 		label "high_computation"
 		label "require_vsearch"
-		
+
 		publishDir params.outdir+"/Misc/8-LULU_correction", mode: "copy"
 
 		input:
 		tuple val(otuId), file(fasta), file(abundance) from CLUSTERING_OUT.mix(ESV_OUT)
-		
+
 		output:
 		tuple val(otuId), file("match_list_${otuId}.txt"), file(fasta), file(abundance) into FOR_LULU
 		
@@ -529,12 +529,12 @@ process ClassificationSintax {
     input:
 	tuple otuId, file(fasta), file(abundance) from LULU_FILTERED
 	file(db) from DB_CHANNEL
-	
+
     output:
     tuple file("sequences*.fasta"), file("abundance_table*.tsv"), file("annotations_*.tsv")
-	
+
     script:
-	
+
     """
     vsearch --threads ${task.cpus} --db ${db} \
             --sintax ${fasta} --sintax_cutoff ${params.confidenceThresh} \

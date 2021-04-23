@@ -1,19 +1,23 @@
 // Import generic module functions
 include { initOptions; saveFiles; getSoftwareName } from './functions'
 
+options = initOptions(params.options)
+
 process DADA2_MAKESEQUENCETABLE {
     tag ""
     label 'process_high'
+
     publishDir "${params.outdir}",
         mode: params.publish_dir_mode,
-        saveAs: { filename -> saveFiles(filename:filename, options:options, publish_dir:getSoftwareName(task.process), publish_id:"") }
+        saveAs: { filename -> saveFiles(filename:filename, options:params.options,
+                                        publish_dir:getSoftwareName(task.process),
+                                        meta:meta, publish_by_meta:['id']) }
 
-    container "nakor/dada2:1.16"
-    // conda (params.conda ? "bioconda::bioconductor-dada2=1.16 r-ggplot2" : null) // not working
-
+    container "quay.io/biocontainers/bioconductor-dada2:1.18.0--r40h399db7b_1"
+    conda (params.enable_conda ? "bioconda::bioconductor-dada2=1.18 conda-forge::r-ggplot2" : null)
+    
     input:
     path merged_rds
-    val options
 
     output:
     tuple val(100), path("dada2_ESVs-100.fasta"), emit: fasta
@@ -22,7 +26,6 @@ process DADA2_MAKESEQUENCETABLE {
 
     script:
     def software = getSoftwareName(task.process)
-    def ioptions = initOptions(options)
     """
     #!/usr/bin/env Rscript
     library(dada2)

@@ -1,51 +1,58 @@
 // Import generic module functions
 include { initOptions; saveFiles; getSoftwareName } from './functions'
 
+options = initOptions(params.options)
+
 process DADA2_MERGEPAIRS {
-    tag ""
-    label 'process_high'
+    tag "merge_pairs"
+    label "process_high"
     publishDir "${params.outdir}",
         mode: params.publish_dir_mode,
-        saveAs: { filename -> saveFiles(filename:filename, options:options, publish_dir:getSoftwareName(task.process), publish_id:"") }
+        saveAs: { filename -> saveFiles(filename:filename, options:params.options,
+                                        publish_dir:getSoftwareName(task.process),
+                                        meta:meta, publish_by_meta:['id']) }
 
-    container "nakor/dada2:1.16"
-    // conda (params.conda ? "bioconda::bioconductor-dada2=1.16 r-ggplot2" : null) // not working
+    container "quay.io/biocontainers/bioconductor-dada2:1.18.0--r40h399db7b_1"
+    conda (params.enable_conda ? "bioconda::bioconductor-dada2=1.18 conda-forge::r-ggplot2" : null)
 
     input:
     path(derep)
     path(denoised)
-    val options
 
     output:
-    path "reads_merged-dada2.RDS", emit: rds
-    path "*.tsv", emit: summary
+    path "*.RDS", emit: rds
+    path "*.count_table", emit: count_table
+    path "dada2_ASVs-100.tsv", emit: tsv
+    path "dada2_ASVs-100.fasta", emit: fasta    
+    path "*.tsv", emit: summary, optional: true
     path "*.version.txt", emit: version
 
     script:
     def software = getSoftwareName(task.process)
-    def ioptions = initOptions(options)
     """
     #!/usr/bin/env Rscript
 
     library(dada2)
 
-    derepF <- list.files(path=".", pattern="*_R1-derep.RDS")
-    derepR <- list.files(path=".", pattern="*_R2-derep.RDS")
-    denoisedF <- list.files(path=".", pattern="*_R1-denoised.RDS")
-    denoisedR <- list.files(path=".", pattern="*_R2-denoised.RDS")    
+    derepF <- list.files(path=".", pattern="*-derep_R1.RDS")
+    derepR <- list.files(path=".", pattern="*-derep_R2.RDS")
+    denoisedF <- list.files(path=".", pattern="*-denoised_R1.RDS")
+    denoisedR <- list.files(path=".", pattern="*-denoised_R2.RDS")
+
+    sample_names <- unname(sapply(denoisedF, function(x) gsub("-denoised_R1.RDS", "", x)))
     
-    inputs <- list(dadaF=lapply(denoisedF, readRDS),
-                   derepF=lapply(derepF, readRDS),
-                   dadaR=lapply(denoisedR, readRDS),
-                   derepR=lapply(derepR, readRDS))
+    merged <- mergePairs(
+        derepF=lapply(derepF, readRDS),
+        dadaF=lapply(denoisedF, readRDS),
+        derepR=lapply(derepR, readRDS),
+        dadaR=lapply(denoisedR, readRDS),
+        minOverlap=${params.min_overlap},
+        maxMismatch=${params.max_mismatch},
+        returnReject=TRU
+    )
+    saveRDS(merged, "merged.RDS")
 
-    params <- list(minOverlap=${params.min_overlap}, 
-                   maxMismatch=${params.max_mismatch},
-                   returnReject=TRUE)
-
-    merged <- do.call(mergePairs,append(inputs, params))
-
-
+    # Merging summary
     write_merge_summary <- function(merged, key, samples) {
         ## Get a summary of matches
         data <- lapply(merged, function(df) table(df[[key]]))
@@ -58,17 +65,32 @@ process DADA2_MERGEPAIRS {
         for (i in 1:nrow(summary)) {
             summary[i, names(data[[i]])] <- as.numeric(data[[i]])
         }
+
         write.table(summary, sprintf("%s_summary.tsv", key), sep='\\t', quote=FALSE, row.names=FALSE)
     }
 
-    ## Get a summary of matches
-    samples <- unname(sapply(denoisedF, function(x) gsub("_R1-denoised.RDS", "", x)))
-    write_merge_summary(merged, 'nmatch', samples)
-    write_merge_summary(merged, 'nmismatch', samples)
+    write_merge_summary(merged, 'nmatch', sample_names)
+    write_merge_summary(merged, 'nmismatch', sample_names)
 
-    ## Save data
-    saveRDS(merged, "reads_merged-dada2.RDS")
+    ## Removes the reads not matching the merging criteria
+    merged <- lapply(merged, function(df) df[df\$accept,])
 
-    writeLines(paste0(packageVersion('dada2')), "${software}.version.txt")    
+    ## Make the ASV table
+    asv_table <- makeSequenceTable(merged)
+
+    print("Removing empty samples")
+    not_empty_samples <- rowSums(asv_table)>0
+    asv_table <- asv_table[not_empty_samples, ]
+    
+    ## Write ASV sequences
+    asv_ids <- sprintf("asv_%s", c(1:dim(asv_table)[2]))
+    uniquesToFasta(asv_table, "dada2_ASVs-100.fasta", ids=asv_ids)
+    colnames(asv_table) <- asv_ids
+
+    count_table <- cbind(asv_ids, colSums(asv_table), t(asv_table) )
+    colnames(count_table) <- c("Representative_Sequence","total",sample_names)
+    write.table(count_table, file="dada2_ASVs-100.count_table", row.names=F, col.names=T, quote=F, sep="\\t")
+
+    writeLines(paste0(packageVersion('dada2')), "${software}.version.txt")
     """
 }

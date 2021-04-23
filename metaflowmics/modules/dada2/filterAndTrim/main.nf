@@ -1,30 +1,31 @@
 // Import generic module functions
 include { initOptions; saveFiles; getSoftwareName } from './functions'
 
+options = initOptions(params.options)
+
 process DADA2_FILTERANDTRIM {
     tag "$meta.id"
     label 'process_low'
     publishDir "${params.outdir}",
         mode: params.publish_dir_mode,
-        saveAs: { filename -> saveFiles(filename:filename, options:options, publish_dir:getSoftwareName(task.process), publish_id:meta.id) }
+        saveAs: { filename -> saveFiles(filename:filename, options:params.options,
+                                        publish_dir:getSoftwareName(task.process),
+                                        meta:meta, publish_by_meta:['id']) }
 
-    container "nakor/dada2:1.16"
-    // conda (params.conda ? "bioconda::bioconductor-dada2=1.16 r-ggplot2" : null) // not working
+    container "quay.io/biocontainers/bioconductor-dada2:1.18.0--r40h399db7b_1"
+    conda (params.enable_conda ? "bioconda::bioconductor-dada2=1.18 conda-forge::r-ggplot2" : null)
 
     input:
     tuple val(meta), path(reads)
-    val options
 
     output:
-    tuple val(meta), path("*.fastq.gz"), emit: fastq
-    path "*.png", emit: png
+    tuple val(meta), path("*.fastq.gz"), emit: fastq, optional: true
+    path "*.png", emit: png, optional: true
     path "*.version.txt", emit: version
 
     script:
     def software = getSoftwareName(task.process)
-    def ioptions = initOptions(options)
-
-    def rmphix = params.keepPhix ? "TRUE" : "FALSE"
+    def rmphix = params.keep_phix ? "TRUE" : "FALSE"
     """
     #!/usr/bin/env Rscript
 
@@ -32,8 +33,8 @@ process DADA2_FILTERANDTRIM {
     library(ggplot2)
 
     params <- list(
-        minLen=c($params.minLen), truncLen=c($params.truncLen), truncQ=c($params.truncQ), 
-        maxEE=c($params.maxEE), rm.phix=${rmphix}, compress=TRUE
+        minLen=c($params.min_len), truncLen=c($params.trunc_len), truncQ=c($params.trunc_quality), 
+        maxEE=c($params.max_expected_error), rm.phix=${rmphix}, compress=TRUE
     )
 
     io <- list(fwd="${reads[0]}", filt="${meta.id}_R1-trimmed.fastq.gz")
@@ -45,8 +46,11 @@ process DADA2_FILTERANDTRIM {
 
     do.call(filterAndTrim, append(io, params))
 
-    fig <- plotQualityProfile(io)
-    ggsave("quality-profile_${meta.id}.png", plot=fig, type="cairo-png" )
+    # Plot if we kept all reads
+    if (file.exists(io[["filt"]])) {
+        fig <- plotQualityProfile(io)
+        ggsave("quality-profile_${meta.id}.png", plot=fig, type="cairo-png" )
+    }
 
     writeLines(paste0(packageVersion('dada2')), "${software}.version.txt")    
     """
