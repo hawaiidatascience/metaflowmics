@@ -57,7 +57,7 @@ process LULU {
 
     if (dim(matchList)[1] > 0) {
         res <- lulu(as.data.frame(otutab), matchList, 
-                    minimum_ratio_type=$params.lulu_min_ratio_type,
+                    minimum_ratio_type="$params.lulu_min_ratio_type",
                     minimum_ratio=$params.lulu_min_ratio,
                     minimum_match=$params.lulu_min_match,
                     minimum_relative_cooccurence=$params.lulu_min_rel_cooccurence)

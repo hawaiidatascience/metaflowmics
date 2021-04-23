@@ -33,8 +33,11 @@ process DADA2_FILTERANDTRIM {
     library(ggplot2)
 
     params <- list(
-        minLen=c($params.min_len), truncLen=c($params.trunc_len), truncQ=c($params.trunc_quality), 
-        maxEE=c($params.max_expected_error), rm.phix=${rmphix}, compress=TRUE
+        minLen=c($params.min_read_len), 
+        truncLen=c($params.trunc_len), 
+        truncQ=c($params.trunc_quality), 
+        maxEE=c($params.max_expected_error), 
+        rm.phix=${rmphix}, compress=TRUE
     )
 
     io <- list(fwd="${reads[0]}", filt="${meta.id}_R1-trimmed.fastq.gz")

@@ -144,7 +144,7 @@ process READ_TRACKING {
     path counts
 
     output:
-    file('summary*.csv')
+    file('summary-per-sample-per-step.csv')
 
     script:
     // def software = getSoftwareName(task.process)

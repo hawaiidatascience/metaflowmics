@@ -30,7 +30,7 @@ process ITSXPRESS {
     def prefix   = options.suffix ? "${meta.id}.${options.suffix}" : "${meta.id}"
     def rev_arg = meta.paired ? "--fastq2 ${reads[1]}" : "--single_end"
     """
-    itsxpress --taxa Fungi --region ${params.locus} --threads ${task.cpus} \\
+    itsxpress --taxa All --region ${params.locus} --threads ${task.cpus} \\
         --outfile ${meta.id}-${params.locus}.fastq.gz --log ITSxpress_${meta.id}.log \\
         --fastq ${reads[0]} $rev_arg
 
