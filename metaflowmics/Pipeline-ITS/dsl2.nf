@@ -88,7 +88,7 @@ include{ VSEARCH_USEARCHGLOBAL } from '../modules/vsearch/usearchglobal/main.nf'
     addParams( options: [publish_dir: '6-LULU'] )
 include{ LULU } from '../modules/lulu/main.nf' \
     addParams( options: [publish_dir: '6-LULU'] )
-include{ VSEARCH_SINTAX } from '../modules/vsearch/taxonomy/main.nf' \
+include{ DADA2_ASSIGN_TAXONOMY } from '../modules/dada2/assignTaxonomy/main.nf' \
     addParams( options: [publish_dir: '7-Taxonomy'] )
 include{ READ_TRACKING } from '../modules/other/util/main.nf' \
     addParams( options: [publish_dir: '8-Read_tracking'] )
@@ -163,7 +163,7 @@ workflow its {
 
     // Taxonomy assignment with Sintax
     unite_db = DOWNLOAD_UNITE()
-    taxonomy = VSEARCH_SINTAX(
+    taxonomy = DADA2_ASSIGN_TAXONOMY(
         lulu_filt.fasta,
         unite_db
     )
