@@ -7,6 +7,7 @@ process SUBSET_READS_RDS {
     tag "$meta.id"
     label "process_low"
     publishDir "${params.outdir}",
+        mode: params.publish_dir_mode,
         saveAs: { filename -> saveFiles(filename:filename, options:params.options,
                                         meta:meta) }
 
@@ -59,6 +60,7 @@ process BUILD_ASV_TABLE {
     tag "asv_table"
     label "process_low"
     publishDir "${params.outdir}",
+        mode: params.publish_dir_mode,
         saveAs: { filename -> saveFiles(filename:filename, options:params.options,
                                         meta:meta) }
 
@@ -134,6 +136,7 @@ process READ_TRACKING {
     tag "read_tracking"
     label "process_low"
     publishDir "${params.outdir}",
+        mode: params.publish_dir_mode,
         saveAs: { filename -> saveFiles(filename:filename, options:params.options,
                                         meta:meta) }
 
