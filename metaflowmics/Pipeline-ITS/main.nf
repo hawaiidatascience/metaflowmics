@@ -84,14 +84,14 @@ include{ SUBSET_READS_RDS; BUILD_ASV_TABLE } from '../modules/util/dada2/main.nf
     addParams( options: [publish_dir: '5-OTU_clustering'], format: 'VSEARCH' )
 include{ VSEARCH_CLUSTER } from '../modules/vsearch/cluster/main.nf' \
     addParams( options: [publish_dir: '5-OTU_clustering'] )
-include{ VSEARCH_USEARCHGLOBAL } from '../modules/vsearch/usearchglobal/main.nf' \
+include{ VSEARCH_USEARCH_GLOBAL } from '../modules/vsearch/usearchGlobal/main.nf' \
     addParams( options: [publish_dir: '6-LULU'] )
 include{ LULU } from '../modules/lulu/main.nf' \
     addParams( options: [publish_dir: '6-LULU'] )
 include{ DADA2_ASSIGN_TAXONOMY } from '../modules/dada2/assignTaxonomy/main.nf' \
     addParams( options: [publish_dir: '7-Taxonomy'] )
 include{ SUMMARIZE_TABLE; READ_TRACKING } from '../modules/util/misc/main.nf' \
-    addParams( options: [publish_dir: '8-Read_tracking'] )
+    addParams( options: [publish_dir: '8-Read_tracking'], taxa_are_rows: 'T' )
 
 workflow pipeline_ITS {
     take:
@@ -124,18 +124,18 @@ workflow pipeline_ITS {
     )
 
     // Remove chimera from DADA2 derep object
-    nochim = SUBSET_READS_RDS(
+    chimera = SUBSET_READS_RDS(
         derep.rds.join(chimera.fasta)
     )
 
     // Build Illumina reads error model
     error_model = DADA2_LEARNERRORS(
-        nochim.rds
+        chimera.rds
     )
 
     // Denoise reads
     dada = DADA2_DADA(
-        nochim.rds.join(error_model.rds)
+        chimera.rds.join(error_model.rds)
     )
 
     // Make raw ASV table
@@ -148,14 +148,14 @@ workflow pipeline_ITS {
         asvs.fasta_dup,
         params.clustering_thresholds.split(',').findAll({it!='100'}).collect{it as int}
     )
-    otus_summary = SUMMARIZE_TABLE(otus.tsv.map{["clustering-${it[0]}", it[1]]})
-
     otu_fastas = asvs.fasta.map{[100, it]}.mix(otus.fasta)
     otu_tables = asvs.count_table.map{[100, it]}.mix(otus.tsv)
 
+    otus_summary = SUMMARIZE_TABLE(otu_tables.map{["clustering", it[0], it[1]]})
+
     if (!params.skip_lulu) {
         // Co-occurrence pattern detection
-        matchlist = VSEARCH_USEARCHGLOBAL(
+        matchlist = VSEARCH_USEARCH_GLOBAL(
             otu_fastas
         )
         lulu = LULU(
@@ -174,13 +174,13 @@ workflow pipeline_ITS {
 
     // Track read in the pipeline
     fq_counts = raw_counts.mix(its_counts).mix(qc_counts)
-        .collectFile(name: 'summary.csv', newLine: true){"${it[0]},${it[2][0].id},${it[1]},"}
+        .collectFile(name: 'summary.csv', newLine: true){"${it[0]},,${it[2][0].id},${it[1]},"}
     
     tracked_files = tracked_files
-        .concat(fq_counts, derep.summary, nochim.summary, dada.summary, otus_summary)
+        .concat(fq_counts, derep.summary, chimera.summary, dada.summary, otus_summary)
 
     summary = READ_TRACKING(
-        tracked_files.collectFile()
+        tracked_files.collectFile(name: 'summary.csv')
     )
 }
 

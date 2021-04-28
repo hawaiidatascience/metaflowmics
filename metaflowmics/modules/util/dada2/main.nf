@@ -51,7 +51,7 @@ process SUBSET_READS_RDS {
 
     # Write counts
     counts <- getUniques(derep)
-    data <- sprintf("Chimera,${meta.id},%s,%s",sum(counts),sum(counts>0))
+    data <- sprintf("Chimera,,${meta.id},%s,%s",sum(counts),sum(counts>0))
     write(data, "summary.csv")
     """
 }

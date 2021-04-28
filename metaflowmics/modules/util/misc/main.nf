@@ -11,7 +11,7 @@ process SUMMARIZE_TABLE {
     conda (params.enable_conda ? "conda-forge::r-data.table" : null)
 
     input:
-    tuple val(step), path(table)
+    tuple val(step), val(otu_id), path(table)
 
     output:
     file('summary.csv')
@@ -20,7 +20,7 @@ process SUMMARIZE_TABLE {
     drop = 'NULL'
     sep = 'auto'
     rownames = 1
-    taxa_are_rows = table.getName().startsWith('vsearch') ? 'T' : 'F'
+    taxa_are_rows = params.taxa_are_rows ?: 'F'
     
     if (table.getExtension() == 'count_table') {
         drop = "'total'"
@@ -43,7 +43,8 @@ process SUMMARIZE_TABLE {
     }
     
     summary <- cbind(
-        rep("$step", ncol(table)),
+        rep('$step', ncol(table)),
+        rep('$otu_id', ncol(table)),
         colnames(table),
         colSums(table),
         colSums(table > 0)
@@ -79,7 +80,7 @@ process READ_TRACKING {
     library(tidyr)
 
     data <- read.csv('summary.csv', header=F)
-    colnames(data) <- c('step', 'sample', 'total', 'nuniq')
+    colnames(data) <- c('step', 'otu_id', 'sample', 'total', 'nuniq')
 
     # Order the step according to total count and uniques
     col_order <- data %>% replace_na(list(nuniq=Inf)) %>%
@@ -90,7 +91,6 @@ process READ_TRACKING {
     # Reshape the table into wide format
     summary <- data %>% 
       mutate(
-        otu_id=str_extract(step, '[0-9]{2,3}'),
         step=factor(step, col_order),
         label=ifelse(is.na(nuniq), total, sprintf("%s (%s uniques)", total, nuniq))
       ) %>% 

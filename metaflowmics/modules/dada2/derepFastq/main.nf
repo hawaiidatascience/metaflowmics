@@ -42,7 +42,7 @@ process DADA2_DEREPFASTQ {
 
     # Write counts
     counts <- getUniques(derep)
-    data <- sprintf("Dereplication,${meta.id},%s,%s",sum(counts),sum(counts>0))
+    data <- sprintf("Dereplication,,${meta.id},%s,%s",sum(counts),sum(counts>0))
     write(data, "summary.csv")
 
     writeLines(paste0(packageVersion('dada2')), "${software}.version.txt")    

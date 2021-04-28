@@ -22,7 +22,7 @@ process LULU {
     tuple val(otu_id), path("abundance_table-lulu-*.{csv,shared}"), emit: abundance
     tuple val(otu_id), path("*.fasta"), emit: fasta
     tuple val(otu_id), path("mapping_discarded*.txt"), emit: discarded, optional: true
-    path "summary.csv", emit: summary
+    path "*.summary", emit: summary
     path "*.version.txt", emit: version
 
     script:
@@ -79,12 +79,13 @@ process LULU {
 
     # Write counts
     summary <- cbind(
-        rep('LULU-${otu_id}', ncol(otutab)),
+        rep("LULU", ncol(otutab)),
+        rep("$otu_id", ncol(otutab)),
         colnames(otutab),
         colSums(otutab),
         colSums(otutab > 0)
     )
-    write.table(summary, "summary.csv", quote=F, sep=',', row.names=F, col.names=F)    
+    write.table(summary, "lulu_${otu_id}.summary", quote=F, sep=',', row.names=F, col.names=F)    
 
     writeLines(paste0(packageVersion('lulu')), "${software}.version.txt")
     """

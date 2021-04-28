@@ -54,7 +54,7 @@ process DADA2_DADA {
 
     # Write counts
     counts <- getUniques(denoised)
-    data <- sprintf("denoising,${meta.id},%s,%s",sum(counts),sum(counts>0))
+    data <- sprintf("denoising,,${meta.id},%s,%s",sum(counts),sum(counts>0))
     write(data, "summary.csv")
 
     writeLines(paste0(packageVersion('dada2')), "${software}.version.txt")

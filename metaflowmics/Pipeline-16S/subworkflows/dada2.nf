@@ -69,11 +69,11 @@ workflow dada2 {
 
     // Read tracking
     merge_summary = SUMMARIZE_TABLE(
-        merged.count_table.map{["read-merging", it]}
+        merged.count_table.map{["read-merging", "", it]}
     )
             
     tracked_reads = raw_counts.concat(qc_counts)
-        .collectFile(name: 'summary.csv', newLine: true){"${it[0]},${it[2][0].id},${it[1]},"}
+        .collectFile(name: 'summary.csv', newLine: true){"${it[0]},,${it[2][0].id},${it[1]},"}
         .concat(dada.summary, merge_summary)
 
     emit:

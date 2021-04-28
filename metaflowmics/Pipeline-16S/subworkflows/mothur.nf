@@ -2,91 +2,96 @@
 
 nextflow.enable.dsl=2
 params.options = [:]
-moduledir = "../../modules"
+module_dir = "../../modules"
 
-include{ DOWNLOAD_SILVA_FOR_MOTHUR } from "$moduledir/util/download/main.nf" \
-    addParams( db_release: "seed" )
-// Mothur module imports
-include { MOTHUR_ALIGN_SEQS } from "$moduledir/mothur/alignSeqs/main.nf" \
+// mothur module imports
+include { MOTHUR_GET_SEQS } from "$module_dir/mothur/getSeqs/main.nf"
+include { MOTHUR_GET_OTUS } from "$module_dir/mothur/getOtus/main.nf"
+include { MOTHUR_SUMMARY_SINGLE } from "$module_dir/mothur/summarySingle/main.nf"
+include { MOTHUR_ALIGN_SEQS } from "$module_dir/mothur/alignSeqs/main.nf" \
     addParams( options: [publish_dir: "interm/8-MSA"] )
-include { MOTHUR_CHIMERA } from "$moduledir/mothur/chimera/main.nf" \
+include { MOTHUR_CHIMERA } from "$module_dir/mothur/chimera/main.nf" \
     addParams( options: [publish_dir: "interm/9-Chimera"] )
-include { MOTHUR_CLASSIFY_SEQS } from "$moduledir/mothur/classifySeqs/main.nf" \
+include { MOTHUR_CLASSIFY_SEQS } from "$module_dir/mothur/classifySeqs/main.nf" \
     addParams( options: [publish_dir: "raw"] )
-include { MOTHUR_CLUSTER } from "$moduledir/mothur/cluster/main.nf" \
+include { MOTHUR_CLUSTER } from "$module_dir/mothur/cluster/main.nf" \
     addParams( options: [publish_dir: "interm/10-Clustering"] )
-include { MOTHUR_CLASSIFY_OTUS } from "$moduledir/mothur/classifyOtus/main.nf" \
+include { MOTHUR_CLASSIFY_OTUS } from "$module_dir/mothur/classifyOtus/main.nf" \
     addParams( options: [publish_dir: "raw"] )
-include { MOTHUR_GET_SEQS } from "$moduledir/mothur/getSeqs/main.nf"
-include { MOTHUR_GET_OTUS } from "$moduledir/mothur/getOtus/main.nf"
-include { MOTHUR_MAKE_SHARED } from "$moduledir/mothur/makeShared/main.nf"
-include { MOTHUR_SUMMARY_SINGLE } from "$moduledir/mothur/summarySingle/main.nf"
-include { MOTHUR_GET_OTU_REP } from "$moduledir/mothur/getOtuRep/main.nf" \
+include { MOTHUR_GET_OTU_REP } from "$module_dir/mothur/getOtuRep/main.nf" \
     addParams( options: [publish_dir: "raw"] )
-include { MOTHUR_MAKE_DATABASE } from "$moduledir/mothur/makeDatabase/main.nf" \
+include { MOTHUR_MAKE_DATABASE } from "$module_dir/mothur/makeDatabase/main.nf" \
     addParams( options: [publish_dir: "raw"] )
-include { MOTHUR_REMOVE_LINEAGE } from "$moduledir/mothur/removeLineage/main.nf" \
+include { MOTHUR_REMOVE_LINEAGE } from "$module_dir/mothur/removeLineage/main.nf" \
     addParams( options: [publish_dir: "interm/11-Filtering"] )
-include { MOTHUR_REMOVE_RARE } from "$moduledir/mothur/removeRare/main.nf" \
+include { MOTHUR_REMOVE_RARE } from "$module_dir/mothur/removeRare/main.nf" \
     addParams( options: [publish_dir: "interm/11-Filtering"] )
-include { GET_SUBSAMPLING_THRESHOLD } from "$moduledir/util/misc/main.nf"
-include { MOTHUR_SUBSAMPLE } from "$moduledir/mothur/subsample/main.nf" \
+include { GET_SUBSAMPLING_THRESHOLD } from "$module_dir/util/misc/main.nf"
+include { MOTHUR_SUBSAMPLE } from "$module_dir/mothur/subsample/main.nf" \
     addParams( options: [publish_dir: "interm/12-Subsampling"] )
-include { MOTHUR_DIST_SEQS } from "$moduledir/mothur/distSeqs/main.nf" \
+include { MOTHUR_DIST_SEQS } from "$module_dir/mothur/distSeqs/main.nf" \
     addParams( cutoff: 1-params.lulu_min_match/100, format: 'vsearch' )
 // Other imports
-include{ SUMMARIZE_TABLE } from "$moduledir/util/misc/main.nf" \
-    addParams( options: [publish_dir: "read_tracking"] )
-include { LULU } from "$moduledir/lulu/main.nf"
+include{ SUMMARIZE_TABLE } from "$module_dir/util/misc/main.nf"
+include { LULU } from "$module_dir/lulu/main.nf"
 
 
 
+def split_by_extension = branchCriteria {
+    fasta: it[-1].getExtension() == 'fasta'
+    count_table: it[-1].getExtension() == 'count_table'
+    taxonomy: it[-1].getExtension() == 'taxonomy'
+    shared: it[-1].getExtension() == 'shared'
+    summary: it.getExtension() == 'summary'
+}
 
-workflow mothur_curate {
+
+
+workflow mothur {
     take:
     fasta
     count_table
+    db_aln
+    db_tax
 
     main:
     // Keep track of the reads in the pipeline
-    tracked_ct = Channel.empty()
+    // items are (step, otu_id, file) or a file with those fields
+    tracked = Channel.empty()
     
-    // Processing with Mothur
-    db = DOWNLOAD_SILVA_FOR_MOTHUR()
-
     // Filter bad MSA with db
     msa = MOTHUR_ALIGN_SEQS(
         fasta.combine(count_table),
-        db.align
+        db_aln
     )
-    tracked_ct = tracked_ct.mix(msa.count_table.map{["MSA", it]})
+    tracked = tracked.mix(msa.count_table.map{["MSA", "", it]})
     
     // Discard chimeric contigs
     chimera = MOTHUR_CHIMERA(
         msa.fasta.combine(msa.count_table)
     )
-    tracked_ct = tracked_ct.mix(chimera.count_table.map{["chimera-filter", it]})
+    tracked = tracked.mix(chimera.count_table.map{["chimera-filter", "", it]})
     
     // Get contig raw taxonomy
     classify = MOTHUR_CLASSIFY_SEQS(
         chimera.fasta.combine(chimera.count_table),
-        db.align,
-        db.tax
+        db_aln,
+        db_tax
     )
 
     fasta = chimera.fasta
     count_table = chimera.count_table
     taxonomy = classify.taxonomy
     
+    // Remove unwanted taxa
     if ( params.taxa_to_filter != "" ) {
-        // Remove unwanted taxa
         lineage = MOTHUR_REMOVE_LINEAGE(
             fasta.concat(count_table, taxonomy).toList()
         )
         fasta = lineage.fasta
         count_table = lineage.count_table
         taxonomy = classify.taxonomy
-        tracked_ct = tracked_ct.mix(count_table.map{["taxa-filter", it]})
+        tracked = tracked.mix(count_table.map{["taxa-filter", "", it]})
     }
 
     // Cluster into OTU
@@ -94,34 +99,74 @@ workflow mothur_curate {
         fasta.combine(count_table),
         params.clustering_thresholds.split(",").collect{it as int}
     )
+    tracked = tracked.mix(otus.shared.map{["clustering", it[0], it[1]]})
+
+    // Add otu identity to channels
+    fasta = otus.list.combine(fasta).map{[it[0], it[2]]}
+    count_table = otus.list.combine(count_table).map{[it[0], it[2]]}
+    taxonomy = otus.list.combine(taxonomy).map{[it[0], it[2]]}
+
+    // Intermediate results
+    interm = compile(
+        fasta,
+        count_table,
+        taxonomy,
+        otus.list
+    )
 
     // Discard rare contigs
     rare = MOTHUR_REMOVE_RARE(
-        otus.list.combine(count_table)
+        otus.list.join(count_table)
     )
-    
-    // Synchronize fasta and taxonomy file
-    files = mothur_sync(
-        rare.list.combine(fasta.mix(taxonomy)).map{[it[0], it[2]]},
-        rare.list
+    tracked = tracked.mix(rare.shared.map{["rare-otus-filter", it[0], it[1]]})
+    count_table = rare.count_table
+    list = rare.list
+    shared = rare.shared
+
+    // Subsampling if not skipped
+    if (!params.skip_subsampling) {
+        subsampled_ = subsample(
+            count_table,
+            rare.list
+        )
+        count_table = subsampled_.count_table
+        list = subsampled_.list
+        shared = subsampled_.shared
+        tracked = tracked.mix(subsampled_.tracking)
+    }
+
+    // Lulu if not skipped
+    if (!params.skip_lulu) {
+        lulu_ = lulu(
+            interm.repfasta,
+            shared
+        )
+        shared = lulu_.shared
+        tracked = tracked.mix(lulu_.tracking)
+    }
+
+    files = sync(
+        fasta.mix(count_table).mix(taxonomy),
+        list,
+        shared
     )
 
     // Read tracking
-    tracked_ct = SUMMARIZE_TABLE( tracked_ct )
-    tracked_shared = MOTHUR_SUMMARY_SINGLE(
-        otus.shared.map{["clustering-${it[0]}", it[1]]}
-            .mix(rare.shared.map{["rare-otus-filter-${it[0]}", it[1]]})
-    ).summary
-        
+    tracked_by_ext = tracked.branch(split_by_extension)
+    tracked_files = tracked_by_ext.summary.concat(
+        SUMMARIZE_TABLE( tracked_by_ext.count_table ),
+        MOTHUR_SUMMARY_SINGLE( tracked_by_ext.shared ).summary
+    )
+   
     emit:
     fasta=files.fasta
     taxonomy=files.taxonomy
-    count_table=rare.count_table
-    list=rare.list
-    tracking=tracked_ct.mix(tracked_shared)
+    count_table=files.count_table
+    list=files.list
+    tracking=tracked_files
 }
 
-workflow mothur_subsample {
+workflow subsample {
     take:
     count_table
     list
@@ -136,7 +181,7 @@ workflow mothur_subsample {
     )
     
     tracked_shared = MOTHUR_SUMMARY_SINGLE(
-        subsampled.shared.map{["subsampling-${it[0]}", it[1]]}
+        subsampled.shared.map{["subsampling", it[0], it[1]]}
     )
 
     emit:
@@ -146,7 +191,7 @@ workflow mothur_subsample {
     tracking=tracked_shared.summary
 }
 
-workflow mothur_lulu {
+workflow lulu {
     take:
     repfasta
     shared
@@ -164,17 +209,16 @@ workflow mothur_lulu {
     tracking=lulu.summary
 }
 
-workflow mothur_sync {
+workflow sync {
     take:
     files
     list
+    shared
 
     main:
-    def split_by_extension = branchCriteria {
-        count_table: it[1].getExtension() == 'count_table'
-        fasta: it[1].getExtension() == 'fasta'
-        taxonomy: it[1].getExtension() == 'taxonomy'
-    }
+    list = MOTHUR_GET_OTUS(
+        shared.join(list)
+    )
 
     files = MOTHUR_GET_SEQS(
         list.combine(files, by: 0)
@@ -184,9 +228,10 @@ workflow mothur_sync {
     fasta=files.fasta
     count_table=files.count_table
     taxonomy=files.taxonomy
+    list=list
 }
 
-workflow mothur_compile {
+workflow compile {
     take:
     fasta
     count_table
@@ -195,9 +240,9 @@ workflow mothur_compile {
 
     main:
     // 1) Abundance table (shared)
-    abundance = MOTHUR_MAKE_SHARED(
-        list.join(count_table)
-    )
+    // abundance = MOTHUR_MAKE_SHARED(
+    //     list.join(count_table)
+    // )
     
     // 2) Consensus taxonomy
     cons = MOTHUR_CLASSIFY_OTUS(
@@ -210,21 +255,15 @@ workflow mothur_compile {
     )
     
     // 4) Database
-    if (params.make_db) {
+    if (params.compute_mothur_db) {
         db = MOTHUR_MAKE_DATABASE(
             list.join(cons.taxonomy).join(rep.fasta).join(rep.count_table)
         ).database
     }
     
     emit:
-    shared=abundance.shared
+    // shared=abundance.shared
     constaxonomy=cons.taxonomy
     repfasta=rep.fasta
     repcount=rep.count_table    
 }
-
-// workflow mothur_postprocessing {
-//     take:
-    
-//     main:
-// }
