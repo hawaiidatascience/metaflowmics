@@ -4,8 +4,8 @@ include { initOptions; saveFiles; getSoftwareName } from './functions'
 options = initOptions(params.options)
 
 process DADA2_ASSIGN_TAXONOMY {
-    tag "dada2_taxonomy"
-    label 'process_high'
+    tag "${otu_id}"
+    label "process_high"
 
     publishDir "${params.outdir}",
         mode: params.publish_dir_mode,

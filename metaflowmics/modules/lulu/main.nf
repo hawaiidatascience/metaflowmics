@@ -19,7 +19,7 @@ process LULU {
     tuple val(otu_id), path(matchlist), path(abundance), path(fasta)
 
     output:
-    tuple val(otu_id), path("abundance_table-lulu-*.csv"), emit: csv
+    tuple val(otu_id), path("abundance_table-lulu-*.{csv,shared}"), emit: abundance
     tuple val(otu_id), path("*.fasta"), emit: fasta
     tuple val(otu_id), path("mapping_discarded*.txt"), emit: discarded, optional: true
     path "summary.csv", emit: summary
@@ -27,6 +27,7 @@ process LULU {
 
     script:
     def software = getSoftwareName(task.process)
+    def ext = abundance.getExtension()
     """
     #!/usr/bin/env Rscript
 
@@ -34,40 +35,46 @@ process LULU {
     library(data.table)
     library(seqinr)
 
-    fast_table_load <- function(filename, drop=c(), row.label=1) {
-        data <- as.data.frame(
-          fread(filename, nThread=$task.cpus, drop=drop, header=T, blank.lines.skip=T)
+    fast_table_load <- function(filename, drop=c(), row.names=1) {
+        data <- data.frame(
+            fread(filename, nThread=$task.cpus, drop=drop, header=T),
+            row.names=row.names, check.names=F
         )
-        if (row.label > 0) {
-            rownames(data) <- data[[row.label]]
-            data[, row.label] <- NULL
-        }
         return(data)
     }
 
-    if("${abundance.getExtension()}"=='shared') {
-        otutab <- t(fast_table_load("$abundance", drop=c('label', 'numOtus'), row.label='Group'))
+    if("$ext"=='shared') {
+        otutab <- t(fast_table_load("$abundance", drop=c(1, 3), row.names=1))
     } else {
-        otutab <- fast_table_load("$abundance", row.label=1)        
+        otutab <- fast_table_load("$abundance", row.names=1)        
     }
 
     matchList <- read.table("$matchlist", header=FALSE, col.names=c("OTU1", "OTU2", "pctIdentity"),
                             as.is=TRUE, check.names=F, stringsAsFactors=FALSE)
     fasta <- read.fasta("$fasta", seqtype="DNA", forceDNAtolower=F)
 
-    if (dim(matchList)[1] > 0) {
-        res <- lulu(as.data.frame(otutab), matchList, 
-                    minimum_ratio_type="$params.lulu_min_ratio_type",
-                    minimum_ratio=$params.lulu_min_ratio,
-                    minimum_match=$params.lulu_min_match,
-                    minimum_relative_cooccurence=$params.lulu_min_rel_cooccurence)
-        fasta <- fasta[res\$curated_otus]
+    res <- lulu(as.data.frame(otutab), matchList, 
+                minimum_ratio_type="$params.lulu_min_ratio_type",
+                minimum_ratio=$params.lulu_min_ratio,
+                minimum_match=$params.lulu_min_match,
+                minimum_relative_cooccurence=$params.lulu_min_rel_cooccurence)
+    otutab <- res\$curated_table
+    fasta <- fasta[res\$curated_otus]
 
-        otutab <- res\$curated_table
-        write.table(res\$otu_map[res\$discarded_otus,], "mapping_discarded-${otu_id}.txt", quote=F)
+    if ("$ext"=='shared') {
+        shared <- cbind(
+            rep(1-${otu_id}/100, ncol(otutab)),
+            colnames(otutab),
+            rep(nrow(otutab), ncol(otutab)),
+            t(otutab)
+        )
+        colnames(shared) <- c('label', 'Group', 'numOtus', rownames(otutab))
+        write.table(shared, "abundance_table-lulu-${otu_id}.shared", quote=F, sep='\\t', row.names=F)
+    } else {
+        write.table(otutab, "abundance_table-lulu-${otu_id}.csv", quote=F, sep=',')
     }
 
-    write.csv(otutab, "abundance_table-lulu-${otu_id}.csv", quote=F)
+    write.table(res\$otu_map[res\$discarded_otus,], "mapping_discarded-${otu_id}.txt", quote=F)
     write.fasta(fasta, names(fasta), "sequences-${otu_id}.fasta")
 
     # Write counts

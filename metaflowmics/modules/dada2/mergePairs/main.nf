@@ -4,7 +4,6 @@ include { initOptions; saveFiles; getSoftwareName } from './functions'
 options = initOptions(params.options)
 
 process DADA2_MERGEPAIRS {
-    tag "merge_pairs"
     label "process_high"
     publishDir "${params.outdir}",
         mode: params.publish_dir_mode,
@@ -21,10 +20,9 @@ process DADA2_MERGEPAIRS {
 
     output:
     path "*.RDS", emit: rds
-    path "*.count_table", emit: count_table
-    path "dada2_ASVs-100.tsv", emit: tsv
-    path "dada2_ASVs-100.fasta", emit: fasta    
-    path "*.tsv", emit: summary, optional: true
+    path "ASVs-100.count_table", emit: count_table
+    path "ASVs-100.fasta", emit: fasta    
+    path "*.tsv", emit: merge_summary, optional: true
     path "*.version.txt", emit: version
 
     script:
@@ -48,8 +46,9 @@ process DADA2_MERGEPAIRS {
         dadaR=lapply(denoisedR, readRDS),
         minOverlap=${params.min_overlap},
         maxMismatch=${params.max_mismatch},
-        returnReject=TRU
+        returnReject=TRUE
     )
+    names(merged) <- sample_names
     saveRDS(merged, "merged.RDS")
 
     # Merging summary
@@ -78,19 +77,17 @@ process DADA2_MERGEPAIRS {
     ## Make the ASV table
     asv_table <- makeSequenceTable(merged)
 
-    print("Removing empty samples")
-    not_empty_samples <- rowSums(asv_table)>0
-    asv_table <- asv_table[not_empty_samples, ]
+    sample_names <- sample_names[rowSums(asv_table)>0]
+    asv_table <- asv_table[sample_names, ]
     
     ## Write ASV sequences
     asv_ids <- sprintf("asv_%s", c(1:dim(asv_table)[2]))
-    uniquesToFasta(asv_table, "dada2_ASVs-100.fasta", ids=asv_ids)
+    uniquesToFasta(asv_table, "ASVs-100.fasta", ids=asv_ids)
     colnames(asv_table) <- asv_ids
 
     count_table <- cbind(asv_ids, colSums(asv_table), t(asv_table) )
     colnames(count_table) <- c("Representative_Sequence","total",sample_names)
-    write.table(count_table, file="dada2_ASVs-100.count_table", row.names=F, col.names=T, quote=F, sep="\\t")
-
+    write.table(count_table, file="ASVs-100.count_table", row.names=F, col.names=T, quote=F, sep="\\t")
     writeLines(paste0(packageVersion('dada2')), "${software}.version.txt")
     """
 }

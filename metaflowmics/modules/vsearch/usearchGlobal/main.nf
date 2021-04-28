@@ -3,7 +3,7 @@ include { initOptions; saveFiles; getSoftwareName } from './functions'
 
 options = initOptions(params.options)
 
-process VSEARCH_USEARCHGLOBAL {
+process VSEARCH_USEARCH_GLOBAL {
     tag "$otu_id"
     label 'process_high'
     publishDir "${params.outdir}",
@@ -26,6 +26,7 @@ process VSEARCH_USEARCHGLOBAL {
     def software = getSoftwareName(task.process)
     """
     #!/usr/bin/env bash
+
     vsearch $options.args \\
         --usearch_global $fasta \\
         --threads $task.cpus \\

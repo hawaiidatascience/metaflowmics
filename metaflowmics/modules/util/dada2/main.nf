@@ -57,7 +57,6 @@ process SUBSET_READS_RDS {
 }
 
 process BUILD_ASV_TABLE {
-    tag "asv_table"
     label "process_low"
     publishDir "${params.outdir}",
         mode: params.publish_dir_mode,
@@ -71,9 +70,9 @@ process BUILD_ASV_TABLE {
     path(rds)
 
     output:
-    path "ASVs_duplicates_to_cluster.fasta", emit: fasta_dup
-    tuple val(100), path("ASVs-100.fasta"), emit: fasta    
-    tuple val(100), path("ASVs-100.{count_table,tsv}"), emit: tsv
+    path "ASVs_duplicates_to_cluster.fasta", optional: true, emit: fasta_dup
+    path "ASVs-100.fasta", emit: fasta    
+    path "ASVs-100.{count_table,tsv}", emit: count_table
     // path "*.version.txt", emit: version
 
     script:
@@ -129,53 +128,5 @@ process BUILD_ASV_TABLE {
         write.fasta(list.fasta, names=names(list.fasta), 
                     file.out='ASVs_duplicates_to_cluster.fasta')
     }
-    """
-}
-
-process READ_TRACKING {
-    tag "read_tracking"
-    label "process_low"
-    publishDir "${params.outdir}",
-        mode: params.publish_dir_mode,
-        saveAs: { filename -> saveFiles(filename:filename, options:params.options,
-                                        meta:meta) }
-
-    container "nakor/metaflowmics-script-env:0.0.1"
-    conda (params.enable_conda ? "" : null)
-
-    input:
-    path counts
-
-    output:
-    file('summary-per-sample-per-step.csv')
-
-    script:
-    // def software = getSoftwareName(task.process)
-    """
-    #!/usr/bin/env Rscript    
-
-    library(dplyr)
-    library(tidyr)
-
-    data <- read.csv('summary.csv', header=F)
-    colnames(data) <- c('step', 'sample', 'total', 'nuniq')
-
-    # Order the step according to total count and uniques
-    col_order <- data %>% replace_na(list(nuniq=Inf)) %>%
-        group_by(step) %>% summarise(m1=sum(total), m2=sum(nuniq)) %>%
-        arrange(desc(m1), desc(m2)) %>% 
-        pull(step) %>% as.character
-
-    # Reshape the table into wide format
-    summary <- data %>% 
-      mutate(
-        step=factor(step, col_order),
-        label=ifelse(is.na(nuniq), total, sprintf("%s (%s uniques)", total, nuniq))
-      ) %>% 
-      select(step, sample, label) %>%
-      arrange(step) %>%
-      pivot_wider(names_from=step, values_from=label)
-
-    write.csv(summary, 'summary-per-sample-per-step.csv', quote=F, row.names=F)
     """
 }

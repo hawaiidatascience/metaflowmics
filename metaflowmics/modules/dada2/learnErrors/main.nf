@@ -30,18 +30,23 @@ process DADA2_LEARNERRORS {
     #!/usr/bin/env Rscript
 
     library(dada2)
+    library(stringr)
     library(ggplot2)
 
-    input <- "$reads"
-    if (tools::file_ext("$reads") == 'RDS') {
-        input <- readRDS("$reads")
+    inputs <- c("${reads.join('", "')}")
+    
+    for (input in inputs) {
+        orient <- ifelse(str_detect(input, '_R2.'), '_R2',
+                    ifelse(str_detect(input, '_R1.'), '_R1', ''))
+        if (tools::file_ext(input) == 'RDS') {
+            input <- readRDS(input)
+        }
+        errors <- learnErrors(input, multithread=TRUE, randomize=TRUE, nbases=1e7)
+        saveRDS(errors, sprintf("${meta.id}-errors%s.RDS", orient))
+
+        fig <- plotErrors(errors, nominalQ=TRUE)
+        ggsave(sprintf("${meta.id}-errorProfile%s.png", orient), plot=fig, type="cairo-png")
     }
-
-    errors <- learnErrors(input, multithread=TRUE, randomize=TRUE, nbases=1e8)
-    saveRDS(errors, "${meta.id}-errors.RDS")
-
-    fig <- plotErrors(errors, nominalQ=TRUE)
-    ggsave("${meta.id}-errorProfile.png", plot=fig, type="cairo-png")
 
     writeLines(paste0(packageVersion('dada2')), "${software}.version.txt")    
     """

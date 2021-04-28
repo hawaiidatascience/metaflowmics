@@ -32,23 +32,29 @@ process DADA2_DADA {
     library(dada2)
     library(stringr)
 
-    for (read in c("${reads.join('"')}")) {
-        orient <- ifelse(str_detect(read, '_R2.fastq'), '_R2', 
-                    ifelse(str_detect(read, '_R1.fastq'), '_R1', ''))
-        if (tools::file_ext(read) == 'RDS') {
-            input <- readRDS(read)
+    read_files <- c("${reads.join('", "')}")
+    error_files <- c("${errors.join('", "')}")
+
+    for (i in 1:length(read_files)) {
+        rd_file <- read_files[i]
+        err_file <- error_files[i]
+
+        orient <- ifelse(str_detect(rd_file, '_R2.fastq'), '_R2', 
+                    ifelse(str_detect(rd_file, '_R1.fastq'), '_R1', ''))
+        if (tools::file_ext(rd_file) == 'RDS') {
+            input <- readRDS(rd_file)
         } else {
-            input <- derepFastq(read)
+            input <- derepFastq(rd_file)
             saveRDS(input, sprintf("${meta.id}-derep%s.RDS", orient))
         }
-        errors <- readRDS("$errors")
+        errors <- readRDS(err_file)
         denoised <- dada(input, err=errors, multithread=TRUE)
         saveRDS(denoised, sprintf("${meta.id}-denoised%s.RDS", orient))
     }
 
     # Write counts
     counts <- getUniques(denoised)
-    data <- sprintf("Denoising,${meta.id},%s,%s",sum(counts),sum(counts>0))
+    data <- sprintf("denoising,${meta.id},%s,%s",sum(counts),sum(counts>0))
     write(data, "summary.csv")
 
     writeLines(paste0(packageVersion('dada2')), "${software}.version.txt")

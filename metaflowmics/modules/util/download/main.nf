@@ -1,5 +1,5 @@
 process DOWNLOAD_UNITE {
-    tag "download_unite_db"
+    tag "$params.db_release"
     label "process_low"
 
     conda (params.enable_conda ? "bash:5.0.018" : null)
@@ -10,7 +10,7 @@ process DOWNLOAD_UNITE {
 
     script:
     root_url = "https://files.plutof.ut.ee/public/orig"
-    if (params.release == 'fungi') {
+    if (params.db_release == 'fungi') {
         url_base = "${root_url}/1E/66"
         file = "1E662B6EB320312A61E7E3218327F34C7DB09CFF8E4686A89EF47886822DA6AB.gz"
         """
@@ -33,7 +33,7 @@ process DOWNLOAD_UNITE {
 }
 
 process DOWNLOAD_SILVA_FOR_MOTHUR {
-    tag "download_silva_db"
+    tag "$params.db_release"
     label "process_low"
 
     conda (params.enable_conda ? "bash:5.0.018" : null)
@@ -45,9 +45,28 @@ process DOWNLOAD_SILVA_FOR_MOTHUR {
 
     script:
     url_base = "https://mothur.s3.us-east-2.amazonaws.com/wiki"
-    file = "silva.nr_v138_1.tgz"
+    file = "silva.${params.db_release}_v138.tgz"
     """
-    wget -qO- $url_base/${file}.tgz | tar xz
+    wget -qO- $url_base/$file | tar xz
+    """
+}
+
+process DOWNLOAD_RDP_FOR_DADA2 {
+    tag "$params.db_release"
+    label "process_low"
+
+    conda (params.enable_conda ? "bash:5.0.018" : null)
+    container "nakor/bash:5.1.4"
+
+    output:
+    path "*.fa", emit: fasta
+
+    script:
+    url_base = "https://zenodo.org/record/4587955/files"
+    file = "silva_nr99_v138.1_wSpecies_train_set.fa.gz?download=1"
+    """
+    wget -qO- "$url_base/$file" | gunzip \\
+        > silva_nr99_v138.1_wSpecies_train_set.fa
     """
 }
 

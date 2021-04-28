@@ -22,7 +22,7 @@ process VSEARCH_CLUSTER {
     output:
     tuple val(otu_id), path("vsearch_OTUs-*.tsv"), emit: tsv
     tuple val(otu_id), path("vsearch_OTUs-*.fasta"), emit: fasta
-    path "summary.csv", emit: summary
+    // path "summary.csv", emit: summary
     path "*.version.txt", emit: version
 
     script:
@@ -42,12 +42,6 @@ process VSEARCH_CLUSTER {
         --relabel OTU${otu_id}_ \\
         --centroids vsearch_OTUs-${otu_id}.fasta \\
         --otutabout vsearch_OTUs-${otu_id}.tsv
-
-    cut -f2- vsearch_OTUs-${otu_id}.tsv | \\
-        awk 'NR==1 { for (i=1; i<=NF; i++) { hd[i]=\$i } } \\
-        { for (i=1;i<=NF;i++) if(\$i>0) {c1[hd[i]]+=\$i ; c2[hd[i]]++} }; END \\
-        {for (i in c1) print "clustering-${otu_id},"i","c1[i]","c2[i];}' \\
-        > summary.csv
 
     echo \$(vsearch --version 2>&1) | grep "RAM" | sed 's/vsearch v//' | sed 's/, .*//' > ${software}.version.txt
     """
