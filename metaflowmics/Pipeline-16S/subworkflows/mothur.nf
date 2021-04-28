@@ -17,7 +17,8 @@ include { MOTHUR_CLUSTER } from "$moduledir/mothur/cluster/main.nf" \
     addParams( options: [publish_dir: "interm/10-Clustering"] )
 include { MOTHUR_CLASSIFY_OTUS } from "$moduledir/mothur/classifyOtus/main.nf" \
     addParams( options: [publish_dir: "raw"] )
-include { MOTHUR_GET_SEQS; MOTHUR_GET_OTUS } from "$moduledir/mothur/get/main.nf"
+include { MOTHUR_GET_SEQS } from "$moduledir/mothur/getSeqs/main.nf"
+include { MOTHUR_GET_OTUS } from "$moduledir/mothur/getOtus/main.nf"
 include { MOTHUR_MAKE_SHARED } from "$moduledir/mothur/makeShared/main.nf"
 include { MOTHUR_SUMMARY_SINGLE } from "$moduledir/mothur/summarySingle/main.nf"
 include { MOTHUR_GET_OTU_REP } from "$moduledir/mothur/getOtuRep/main.nf" \
@@ -58,13 +59,13 @@ workflow mothur_curate {
         fasta.combine(count_table),
         db.align
     )
-    tracked_ct.mix(msa.count_table.map{["MSA", it]})
+    tracked_ct = tracked_ct.mix(msa.count_table.map{["MSA", it]})
     
     // Discard chimeric contigs
     chimera = MOTHUR_CHIMERA(
         msa.fasta.combine(msa.count_table)
     )
-    tracked_ct.mix(chimera.count_table.map{["chimera-filter", it]})
+    tracked_ct = tracked_ct.mix(chimera.count_table.map{["chimera-filter", it]})
     
     // Get contig raw taxonomy
     classify = MOTHUR_CLASSIFY_SEQS(
@@ -85,7 +86,7 @@ workflow mothur_curate {
         fasta = lineage.fasta
         count_table = lineage.count_table
         taxonomy = classify.taxonomy
-        tracked_ct.mix(count_table.map{["taxa-filter", it]})
+        tracked_ct = tracked_ct.mix(count_table.map{["taxa-filter", it]})
     }
 
     // Cluster into OTU
@@ -110,7 +111,7 @@ workflow mothur_curate {
     tracked_shared = MOTHUR_SUMMARY_SINGLE(
         otus.shared.map{["clustering-${it[0]}", it[1]]}
             .mix(rare.shared.map{["rare-otus-filter-${it[0]}", it[1]]})
-    )
+    ).summary
         
     emit:
     fasta=files.fasta
@@ -148,11 +149,9 @@ workflow mothur_subsample {
 workflow mothur_lulu {
     take:
     repfasta
-    list
     shared
 
     main:
-    repfasta = MOTHUR_GET_OTUS( list.join(repfasta) )
     dists = MOTHUR_DIST_SEQS( repfasta ).dist
 
     lulu = LULU(
@@ -213,7 +212,7 @@ workflow mothur_compile {
     // 4) Database
     if (params.make_db) {
         db = MOTHUR_MAKE_DATABASE(
-            list.join(rep.fasta).join(cons.taxonomy).join(count_table)
+            list.join(cons.taxonomy).join(rep.fasta).join(rep.count_table)
         ).database
     }
     

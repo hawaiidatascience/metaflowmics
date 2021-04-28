@@ -23,7 +23,7 @@ process MOTHUR_CLASSIFY_OTUS {
     script:
     def software = getSoftwareName(task.process)
     def procname = "${task.process.tokenize(':')[-1].toLowerCase()}"
-    outprefix = options.suffix ? "$options.suffix" : "${procname}"
+    outprefix = options.suffix ? "${options.suffix}.${otu_id}" : "${procname}.${otu_id}"
     """
     mothur '#
     list.seqs(list=$list); get.seqs(taxonomy=$tax, accnos=current);

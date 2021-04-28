@@ -10,6 +10,8 @@ include { dada2 } from './subworkflows/dada2.nf'
 include { mothur_curate; mothur_compile; mothur_subsample; mothur_lulu; mothur_sync } \
     from './subworkflows/mothur.nf'
 // Other imports
+include{ MOTHUR_GET_OTUS } from '../modules/mothur/getOtus/main.nf' \
+    addParams( options: [publish_dir: 'read_tracking'] )
 include{ READ_TRACKING } from '../modules/util/misc/main.nf' \
     addParams( options: [publish_dir: 'read_tracking'] )
 
@@ -37,7 +39,6 @@ workflow pipeline_16S {
     )
 
     // Keep track of the following files as we go through optional steps
-    list = otus_.list
     count_table = otus_.count_table
     shared = interm.shared
     tracking = asvs_.tracking.mix(otus_.tracking)
@@ -46,9 +47,8 @@ workflow pipeline_16S {
     if (!params.skip_subsampling) {
         subsampled_ = mothur_subsample(
             count_table,
-            list
+            otus_.list
         )
-        list = subsampled_.list
         count_table = subsampled_.count_table
         shared = subsampled_.shared
         tracking = tracking.mix(subsampled_.tracking)
@@ -58,7 +58,6 @@ workflow pipeline_16S {
     if (!params.skip_lulu) {
         lulu_ = mothur_lulu(
             interm.repfasta,
-            list,
             shared
         )
         shared = lulu_.shared
@@ -66,6 +65,9 @@ workflow pipeline_16S {
     }
 
     // Sync all files
+    list = MOTHUR_GET_OTUS(
+        shared.join(otus_.list)
+    )
     files = mothur_sync(
         otus_.fasta.mix(count_table).mix(otus_.taxonomy),
         list

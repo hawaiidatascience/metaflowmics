@@ -15,7 +15,7 @@ process MOTHUR_MAKE_DATABASE {
     conda (params.enable_conda ? "bioconda::mothur:1.44.1" : null)
 
     input:
-    tuple val(otu_id), file(list), file(repfasta), file(constax), file(count)
+    tuple val(otu_id), file(list), file(constax), file(repfasta), file(repcount)
 
     output:
     tuple val(otu_id), path("${outprefix}.database"), emit: database
@@ -26,7 +26,7 @@ process MOTHUR_MAKE_DATABASE {
     def procname = "${task.process.tokenize(':')[-1].toLowerCase()}"
     outprefix = options.suffix ? "$options.suffix" : "${procname}.${otu_id}"
     """
-    mothur '#create.database(list=$list,repfasta=$repfasta,constaxonomy=$constax,count=$count)'
+    mothur '#create.database(list=$list,repfasta=$repfasta,constaxonomy=$constax,count=$repcount)'
     mv *.database ${outprefix}.database
 
     # print version

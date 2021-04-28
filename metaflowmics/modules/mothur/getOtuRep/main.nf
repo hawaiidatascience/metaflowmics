@@ -29,7 +29,7 @@ process MOTHUR_GET_OTU_REP {
     """
     mothur '#
     list.seqs(list=$list); get.seqs(fasta=$fasta, accnos=current);
-    get.oturep(fasta=current, list=current, method=abundance, count=$count, rename=t)'
+    get.oturep(fasta=current, list=current, method=abundance, count=$count, rename=f)'
 
     mv *.rep.fasta ${outprefix}.rep.fasta
     mv *.rep.count_table ${outprefix}.rep.count_table
