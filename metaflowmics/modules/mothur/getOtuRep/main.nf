@@ -27,7 +27,7 @@ process MOTHUR_GET_OTU_REP {
     def procname = "${task.process.tokenize(':')[-1].toLowerCase()}"
     outprefix = options.suffix ? "$options.suffix" : "${procname}.${otu_id}"
     """
-    mothur '#get.oturep(fasta=$fasta, list=$list, count=$count, method=abundance, rename=f)'
+    mothur '#get.oturep(fasta=$fasta, list=$list, count=$count, method=abundance, rename=t)'
 
     mv *.rep.fasta ${outprefix}.rep.fasta
     mv *.rep.count_table ${outprefix}.rep.count_table

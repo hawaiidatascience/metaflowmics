@@ -4,6 +4,7 @@ include { initOptions; saveFiles; getSoftwareName } from './functions'
 options = initOptions(params.options)
 
 process MOTHUR_CLASSIFY_OTUS {
+    tag "$otu_id"
     label "process_medium"
     publishDir "${params.outdir}",
         mode: params.publish_dir_mode,

@@ -12,7 +12,7 @@ process LULU {
                                         publish_dir:getSoftwareName(task.process),
                                         meta:meta) }
 
-    container "nakor/metaflowmics-script-env:0.0.1"
+    container "nakor/metaflowmics-r:0.0.1"
     // no conda repository for LULU
 
     input:
@@ -52,6 +52,7 @@ process LULU {
     matchList <- read.table("$matchlist", header=FALSE, col.names=c("OTU1", "OTU2", "pctIdentity"),
                             as.is=TRUE, check.names=F, stringsAsFactors=FALSE)
     fasta <- read.fasta("$fasta", seqtype="DNA", forceDNAtolower=F)
+    names(fasta) <- gsub('\\t.*', '', names(fasta))
 
     res <- lulu(as.data.frame(otutab), matchList, 
                 minimum_ratio_type="$params.lulu_min_ratio_type",

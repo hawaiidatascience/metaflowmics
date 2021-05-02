@@ -3,35 +3,27 @@ include { initOptions; saveFiles; getSoftwareName } from './functions'
 
 options = initOptions(params.options)
 
-process MOTHUR_SUMMARY_SINGLE {
+process MOTHUR_SUMMARY_SHARED {
+    tag "$otu_id"
     label "process_high"
 
     container "quay.io/biocontainers/mothur:1.44.1--hf0cea05_2"
     conda (params.enable_conda ? "bioconda::mothur:1.44.1" : null)
 
     input:
-    tuple val(meta), file(shared)
+    tuple val(otu_id), file(shared)
 
     output:
-    path "*.csv", emit: summary
+    path "*.csv", emit: csv
     path "*.version.txt", emit: version
 
     script:
     def software = getSoftwareName(task.process)
     def ext = shared.getBaseName()
     """
-    mothur '#summary.single(shared=$shared, calc=$params.calc)'
+    mothur '#summary.shared(shared=$shared, calc=${params.calc}, distance=lt)'
 
-    # summary
-    if [ "$params.calc" = "nseqs-sobs" ]; then
-        cut -f2- *.groups.summary | tail -n+2 \\
-        | awk '{OFS=","}{print "$meta.step","$meta.otu_id",\$1,int(\$2),int(\$3)}' \\
-        | tr '\\t' ',' \\
-        > ${ext}.csv
-        rm -f *.groups.summary
-    else
-        mv *.summary alpha-diversity_${meta.otu_id}.csv
-    fi
+    mv *.summary beta-diversity_${otu_id}.csv
 
     # print version
     mothur -v | tail -n+2 | head -1 | cut -d'=' -f2 > ${software}.version.txt

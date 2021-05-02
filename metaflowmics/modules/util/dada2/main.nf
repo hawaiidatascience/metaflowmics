@@ -11,7 +11,7 @@ process SUBSET_READS_RDS {
         saveAs: { filename -> saveFiles(filename:filename, options:params.options,
                                         meta:meta) }
 
-    container "nakor/metaflowmics-script-env:0.0.1"
+    container "nakor/metaflowmics-r:0.0.1"
     conda (params.enable_conda ? "conda-forge::r-stringr bioconda::bioconductor-dada2=1.18 conda-forge::r-seqinr" : null)
 
     input:
@@ -63,7 +63,7 @@ process BUILD_ASV_TABLE {
         saveAs: { filename -> saveFiles(filename:filename, options:params.options,
                                         meta:meta) }
 
-    container "nakor/metaflowmics-script-env:0.0.1"    
+    container "nakor/metaflowmics-r:0.0.1"    
     conda (params.enable_conda ? "conda-forge::r-stringr bioconda::bioconductor-dada2=1.18 conda-forge::r-seqinr" : null)
 
     input:

@@ -7,7 +7,7 @@ process SUMMARIZE_TABLE {
     tag "$step"
     label "process_low"
 
-    container "nakor/metaflowmics-script-env:0.0.1"
+    container "nakor/metaflowmics-r:0.0.1"
     conda (params.enable_conda ? "conda-forge::r-data.table" : null)
 
     input:
@@ -20,7 +20,7 @@ process SUMMARIZE_TABLE {
     drop = 'NULL'
     sep = 'auto'
     rownames = 1
-    taxa_are_rows = params.taxa_are_rows ?: 'F'
+    taxa_are_rows = 'F'
     
     if (table.getExtension() == 'count_table') {
         drop = "'total'"
@@ -62,7 +62,7 @@ process READ_TRACKING {
         saveAs: { filename -> saveFiles(filename:filename, options:params.options,
                                         meta:meta) }
 
-    container "nakor/metaflowmics-script-env:0.0.1"
+    container "nakor/metaflowmics-r:0.0.1"
     conda (params.enable_conda ? "conda-forge::r-dplyr conda-forge::tidyr" : null)
 
     input:
@@ -115,7 +115,7 @@ process READ_TRACKING {
 process GET_SUBSAMPLING_THRESHOLD {
     label "process_low"
 
-    container "nakor/metaflowmics-script-env:0.0.1"
+    container "nakor/metaflowmics-r:0.0.1"
     conda (params.enable_conda ? "conda-forge::r-data.table" : null)
 
     input:

@@ -24,9 +24,9 @@ process MOTHUR_DIST_SEQS {
     outprefix = options.suffix ? "$options.suffix" : "${procname}.${meta}"
     """
     # Manually rename sequences
-    sed '/^>/s/.*\\(Otu[0-9]*\\)\\(.*\\)/>\\1\\t\\1\\2/' $fasta > renamed.fasta
+    # sed '/^>/s/.*\\(Otu[0-9]*\\)\\(.*\\)/>\\1\\t\\1\\2/' $fasta > renamed.fasta
 
-    mothur '#filter.seqs(fasta=renamed.fasta, trump=.); dist.seqs(fasta=current, cutoff=$cutoff)'
+    mothur '#filter.seqs(fasta=$fasta, trump=.); dist.seqs(fasta=current, cutoff=$cutoff)'
     
     if [ "${params.format.toLowerCase()}" == "vsearch" ]; then
         awk '{OFS="\\t"}{print \$1,\$2,100*(1-\$3)}' *.dist > ${outprefix}.dist
