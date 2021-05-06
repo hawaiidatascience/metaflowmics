@@ -143,3 +143,50 @@ process GET_SUBSAMPLING_THRESHOLD {
     cat(threshold)
     """
 }
+
+process CONVERT_TO_MOTHUR_FORMAT {
+    label "process_low"
+    container "nakor/metaflowmics-r:0.0.1"
+    conda (params.enable_conda ? "conda-forge::r-data.table" : null)
+
+    input:
+    tuple val(otu_id), path(abundance), path(taxonomy)
+
+    output:
+    tuple val(otu_id), path("*.shared"), emit: shared
+    tuple val(otu_id), path("*.taxonomy"), emit: taxonomy
+
+    script:
+    """
+    #!/usr/bin/env Rscript
+
+    library(data.table)
+
+    abund <- data.frame(fread("$abundance"), row.names=1, check.names=F)
+
+    if ($taxa_are_rows) {
+        abund <- t(abund)
+    }
+    
+    shared <- cbind(
+        rep(1-$otu_id/100, nrow(abund)),
+        rownames(abund),
+        rep(ncol(abund), nrow(abund)),
+        abund
+    )
+    colnames(shared) <- c('label', 'Group', 'numOtus', colnames(abund))
+    write.table(shared, "${abundance.getName()}.shared", quote=F, sep='\\t', row.names=F)
+
+    tax <- data.frame(fread("$taxonomy"), row.names=1, check.names=F)
+    rank_names <- colnames(tax)
+
+    tax <- cbind(
+        rownames(tax), 
+        rowSums(abund), 
+        apply(tax, 1, function(x) paste(x, collapse=';'))
+    )
+    colnames(tax) <- c('OTU', 'Size', 'Taxonomy')
+
+    write.table(tax, "${taxonomy.getName()}.taxonomy", quote=F, sep='\\t', row.names=F)
+    """
+}

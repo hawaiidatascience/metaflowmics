@@ -4,7 +4,7 @@ include { initOptions; saveFiles; getSoftwareName } from './functions'
 options = initOptions(params.options)
 
 process MOTHUR_REMOVE_LINEAGE {
-    label "process_high"
+    label "process_medium"
     publishDir "${params.outdir}",
         mode: params.publish_dir_mode,
         saveAs: { filename -> saveFiles(filename:filename, options:params.options,

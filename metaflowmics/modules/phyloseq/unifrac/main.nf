@@ -1,5 +1,5 @@
 // Import generic module functions
-include { initOptions; saveFiles; getSoftwareName } from './functions'
+include { initOptions; saveFiles; getSoftwareName } from "./functions"
 
 options = initOptions(params.options)
 
@@ -30,7 +30,7 @@ process PHYLOSEQ_UNIFRAC {
     library(phyloseq)
 
     abund <- data.frame(
-        fread("$shared", drop=c('label', 'numOtus'), sep='\\t'),
+        fread("$shared", drop=c("label", "numOtus"), sep="\\t"),
         row.names=1, check.names=F
     )
 
@@ -41,10 +41,10 @@ process PHYLOSEQ_UNIFRAC {
         phy_tree(tree)
     )
 
-    dists <- UniFrac(ps, weighted=("$params.unifrac"=='weighted'), parallel=TRUE)
+    dists <- UniFrac(ps, weighted=("$params.unifrac"=="weighted"), parallel=TRUE)
 
     write.csv(as.matrix(dists), "unifrac_${params.unifrac}_${otu_id}.csv")
 
-    writeLines(paste0(packageVersion('phyloseq')), "${software}.version.txt")
+    writeLines(paste0(packageVersion("phyloseq")), "${software}.version.txt")
     """
 }

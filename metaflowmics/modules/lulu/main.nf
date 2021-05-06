@@ -72,7 +72,11 @@ process LULU {
         colnames(shared) <- c('label', 'Group', 'numOtus', rownames(otutab))
         write.table(shared, "abundance_table-lulu-${otu_id}.shared", quote=F, sep='\\t', row.names=F)
     } else {
-        write.table(otutab, "abundance_table-lulu-${otu_id}.csv", quote=F, sep=',')
+        abund <- cbind(
+            rownames(otutab),
+            otutab
+        )
+        write.table(abund, "abundance_table-lulu-${otu_id}.csv", quote=F, sep=',', row.names=F)
     }
 
     write.table(res\$otu_map[res\$discarded_otus,], "mapping_discarded-${otu_id}.txt", quote=F)

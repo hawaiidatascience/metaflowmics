@@ -9,9 +9,6 @@ MAPPING_BASE5 = str.maketrans(''.join(NUCLS), '01234')
 RC_TRANS = str.maketrans('ACGT', 'TGCA')
 
 def parse_args():
-    '''
-    '''
-
     parser = argparse.ArgumentParser()
     parser.add_argument('--fastqs', type=str, nargs='+')
     parser.add_argument('--split', type=int)
@@ -75,8 +72,6 @@ def fastqs_to_h5(fastqs, n_reads, bc_len=None, rid_len=None, split=0, rc=False):
     h5_handle.close()
 
 def main():
-    '''
-    '''
     
     args = parse_args()
     n_reads = sum(1 for _ in open(args.fastqs[0])) // 4

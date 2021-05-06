@@ -5,7 +5,7 @@ options = initOptions(params.options)
 
 process MOTHUR_GET_OTUS {
     tag "$otu_id"
-    label "process_high"
+    label "process_low"
 
     container "quay.io/biocontainers/mothur:1.44.1--hf0cea05_2"
     conda (params.enable_conda ? "bioconda::mothur:1.44.1" : null)

@@ -1,12 +1,13 @@
 
 // Import generic module functions
-include { initOptions; saveFiles; getSoftwareName } from './functions'
+include { initOptions; saveFiles; getSoftwareName } from "./functions"
 
 options = initOptions(params.options)
 
 process HOLOVIEWS_BARS {
     tag "$otu_id"
     label "process_low"
+    label "plot"
     publishDir "${params.outdir}",
         mode: params.publish_dir_mode,
         saveAs: { filename -> saveFiles(filename:filename, options:params.options,
@@ -29,14 +30,14 @@ process HOLOVIEWS_BARS {
     import pandas as pd
     import holoviews as hv
 
-    hv.extension('bokeh')
+    hv.extension("bokeh")
 
-    data = pd.read_csv("${mg}").drop(columns=['OTU'])
+    data = pd.read_csv("${mg}").drop(columns=["OTU"])
 
     n_samples = data.Group.nunique()
     
     legend_opts = dict(
-        label_text_font_size='12px',
+        label_text_font_size="12px",
         glyph_height=12,
         spacing=0,
         label_height=12
@@ -44,38 +45,38 @@ process HOLOVIEWS_BARS {
 
     plot_opts = dict(
         width=800, height=20*n_samples,
-        stacked=True, tools=['hover'], 
+        stacked=True, tools=["hover"], 
         invert_axes=True,
-        legend_position='right',
+        legend_position="right",
         legend_offset=(30, 0),
         legend_opts=legend_opts
     )
 
-    filler = f'Others(<{${params.min_abund*100}:g}%)'
+    filler = f"Others(<{${params.min_abund*100}:g}%)"
 
     def combine(group, filler=filler):
         out = pd.Series(dict(
-            (col, vals.sum()) if col in {'relabund', 'count'} 
+            (col, vals.sum()) if col in {"relabund", "count"} 
             else (col, vals.iloc[0])
             for (col, vals) in group.iteritems()
         ))
 
-        if out['relabund'] < $params.min_abund:
-            tax_cols = group.drop(columns=['Group', 'relabund', 'count']).columns
+        if out["relabund"] < $params.min_abund:
+            tax_cols = group.drop(columns=["Group", "relabund", "count"]).columns
             out[tax_cols] = filler
 
         return out
 
-    for rank in ['Phylum', 'Class']:
+    for rank in ["Phylum", "Class"]:
 
-        tax_cols = data.loc[:, 'Kingdom':rank].columns.tolist()
+        tax_cols = data.loc[:, "Kingdom":rank].columns.tolist()
 
-        df = (data.loc[:, 'Group':rank]
-            .groupby(['Group', rank]).apply(combine)
+        df = (data.loc[:, "Group":rank]
+            .groupby(["Group", rank]).apply(combine)
             .reset_index(drop=True))
 
-        if rank == 'Class':
-            df = df[df.Phylum == 'Proteobacteria']
+        if rank == "Class":
+            df = df[df.Phylum == "Proteobacteria"]
 
         sorted_taxa = df.groupby(rank).relabund.sum().sort_values().index[::-1]
         sorted_groups = sorted(df.Group.unique())[::-1]
@@ -84,12 +85,12 @@ process HOLOVIEWS_BARS {
             sorted_taxa = sorted_taxa.drop(filler).append(pd.Index([filler]))
 
         bars = (
-            hv.Bars(df.reset_index(), kdims=['Group', rank],
-                    vdims=['relabund', 'count'] + tax_cols[:-1])
-            .redim.values(**{rank: sorted_taxa, 'Group': sorted_groups})
+            hv.Bars(df.reset_index(), kdims=["Group", rank],
+                    vdims=["relabund", "count"] + tax_cols[:-1])
+            .redim.values(**{rank: sorted_taxa, "Group": sorted_groups})
             .opts(**plot_opts)
         )
-        hv.save(bars, f'barplot-{rank}_${otu_id}.html')
+        hv.save(bars, f"barplot-{rank}_${otu_id}.html")
 
     """
 }

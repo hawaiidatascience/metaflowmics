@@ -19,18 +19,16 @@ process ITSXPRESS {
     tuple val(meta), path(reads)
 
     output:
-    tuple val(meta_out), path("*.fastq.gz"), emit: fastq
+    tuple val(meta), path("*.fastq.gz"), emit: fastq
     path "*.log", emit: log
     path "*.version.txt", emit: version
 
     script:
-    meta_out = meta.findAll { it.key != 'paired' }
-    meta_out['paired'] = false
     def software = getSoftwareName(task.process)
     def prefix   = options.suffix ? "${meta.id}.${options.suffix}" : "${meta.id}"
-    def rev_arg = meta.paired ? "--fastq2 ${reads[1]}" : "--single_end"
+    def rev_arg = params.paired_end ? "--fastq2 ${reads[1]}" : "--single_end"
     """
-    itsxpress --taxa All --region ${params.locus} --threads ${task.cpus} \\
+    itsxpress --taxa All --region $params.locus --threads $task.cpus \\
         --outfile ${meta.id}-${params.locus}.fastq.gz --log ITSxpress_${meta.id}.log \\
         --fastq ${reads[0]} $rev_arg
 

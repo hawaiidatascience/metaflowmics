@@ -20,6 +20,7 @@ process DADA2_FILTERANDTRIM {
 
     output:
     tuple val(meta), path("*.fastq.gz"), emit: fastq, optional: true
+    path("*.csv"), emit: summary
     path "*.png", emit: png, optional: true
     path "*.version.txt", emit: version
 
@@ -40,7 +41,7 @@ process DADA2_FILTERANDTRIM {
         rm.phix=${rmphix}, compress=TRUE
     )
 
-    if ("${meta.paired}" == "true") {
+    if ("$params.paired_end" == "true") {
         io <- list(
             fwd="${reads[0]}", filt="${meta.id}-trimmed_R1.fastq.gz",
             rev="${reads[1]}", filt.rev="${meta.id}-trimmed_R2.fastq.gz"
@@ -49,8 +50,9 @@ process DADA2_FILTERANDTRIM {
         io <- list(fwd="${reads[0]}", filt="${meta.id}-trimmed.fastq.gz")
     }
 
-    do.call(filterAndTrim, append(io, params))
-
+    read_count <- do.call(filterAndTrim, append(io, params))[, "reads.out"]
+    write(sprintf("qc,,$meta.id,%s", read_count), "summary.csv")
+    
     # Plot if we kept all reads
     if (file.exists(io[["filt"]])) {
         fig <- plotQualityProfile(io)

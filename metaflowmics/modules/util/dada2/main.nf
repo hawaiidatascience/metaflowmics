@@ -57,7 +57,7 @@ process SUBSET_READS_RDS {
 }
 
 process BUILD_ASV_TABLE {
-    label "process_low"
+    label "process_medium"
     publishDir "${params.outdir}",
         mode: params.publish_dir_mode,
         saveAs: { filename -> saveFiles(filename:filename, options:params.options,

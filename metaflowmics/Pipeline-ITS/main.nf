@@ -3,189 +3,122 @@
 nextflow.enable.dsl=2
 params.options = [:]
 
-def helpMessage() {
-    log.info"""
-    ===================================
-     Metaflow|mics ITS pipeline
-    ===================================
-    Usage:
-    nextflow run ITS-pipeline --reads '*_R1.fastq.gz' --locus ITS1 -profile local
+module_dir = "../modules"
+subworkflow_dir = "../subworkflows"
 
-    ---------------------------------- Mandatory arguments ----------------------------------------
+include{ DOWNLOAD_UNITE } from "$module_dir/util/download/main.nf" \
+    addParams( db_release: "fungi" )
+include{ ITSXPRESS } from "$module_dir/itsxpress/main.nf" \
+    addParams( options: [publish_dir: "interm/read_processing/itsxpress"] )
+include{ VSEARCH_CLUSTER } from "$module_dir/vsearch/cluster/main.nf" \
+    addParams( options: [publish_dir: "interm/contig_processing/clustering"] )
+include{ VSEARCH_USEARCH_GLOBAL } from "$module_dir/vsearch/usearchGlobal/main.nf" \
+    addParams( options: [publish_dir: "interm/contig_processing/lulu"] )
+include{ LULU } from "$module_dir/lulu/main.nf" \
+    addParams( options: [publish_dir: "interm/contig_processing/lulu"] )
+include{ DADA2_ASSIGN_TAXONOMY } from "$module_dir/dada2/assignTaxonomy/main.nf" \
+    addParams( options: [publish_dir: "interm/contig_processing/taxonomy"] )
+include{ SUMMARIZE_TABLE; READ_TRACKING } from "$module_dir/util/misc/main.nf" \
+    addParams( options: [publish_dir: "read_tracking"], taxa_are_rows: "T" )
+include{ CONVERT_TO_MOTHUR_FORMAT } from "$module_dir/util/misc/main.nf" \
+    addParams( options: [publish_dir: "results"], taxa_are_rows: "T" )
 
-      --reads         Path to input data
+// subworkflow imports
+include { dada2 } from "$subworkflow_dir/dada2.nf" \
+    addParams( options: [publish_dir: "interm/read_processing"],
+              trunc_len: 0, trunc_quality: 2, min_read_len: 20,
+              early_chimera_removal: true)
+include { holoviews } from "$subworkflow_dir/holoviews.nf" \
+    addParams( options: [publish_dir: "figures"] )
+include { diversity } from "$subworkflow_dir/diversity.nf" \
+    addParams( options: [publish_dir: "postprocessing"], skip_unifrac: true, unifrac: '' )
 
-    ---------------------------------- Optional arguments ----------------------------------------
+// Functions
+include { helpMessage; saveParams } from "./util.nf"
 
-      --paired_end     If your data is paired-end
-      --locus         Sequenced ITS region (ITS1,ITS2 or ALL). Default: ITS1
-      --outdir        The output directory where the results will be saved. 
-                      Default: ./ITS-pipeline_outputs
 
-    [Quality filtering]
-      --max_expected_errors  Discard reads with more than <max_expected_errors> errors. Default: 3
-      --min_read_count       Discard samples with less than <minReads> reads. Default: 50
-      --min_derep_count      Discard samples with less than <minDerep> unique contigs. Default: 5
-
-    [Taxonomy assignment]
-      --tax_confidence     The minimum consensus for calling a taxonomy. Default: 50%
-
-    [Co-occurence pattern correction]
-	--skip_lulu                 Skip the Lulu step (can save a lot of computation time)
-    --lulu_min_ratio_type       Function to compare the abundance of a parent OTU and its daughter.
-                                  Default: min
-    --lulu_min_ratio            Minimum abundance ratio between parent and daughter
-                                  (across all samples). Default: 1
-    --lulu_min_rel_cooccurence  Proportion of the parent samples where daughter occurs. Default: 1
-    """.stripIndent()
-}
-
-// Show help message
-params.help = false
-if (params.help){
-    helpMessage()
-    exit 0
-}
-
-def summary = [:]
-summary['paired end'] = params.paired_end
-summary['locus'] = params.locus
-summary['max expected errors'] = params.max_expected_error
-summary['min reads per sample'] = params.min_read_count
-summary['min unique sequence per sample'] = params.min_derep_count
-summary['clustering similarity thresholds'] = params.clustering_thresholds
-summary['skip lulu'] = params.skip_lulu
-summary['lulu ratio type'] = params.lulu_min_ratio_type
-summary['lulu parent/daughter min similarity'] = params.lulu_min_match
-summary['lulu parent/daughter min abundance ratio'] = params.lulu_min_ratio
-summary['lulu parent/daughter min co-occurrence'] = params.lulu_min_rel_cooccurence
-summary['consensus taxonomy confidence threshold'] = params.tax_confidence
-
-file(params.outdir).mkdir()
-File f = new File("${params.outdir}/parameters_summary.log")
-f.write("====== Parameter summary =====\n")
-summary.each { key, val -> f.append("\n${key.padRight(50)}: ${val}") }
-
-include{ DOWNLOAD_UNITE } from '../modules/util/download/main.nf' \
-    addParams( db_release: 'fungi' )
-include{ ITSXPRESS } from '../modules/itsxpress/main.nf' \
-    addParams( options: [publish_dir: '1-ITSxpress'] )
-include{ DADA2_FILTERANDTRIM } from '../modules/dada2/filterAndTrim/main.nf' \
-    addParams( options: [publish_dir: '2-Quality_filtering'], trunc_len: 0, trunc_quality: 2, min_read_len: 20 )
-include{ DADA2_DEREPFASTQ } from '../modules/dada2/derepFastq/main.nf' \
-    addParams( options: [publish_dir: '3-Chimera'] )
-include{ VSEARCH_CHIMERA } from '../modules/vsearch/chimera/main.nf' \
-    addParams( options: [publish_dir: '3-Chimera'] )
-include{ DADA2_LEARNERRORS } from '../modules/dada2/learnErrors/main.nf' \
-    addParams( options: [publish_dir: '4-Denoising'] )
-include{ DADA2_DADA } from '../modules/dada2/dada/main.nf' \
-    addParams( options: [publish_dir: '4-Denoising'] )
-include{ SUBSET_READS_RDS; BUILD_ASV_TABLE } from '../modules/util/dada2/main.nf' \
-    addParams( options: [publish_dir: '5-OTU_clustering'], format: 'VSEARCH' )
-include{ VSEARCH_CLUSTER } from '../modules/vsearch/cluster/main.nf' \
-    addParams( options: [publish_dir: '5-OTU_clustering'] )
-include{ VSEARCH_USEARCH_GLOBAL } from '../modules/vsearch/usearchGlobal/main.nf' \
-    addParams( options: [publish_dir: '6-LULU'] )
-include{ LULU } from '../modules/lulu/main.nf' \
-    addParams( options: [publish_dir: '6-LULU'] )
-include{ DADA2_ASSIGN_TAXONOMY } from '../modules/dada2/assignTaxonomy/main.nf' \
-    addParams( options: [publish_dir: '7-Taxonomy'] )
-include{ SUMMARIZE_TABLE; READ_TRACKING } from '../modules/util/misc/main.nf' \
-    addParams( options: [publish_dir: '8-Read_tracking'], taxa_are_rows: 'T' )
-
+// Main workflow
 workflow pipeline_ITS {
     take:
     reads
 
     main:
     tracked_files = Channel.empty()
-    raw_counts = reads.map{['raw', it[1][0].countFastq(), it]}
+    raw_counts = reads.map{["raw", it[1][0].countFastq(), it]}
 
-    // Extract ITS marker
+    // ===== Extract ITS marker =====
     its = ITSXPRESS(
         raw_counts.filter{it[1] > params.min_read_count}.map{it[2]}
     )
-    its_counts = its.fastq.map{['ITS', it[1].countFastq(), it]}
 
-    // Remove low quality reads
-    qc = DADA2_FILTERANDTRIM(
-        its_counts.filter{it[1] > params.min_read_count/2}.map{it[2]}
-    )
-    qc_counts = qc.fastq.map{['QC', it[1].countFastq(), it]}
-
-    // Dereplicate before chimera removal and denoising
-    derep = DADA2_DEREPFASTQ(
-        qc_counts.filter{it[1] > params.min_read_count/4}.map{it[2]}
-    )
-
-    // Flag chimera
-    chimera = VSEARCH_CHIMERA(
-        derep.fasta
-    )
-
-    // Remove chimera from DADA2 derep object
-    chimera = SUBSET_READS_RDS(
-        derep.rds.join(chimera.fasta)
-    )
-
-    // Build Illumina reads error model
-    error_model = DADA2_LEARNERRORS(
-        chimera.rds
-    )
-
-    // Denoise reads
-    dada = DADA2_DADA(
-        chimera.rds.join(error_model.rds)
-    )
-
-    // Make raw ASV table
-    asvs = BUILD_ASV_TABLE(
-        dada.denoised.collect{it[1]}
-    )
-
-    // Cluster ASVs into OTUs
+    // ===== Denoising into ASVs =====
+    asvs = dada2(its.fastq)
+    
+    // ===== Cluster ASVs into OTUs =====
     otus = VSEARCH_CLUSTER(
         asvs.fasta_dup,
-        params.clustering_thresholds.split(',').findAll({it!='100'}).collect{it as int}
+        params.clustering_thresholds.split(",").findAll({it!="100"}).collect{it as int}
     )
-    otu_fastas = asvs.fasta.map{[100, it]}.mix(otus.fasta)
-    otu_tables = asvs.count_table.map{[100, it]}.mix(otus.tsv)
+    otus_fasta = asvs.fasta.map{[100, it]}.mix(otus.fasta)
+    otus_table = asvs.count_table.map{[100, it]}.mix(otus.tsv)
 
-    otus_summary = SUMMARIZE_TABLE(otu_tables.map{["clustering", it[0], it[1]]})
+    otus_summary = SUMMARIZE_TABLE(otus_table.map{["clustering", it[0], it[1]]})
 
+    // ===== Optional co-occurrence pattern correction =====
     if (!params.skip_lulu) {
-        // Co-occurrence pattern detection
         matchlist = VSEARCH_USEARCH_GLOBAL(
-            otu_fastas
+            otus_fasta
         )
         lulu = LULU(
-            matchlist.tsv.join(otu_tables).join(otu_fastas)
+            matchlist.tsv.join(otus_table).join(otus_fasta)
         )
         tracked_files = tracked_files.mix(lulu.summary)
         otu_fastas = lulu.fasta
+        otu_tables = lulu.abundance
     }
 
-    // Taxonomy assignment with Sintax
+    // ===== Taxonomy assignment with Sintax =====
     unite_db = DOWNLOAD_UNITE()
     taxonomy = DADA2_ASSIGN_TAXONOMY(
-        otu_fastas,
+        otus_fasta,
         unite_db
+    ).taxonomy
+
+    // ===== Track read in the pipeline =====    
+    tracked_files = tracked_files
+        .mix(
+            raw_counts.map{"raw,,${it[2][0].id},${it[1]}"}
+                .mix(its.fastq.map{"itsxpress,,${it[0].id},${it[1].countFastq()}"})
+                .collectFile(newLine: true)
+        )
+        .mix(asvs.tracking)
+        .mix(otus_summary)
+        .collectFile(name: "summary.csv")
+
+    summary = READ_TRACKING( tracked_files )
+
+    // Conversion to mothur format
+    mothur_files = CONVERT_TO_MOTHUR_FORMAT(
+        otus_table.join(taxonomy)
     )
 
-    // Track read in the pipeline
-    fq_counts = raw_counts.mix(its_counts).mix(qc_counts)
-        .collectFile(name: 'summary.csv', newLine: true){"${it[0]},,${it[2][0].id},${it[1]},"}
+    // ===== Diversity =====
+    diversity(
+        otus_fasta,
+        mothur_files.shared
+    )
     
-    tracked_files = tracked_files
-        .concat(fq_counts, derep.summary, chimera.summary, dada.summary, otus_summary)
-
-    summary = READ_TRACKING(
-        tracked_files.collectFile(name: 'summary.csv')
+    // ===== Plots =====
+    holoviews(
+        mothur_files.shared,
+        mothur_files.taxonomy
     )
 }
 
 workflow {
     reads = Channel.fromFilePairs(params.reads, size: params.paired_end ? 2 : 1)
-        .map{[ [id: it[0], paired: params.paired_end], it[1] ]}
+        .map{[ [id: it[0]], it[1] ]}
+
+    saveParams()
     pipeline_ITS(reads)
 }
