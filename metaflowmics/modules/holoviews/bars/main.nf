@@ -44,7 +44,7 @@ process HOLOVIEWS_BARS {
      )
 
     plot_opts = dict(
-        width=800, height=20*n_samples,
+        width=800, height=min(20*n_samples, 300),
         stacked=True, tools=["hover"], 
         invert_axes=True,
         legend_position="right",
@@ -75,8 +75,9 @@ process HOLOVIEWS_BARS {
             .groupby(["Group", rank]).apply(combine)
             .reset_index(drop=True))
 
-        if rank == "Class":
+        if rank == "Class" and "Proteobacteria" in set(data.Phylum):
             df = df[df.Phylum == "Proteobacteria"]
+            df.relabund = df.groupby("Group").relabund.transform(lambda x: x/sum(x))
 
         sorted_taxa = df.groupby(rank).relabund.sum().sort_values().index[::-1]
         sorted_groups = sorted(df.Group.unique())[::-1]

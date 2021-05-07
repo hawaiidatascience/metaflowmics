@@ -47,7 +47,7 @@ process SUBSET_READS_RDS {
     seq.lengths <- sapply(names(derep[["uniques"]]),nchar)
     derep[["quals"]] <- derep[["quals"]][,1:max(seq.lengths)]
 
-    saveRDS(derep, "${meta.id}-nochim_R1.RDS")
+    saveRDS(derep, "${meta.id}-nochim.RDS")
 
     # Write counts
     counts <- getUniques(derep)

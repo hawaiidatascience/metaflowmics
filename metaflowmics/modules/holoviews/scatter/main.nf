@@ -46,7 +46,7 @@ process HOLOVIEWS_SCATTER {
     y_cols = ["prevalence"] + metadata.columns.tolist()
 
     for rank in ["Phylum", "Class"]:
-        if rank == "Class":
+        if rank == "Class" and "Proteobacteria" in set(data.Phylum):
             data = data[data.Phylum == "Proteobacteria"]
     
         names = sorted(data[rank].unique())

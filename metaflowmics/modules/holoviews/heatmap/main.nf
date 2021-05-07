@@ -74,8 +74,8 @@ process HOLOVIEWS_CLUSTERMAP {
     # Plot
     hm_opt = dict(
         tools=["hover"],
-        height=20*data.Group.nunique(),
-        width=20*data.OTU.nunique(),
+        height=max(10*data.Group.nunique(), 300),
+        width=max(10*data.OTU.nunique(), 300),
         xrotation=90
     )
 

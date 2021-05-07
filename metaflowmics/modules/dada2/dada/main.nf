@@ -39,8 +39,8 @@ process DADA2_DADA {
         rd_file <- read_files[i]
         err_file <- error_files[i]
 
-        orient <- ifelse(str_detect(rd_file, '_R2.fastq'), '_R2', 
-                    ifelse(str_detect(rd_file, '_R1.fastq'), '_R1', ''))
+        orient <- ifelse(str_detect(err_file, '_R2.RDS'), '_R2', 
+                    ifelse(str_detect(err_file, '_R1.RDS'), '_R1', ''))
         if (tools::file_ext(rd_file) == 'RDS') {
             input <- readRDS(rd_file)
         } else {

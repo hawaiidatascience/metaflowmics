@@ -13,16 +13,17 @@ include{ DADA2_LEARNERRORS } from "$module_dir/dada2/learnErrors/main.nf" \
 include{ DADA2_DADA } from "$module_dir/dada2/dada/main.nf" \
     addParams( options: [publish_dir: "2-denoising"] )
 include{ BUILD_ASV_TABLE } from "$module_dir/util/dada2/main.nf" \
-    addParams( options: [publish_dir: "3-read-merging"], format: "mothur" )
+    addParams( options: [publish_dir: "3-read-merging"] )
 include{ DADA2_MERGEPAIRS } from "$module_dir/dada2/mergePairs/main.nf" \
     addParams( options: [publish_dir: "3-read-merging"] )
+
 // If VSEARCH is used for chinera
 include{ DADA2_DEREPFASTQ } from "$module_dir/dada2/derepFastq/main.nf" \
     addParams( options: [publish_dir: "2.5-Chimera"] )
 include{ VSEARCH_CHIMERA } from "$module_dir/vsearch/chimera/main.nf" \
     addParams( options: [publish_dir: "2.5-Chimera"] )
 include{ SUBSET_READS_RDS } from "$module_dir/util/dada2/main.nf" \
-    addParams( options: [publish_dir: "2.5-OTU_clustering"], format: "VSEARCH" )
+    addParams( options: [publish_dir: "2.5-OTU_clustering"] )
 
 // Other imports
 include{ SUMMARIZE_TABLE } from "$module_dir/util/misc/main.nf" \
@@ -60,7 +61,7 @@ workflow dada2 {
     // Make raw ASV table
     if ( params.paired_end ) {
         merged = DADA2_MERGEPAIRS(
-            dada.derep.collect{it[1]},
+            chimera_filt.rds.collect{it[1]},
             dada.denoised.collect{it[1]}
         )
         fasta_dup = Channel.empty()

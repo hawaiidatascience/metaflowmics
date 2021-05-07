@@ -9,10 +9,11 @@ subworkflow_dir = "../subworkflows"
 
 // DADA2 module imports
 include { dada2 } from "$subworkflow_dir/dada2.nf" \
-    addParams( options: [publish_dir: "interm/1-read_processing"], early_chimera_removal: false )
+    addParams( outdir: "$params.outdir/interm/1-read_processing",
+              early_chimera_removal: false, format: "mothur" )
 // mothur module imports
 include { mothur } from "$subworkflow_dir/mothur.nf" \
-    addParams( options: [publish_dir: "interm/2-contig_processing"] )
+    addParams( outdir: "$params.outdir/interm/2-contig_processing" )
 include { compile } from "$subworkflow_dir/mothur-util.nf" \
     addParams( options: [publish_dir: "results"] )
 // Other imports
@@ -62,7 +63,7 @@ workflow pipeline_16S {
 
     // Read tracking through the pipeline
     READ_TRACKING(
-        reads.map{"raw,,${it[0].id},${it[1].countFastq()}"}
+        reads.map{"raw,,${it[0].id},${it[1][0].countFastq()}"}
             .collectFile(newLine: true)
             .mix(asvs.tracking)
             .mix(otus.tracking)
@@ -83,8 +84,8 @@ workflow pipeline_16S {
 }
 
 workflow {
-    reads = Channel.fromFilePairs(params.reads, size: params.paired_end ? 2 : 1, flat: true)
-        .map{[ [id: it[0], paired: params.paired_end], it[1] ]}
+    reads = Channel.fromFilePairs(params.reads, size: params.paired_end ? 2 : 1)
+        .map{[ [id: it[0]], it[1] ]}
     saveParams()
     pipeline_16S(reads)
 }

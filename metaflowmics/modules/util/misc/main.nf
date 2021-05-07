@@ -164,7 +164,7 @@ process CONVERT_TO_MOTHUR_FORMAT {
 
     abund <- data.frame(fread("$abundance"), row.names=1, check.names=F)
 
-    if ($taxa_are_rows) {
+    if ($params.taxa_are_rows) {
         abund <- t(abund)
     }
     
@@ -175,18 +175,20 @@ process CONVERT_TO_MOTHUR_FORMAT {
         abund
     )
     colnames(shared) <- c('label', 'Group', 'numOtus', colnames(abund))
-    write.table(shared, "${abundance.getName()}.shared", quote=F, sep='\\t', row.names=F)
+    write.table(shared, "${abundance.getBaseName()}.shared", quote=F, sep='\\t', row.names=F)
 
     tax <- data.frame(fread("$taxonomy"), row.names=1, check.names=F)
+    rownames(tax) <- gsub(';.*', '', rownames(tax))
     rank_names <- colnames(tax)
 
     tax <- cbind(
         rownames(tax), 
-        rowSums(abund), 
+        colSums(abund), 
         apply(tax, 1, function(x) paste(x, collapse=';'))
     )
     colnames(tax) <- c('OTU', 'Size', 'Taxonomy')
+    tax[, 'Taxonomy'] <- gsub('[a-z]__', '', tax[, 'Taxonomy'])
 
-    write.table(tax, "${taxonomy.getName()}.taxonomy", quote=F, sep='\\t', row.names=F)
+    write.table(tax, "${taxonomy.getBaseName()}.taxonomy", quote=F, sep='\\t', row.names=F)
     """
 }

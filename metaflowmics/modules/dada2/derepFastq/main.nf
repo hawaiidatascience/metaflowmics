@@ -32,7 +32,7 @@ process DADA2_DEREPFASTQ {
     library(dada2)
     library(stringr)
 
-    for (read in c("${reads.join('"')}")) {
+    for (read in c("${reads.join('", "')}")) {
         orient <- ifelse(str_detect(read, '_R2.fastq'), '_R2', 
                     ifelse(str_detect(read, '_R1.fastq'), '_R1', ''))
         derep <- derepFastq(read)
