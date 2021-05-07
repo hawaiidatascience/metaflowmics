@@ -20,7 +20,7 @@ process SUMMARIZE_TABLE {
     drop = 'NULL'
     sep = 'auto'
     rownames = 1
-    taxa_are_rows = 'F'
+    taxa_are_rows = 'T'
     
     if (table.getExtension() == 'count_table') {
         drop = "'total'"

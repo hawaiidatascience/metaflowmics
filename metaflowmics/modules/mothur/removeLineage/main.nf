@@ -4,6 +4,7 @@ include { initOptions; saveFiles; getSoftwareName } from './functions'
 options = initOptions(params.options)
 
 process MOTHUR_REMOVE_LINEAGE {
+    tag "$otu_id"
     label "process_medium"
     publishDir "${params.outdir}",
         mode: params.publish_dir_mode,
@@ -14,12 +15,13 @@ process MOTHUR_REMOVE_LINEAGE {
     conda (params.enable_conda ? "bioconda::mothur:1.44.1" : null)
 
     input:
-    tuple file(fasta), file(count), file(taxonomy)
+    tuple val(otu_id), file(count), file(taxonomy), file(list)
 
     output:
-    path "${outprefix}.fasta", emit: fasta
-    path "${outprefix}.count_table", emit: count_table
-    path "${outprefix}.taxonomy", emit: taxonomy    
+    tuple val(otu_id), path("${outprefix}.count_table"), emit: count_table
+    tuple val(otu_id), path("${outprefix}.taxonomy"), emit: taxonomy
+    tuple val(otu_id), path("${outprefix}.list"), emit: list
+    tuple val(otu_id), path("${outprefix}.shared"), emit: shared        
     path "*.version.txt", emit: version
 
     script:
@@ -27,11 +29,13 @@ process MOTHUR_REMOVE_LINEAGE {
     def procname = "${task.process.tokenize(':')[-1].toLowerCase()}"
     outprefix = options.suffix ? options.suffix : procname
     """
-    mothur "#remove.lineage(taxonomy=$taxonomy, fasta=$fasta, count=$count, taxon='$params.taxa_to_filter')"
+    mothur "#remove.lineage(taxonomy=$taxonomy, count=$count, list=$list, taxon='$params.taxa_to_filter'); make.shared(list=current, count=current)"
+
     # rename outputs
-    mv *.pick.fasta ${outprefix}.fasta
     mv *.pick.count_table ${outprefix}.count_table
     mv *.pick.taxonomy ${outprefix}.taxonomy
+    mv *.pick.list ${outprefix}.list
+    mv *.shared ${outprefix}.shared
 
     # print version
     mothur -v | tail -n+2 | head -1 | cut -d'=' -f2 > ${software}.version.txt
