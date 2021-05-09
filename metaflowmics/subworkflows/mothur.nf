@@ -5,13 +5,14 @@ params.options = [:]
 
 // workflows used by mothur main workflow
 include { preprocess; refine } from "./mothur-util" \
-    addParams( outdir: "$params.outdir/interm" )
+    addParams( outdir: "$params.outdir/interm/contig_processing" )
 include { compile as compile_raw } from "./mothur-util" \
     addParams( outdir: "$params.outdir/raw" )    
-include { sync } from "./mothur-util" \
-     addParams( outdir: "$params.outdir/results" )
 include { compile as compile_final } from "./mothur-util" \
      addParams( outdir: "$params.outdir/results" )
+include { sync } from "./mothur-util" \
+     addParams( outdir: "$params.outdir/results" )
+
 
 workflow mothur {
     take:
@@ -66,11 +67,9 @@ workflow mothur {
     tracking = raw.tracking.mix(curated.tracking)
 
     emit:
-    fasta=results.fasta
-    taxonomy=results.taxonomy
-    count_table=results.count_table
-    list=results.list
-    shared=curated.shared
+    repfasta = consensus.repfasta
+    constaxonomy = consensus.constaxonomy
+    shared = curated.shared
     tracking=tracking
 }
 

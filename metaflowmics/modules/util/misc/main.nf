@@ -102,12 +102,19 @@ process READ_TRACKING {
     after_clustering <- summary %>% filter(!is.na(otu_id))
     thresholds <- after_clustering %>% pull(otu_id) %>% unique
 
-    for (id in thresholds) {
-        summary_i <- before_clustering %>%
-          bind_rows(after_clustering %>% filter(otu_id==id)) %>%
-          select(-otu_id) %>%
-          pivot_wider(names_from=step, values_from=label)
-        write.table(summary_i, sprintf('summary-per-sample-per-step-%s.csv', id), quote=F, row.names=F, sep=',')
+    if (length(thresholds) > 0) {
+        for (id in thresholds) {
+            summary_i <- before_clustering %>%
+              bind_rows(after_clustering %>% filter(otu_id==id)) %>%
+              select(-otu_id) %>%
+              pivot_wider(names_from=step, values_from=label, values_fill="0")
+            write.table(summary_i, sprintf('summary-per-sample-per-step-%s.csv', id), quote=F, row.names=F, sep=',')
+        }
+    } else { # reads were all filtered before clustering
+        summary <- summary %>% 
+            select(-otu_id) %>% 
+            pivot_wider(names_from=step, values_from=label, values_fill="0")
+        write.table(summary, 'summary-per-sample-per-step.csv', quote=F, row.names=F, sep=',')
     }
     """
 }

@@ -44,7 +44,7 @@ process HOLOVIEWS_BARS {
      )
 
     plot_opts = dict(
-        width=800, height=min(20*n_samples, 300),
+        width=800, height=max(20*n_samples, 300),
         stacked=True, tools=["hover"], 
         invert_axes=True,
         legend_position="right",

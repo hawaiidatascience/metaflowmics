@@ -111,21 +111,21 @@ workflow refine {
     repfasta // for LULU
     
     main:
-    tracked_shared = Channel.empty()
+    tracked = Channel.empty()
     
     // Remove unwanted taxa
     if ( params.taxa_to_filter != "" ) {
         (count_table, taxonomy, list, shared) = MOTHUR_REMOVE_LINEAGE(
             count_table.join(taxonomy).join(list)
         )
-        tracked_shared << shared.map{[[step: "taxa-filter", otu_id: it[0]], it[1]]}.collect()
+        tracked = tracked.mix(shared.map{[[step: "taxa-filter", otu_id: it[0]], it[1]]})
     }
 
     // Discard rare contigs
     (list, shared, count_table) = MOTHUR_REMOVE_RARE(
         list.join(count_table)
     )
-    tracked_shared << shared.map{[[step: "rare-otus-filter", otu_id: it[0]], it[1]]}.collect()
+    tracked = tracked.mix(shared.map{[[step: "rare-otus-filter", otu_id: it[0]], it[1]]})
 
     // subsampling
     if (!params.skip_subsampling) {
@@ -134,7 +134,7 @@ workflow refine {
             list.join(count_table),
             subsampling_level
         )
-        tracked_shared << shared.map{[[step: "subsampling", otu_id: it[0]], it[1]]}.collect()
+        tracked = tracked.mix(shared.map{[[step: "subsampling", otu_id: it[0]], it[1]]})
     }
 
     // Co-occurrence pattern correction
@@ -143,10 +143,10 @@ workflow refine {
         (shared, repfasta, discard, summary) = LULU(
             dists.join(shared).join(repfasta)
         )
-        tracked_shared << shared.map{[[step: "lulu", otu_id: it[0]], it[1]]}.collect()
+        tracked = tracked.mix(shared.map{[[step: "lulu", otu_id: it[0]], it[1]]})
     }
 
-    tracking = MOTHUR_SUMMARY_SINGLE( tracked_shared ).summary
+    tracking = MOTHUR_SUMMARY_SINGLE( tracked ).summary
 
     emit:
     list = list

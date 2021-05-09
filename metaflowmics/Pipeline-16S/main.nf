@@ -9,13 +9,11 @@ subworkflow_dir = "../subworkflows"
 
 // DADA2 module imports
 include { dada2 } from "$subworkflow_dir/dada2.nf" \
-    addParams( outdir: "$params.outdir/interm/1-read_processing",
+    addParams( outdir: "$params.outdir/interm/read_processing",
               early_chimera_removal: false, format: "mothur" )
 // mothur module imports
-include { mothur } from "$subworkflow_dir/mothur.nf" \
-    addParams( outdir: "$params.outdir/interm/2-contig_processing" )
-include { compile } from "$subworkflow_dir/mothur-util.nf" \
-    addParams( options: [publish_dir: "results"] )
+include { mothur } from "$subworkflow_dir/mothur.nf"
+
 // Other imports
 include{ DOWNLOAD_SILVA_FOR_MOTHUR } from "$module_dir/util/download/main.nf" \
     addParams( db_release: params.silva_db )
@@ -52,15 +50,6 @@ workflow pipeline_16S {
         db.tax
     )
 
-    // Summary
-    metagenome = compile(
-        otus.fasta,
-        otus.count_table,
-        otus.taxonomy,
-        otus.list,
-        otus.shared
-    )
-
     // Read tracking through the pipeline
     READ_TRACKING(
         reads.map{"raw,,${it[0].id},${it[1][0].countFastq()}"}
@@ -73,12 +62,12 @@ workflow pipeline_16S {
     // Visualization
     holoviews(
         otus.shared,
-        metagenome.constaxonomy,
+        otus.constaxonomy,
     )
 
     // Postprocessing
     diversity(
-        metagenome.repfasta,
+        otus.repfasta,
         otus.shared
     )
 }

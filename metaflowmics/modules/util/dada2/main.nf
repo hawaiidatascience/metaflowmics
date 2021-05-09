@@ -3,6 +3,7 @@ include { initOptions; saveFiles; getSoftwareName } from './functions'
 
 options = initOptions(params.options)
 
+
 process SUBSET_READS_RDS {
     tag "$meta.id"
     label "process_low"
@@ -20,10 +21,8 @@ process SUBSET_READS_RDS {
     output:
     tuple val(meta), path("*.RDS"), emit: rds
     path "summary.csv", emit: summary
-    // path "*.version.txt", emit: version
 
     script:
-    // def software = getSoftwareName(task.process)
     """
     #!/usr/bin/env Rscript
     library(stringr)
@@ -38,15 +37,15 @@ process SUBSET_READS_RDS {
     indices <- as.numeric(sapply(seq.clean,
         function(x) str_extract(x,"[0-9]+")))
 
+    ## Check the longest sequence in indices 
+    ## To prevent error in case the longest sequence is removed
+    seq.lengths <- sapply(names(derep[["uniques"]][indices]), nchar)
+
     ## Subset the indices from derep-class object
     derep[["uniques"]] <- derep[["uniques"]][indices]
-    derep[["quals"]] <- derep[["quals"]][indices,]
+    derep[["quals"]] <- derep[["quals"]][indices, 1:max(seq.lengths)]
     derep[["map"]] <- derep[["map"]][which(derep[["map"]] %in% indices)]
     
-    ## Handle special case where the longest sequence is removed
-    seq.lengths <- sapply(names(derep[["uniques"]]),nchar)
-    derep[["quals"]] <- derep[["quals"]][,1:max(seq.lengths)]
-
     saveRDS(derep, "${meta.id}-nochim.RDS")
 
     # Write counts
@@ -119,7 +118,7 @@ process BUILD_ASV_TABLE {
             for(sample in rownames(asv_table)) {
                 abd = asv_table[sample, seq]
                 if(abd > 0) {
-                    seq_id = sprintf("asv_%s;sample=%s;size=%s", i, sample, abd)
+                    seq_id = sprintf("ASV_%s;sample=%s;size=%s", i, sample, abd)
                     list.fasta[seq_id] = seq
                 }
             }

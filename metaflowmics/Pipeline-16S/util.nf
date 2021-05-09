@@ -64,10 +64,10 @@ def helpMessage() {
     --lulu_min_rel_cooccurence   Proportion of the parent samples where daughter occurs. 
                                    Default: 1
     [Other]
-    --min_abundance  Remove OTUs with a total abundance equal or below <minAbundance>. Default: 2
-    --make_db        Compute mothur database summary file. Can be memory intensive. Default: false
-    --skip_unifrac   Skip unifrac calculation. Recommended if your memory is limited and
-                       your have a significant amount of OTUs. Default: false
+    --min_abundance      Remove OTUs with a total abundance equal or below <minAbundance>. Default: 2
+    --compute_mothur_db  Compute mothur database summary file. Can be memory intensive. Default: false
+    --skip_unifrac       Skip unifrac calculation. Recommended if your memory is limited and
+                           your have a significant amount of OTUs. Default: false
     """.stripIndent()
 }
 

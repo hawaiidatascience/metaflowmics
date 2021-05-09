@@ -27,31 +27,31 @@ process DADA2_FILTERANDTRIM {
     script:
     def software = getSoftwareName(task.process)
     def rmphix = params.keep_phix ? "TRUE" : "FALSE"
+    def n = params.paired_end ? 2 : 1
     """
     #!/usr/bin/env Rscript
 
     library(dada2)
     library(ggplot2)
 
-    params <- list(
-        minLen=c($params.min_read_len), 
-        truncLen=c($params.trunc_len), 
-        truncQ=c($params.trunc_quality), 
-        maxEE=c($params.max_expected_error), 
-        rm.phix=${rmphix}, compress=TRUE
-    )
+    filt_params <- data.frame(
+        minLen=c($params.min_read_len),
+        truncLen=c($params.trunc_len),
+        truncQ=c($params.trunc_quality),
+        maxEE=c($params.max_expected_error)
+    )[1:$n,]
 
     if ("$params.paired_end" == "true") {
-        io <- list(
-            fwd="${reads[0]}", filt="${meta.id}-trimmed_R1.fastq.gz",
-            rev="${reads[1]}", filt.rev="${meta.id}-trimmed_R2.fastq.gz"
-        )
+        io <- list(fwd="${reads[0]}", filt="${meta.id}-trimmed_R1.fastq.gz",
+                   rev="${reads[1]}", filt.rev="${meta.id}-trimmed_R2.fastq.gz")
     } else {
         io <- list(fwd="${reads[0]}", filt="${meta.id}-trimmed.fastq.gz")
     }
 
-    read_count <- do.call(filterAndTrim, append(io, params))[, "reads.out"]
-    write(sprintf("qc,,$meta.id,%s", read_count), "summary.csv")
+    params <- c(io, filt_params, list(rm.phix=${rmphix}))
+
+    read_count <- do.call(filterAndTrim, params)[, "reads.out"]
+    write(sprintf("qc,,$meta.id,%s,", read_count), "summary.csv")
     
     # Plot if we kept all reads
     if (file.exists(io[["filt"]])) {

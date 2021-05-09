@@ -19,13 +19,12 @@ process DADA2_LEARNERRORS {
     tuple val(meta), path(reads)
 
     output:
-    tuple val(meta), path("*.RDS"), emit: rds
-    path "*.png", emit: png
+    tuple val(meta), path("*.RDS"), emit: rds, optional: true
+    path "*.png", emit: png, optional: true
     path "*.version.txt", emit: version
 
     script:
     def software = getSoftwareName(task.process)
-    // def orient = (reads.getBaseName() =~/_(R[12])[\._]/)[0][1]
     """
     #!/usr/bin/env Rscript
 
@@ -41,11 +40,23 @@ process DADA2_LEARNERRORS {
         if (tools::file_ext(input) == 'RDS') {
             input <- readRDS(input)
         }
-        errors <- learnErrors(input, multithread=TRUE, randomize=TRUE, nbases=1e7)
-        saveRDS(errors, sprintf("${meta.id}-errors%s.RDS", orient))
 
-        fig <- plotErrors(errors, nominalQ=TRUE)
-        ggsave(sprintf("${meta.id}-errorProfile%s.png", orient), plot=fig, type="cairo-png")
+        tryCatch(
+            expr={ errors <- learnErrors(input, multithread=TRUE, randomize=TRUE, nbases=1e7)
+                   saveRDS(errors, sprintf("${meta.id}-errors%s.RDS", orient)) 
+                   fig <- plotErrors(errors, nominalQ=TRUE)
+                   ggsave(sprintf("${meta.id}-errorProfile%s.png", orient), plot=fig, type="cairo-png") },
+            error=function(e) { print(e) }
+        )
+    }
+
+    outputs <- list.files(pattern="-errors.*\\\\.RDS\$")
+    if (length(outputs) < length(inputs)) {
+        # Something went wrong (usually happens when there are too few reads
+        # We discard the sample
+        for (f in outputs) {
+            file.remove(f)
+        }
     }
 
     writeLines(paste0(packageVersion('dada2')), "${software}.version.txt")    

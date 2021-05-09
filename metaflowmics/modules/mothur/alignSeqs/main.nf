@@ -42,7 +42,7 @@ process MOTHUR_ALIGN_SEQS {
     elif [ -f *.good.count_table ]; then
         mv *.good.count_table ${outprefix}.count_table
     else
-        cp ${count} ${outprefix}.count_table
+        cp $count ${outprefix}.count_table
     fi
     
     # print version

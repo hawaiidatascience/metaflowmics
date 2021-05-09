@@ -81,7 +81,7 @@ process DADA2_MERGEPAIRS {
     asv_table <- asv_table[sample_names, ]
     
     ## Write ASV sequences
-    asv_ids <- sprintf("asv_%s", c(1:dim(asv_table)[2]))
+    asv_ids <- sprintf("ASV_%s", c(1:dim(asv_table)[2]))
     uniquesToFasta(asv_table, "ASVs-100.fasta", ids=asv_ids)
     colnames(asv_table) <- asv_ids
 

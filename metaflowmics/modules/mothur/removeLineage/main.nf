@@ -32,10 +32,12 @@ process MOTHUR_REMOVE_LINEAGE {
     mothur "#remove.lineage(taxonomy=$taxonomy, count=$count, list=$list, taxon='$params.taxa_to_filter'); make.shared(list=current, count=current)"
 
     # rename outputs
-    mv *.pick.count_table ${outprefix}.count_table
     mv *.pick.taxonomy ${outprefix}.taxonomy
-    mv *.pick.list ${outprefix}.list
     mv *.shared ${outprefix}.shared
+
+    # if it exists
+    [ -f *.pick.count_table ] && mv *.pick.count_table ${outprefix}.count_table || cp $count ${outprefix}.count_table
+    [ -f *.pick.list ] && mv *.pick.list ${outprefix}.list || cp $list ${outprefix}.list
 
     # print version
     mothur -v | tail -n+2 | head -1 | cut -d'=' -f2 > ${software}.version.txt

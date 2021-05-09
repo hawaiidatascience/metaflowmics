@@ -26,7 +26,7 @@ include{ CONVERT_TO_MOTHUR_FORMAT } from "$module_dir/util/misc/main.nf" \
 // subworkflow imports
 include { dada2 } from "$subworkflow_dir/dada2.nf" \
     addParams( outdir: "$params.outdir/interm/read_processing",
-              trunc_len: 0, trunc_quality: 2, min_read_len: 20,
+              trunc_len: 0, trunc_quality: 2, min_read_len: 20, paired_end: false,
               early_chimera_removal: true, format: "VSEARCH" )
 include { holoviews } from "$subworkflow_dir/holoviews.nf" \
     addParams( options: [publish_dir: "figures"] )
