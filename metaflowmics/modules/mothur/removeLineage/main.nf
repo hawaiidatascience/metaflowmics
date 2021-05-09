@@ -1,5 +1,5 @@
 // Import generic module functions
-include { initOptions; saveFiles; getSoftwareName } from './functions'
+include { initOptions; saveFiles; getSoftwareName } from "./functions"
 
 options = initOptions(params.options)
 
@@ -21,7 +21,7 @@ process MOTHUR_REMOVE_LINEAGE {
     tuple val(otu_id), path("${outprefix}.count_table"), emit: count_table
     tuple val(otu_id), path("${outprefix}.taxonomy"), emit: taxonomy
     tuple val(otu_id), path("${outprefix}.list"), emit: list
-    tuple val(otu_id), path("${outprefix}.shared"), emit: shared        
+    tuple val(otu_id), path("${outprefix}.shared"), emit: shared
     path "*.version.txt", emit: version
 
     script:
@@ -29,7 +29,7 @@ process MOTHUR_REMOVE_LINEAGE {
     def procname = "${task.process.tokenize(':')[-1].toLowerCase()}"
     outprefix = options.suffix ? options.suffix : procname
     """
-    mothur "#remove.lineage(taxonomy=$taxonomy, count=$count, list=$list, taxon='$params.taxa_to_filter'); make.shared(list=current, count=current)"
+    mothur "#remove.lineage(taxonomy=$taxonomy, count=$count, list=$list, taxon="$params.taxa_to_filter"); make.shared(list=current, count=current)"
 
     # rename outputs
     mv *.pick.taxonomy ${outprefix}.taxonomy
@@ -40,6 +40,6 @@ process MOTHUR_REMOVE_LINEAGE {
     [ -f *.pick.list ] && mv *.pick.list ${outprefix}.list || cp $list ${outprefix}.list
 
     # print version
-    mothur -v | tail -n+2 | head -1 | cut -d'=' -f2 > ${software}.version.txt
+    mothur -v | tail -n+2 | head -1 | cut -d"=" -f2 > ${software}.version.txt
     """
 }

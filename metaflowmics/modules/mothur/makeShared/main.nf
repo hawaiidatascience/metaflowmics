@@ -1,5 +1,5 @@
 // Import generic module functions
-include { initOptions; saveFiles; getSoftwareName } from './functions'
+include { initOptions; saveFiles; getSoftwareName } from "./functions"
 
 options = initOptions(params.options)
 
@@ -25,12 +25,12 @@ process MOTHUR_MAKE_SHARED {
     def procname = "${task.process.tokenize(':')[-1].toLowerCase()}"
     outprefix = options.suffix ? "$options.suffix" : "${procname}"
     """
-    mothur '#make.shared(count=$count, list=$list)'
+    mothur "#make.shared(count=$count, list=$list)"
 
     # rename output
     mv *.shared ${outprefix}.shared
 
     # print version
-    mothur -v | tail -n+2 | head -1 | cut -d'=' -f2 > ${software}.version.txt
+    mothur -v | tail -n+2 | head -1 | cut -d"=" -f2 > ${software}.version.txt
     """
 }

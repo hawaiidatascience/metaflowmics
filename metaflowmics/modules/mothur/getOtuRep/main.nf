@@ -1,5 +1,5 @@
 // Import generic module functions
-include { initOptions; saveFiles; getSoftwareName } from './functions'
+include { initOptions; saveFiles; getSoftwareName } from "./functions"
 
 options = initOptions(params.options)
 
@@ -27,12 +27,12 @@ process MOTHUR_GET_OTU_REP {
     def procname = "${task.process.tokenize(':')[-1].toLowerCase()}"
     outprefix = options.suffix ? "$options.suffix" : "${procname}.${otu_id}"
     """
-    mothur '#get.oturep(fasta=$fasta, list=$list, count=$count, method=abundance, rename=t)'
+    mothur "#get.oturep(fasta=$fasta, list=$list, count=$count, method=abundance, rename=t)"
 
     mv *.rep.fasta ${outprefix}.rep.fasta
     mv *.rep.count_table ${outprefix}.rep.count_table
 
     # print version
-    mothur -v | tail -n+2 | head -1 | cut -d'=' -f2 > ${software}.version.txt
+    mothur -v | tail -n+2 | head -1 | cut -d"=" -f2 > ${software}.version.txt
     """
 }

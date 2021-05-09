@@ -1,5 +1,5 @@
 // Import generic module functions
-include { initOptions; saveFiles; getSoftwareName } from './functions'
+include { initOptions; saveFiles; getSoftwareName } from "./functions"
 
 options = initOptions(params.options)
 
@@ -26,15 +26,15 @@ process MOTHUR_CHIMERA {
     def procname = "${task.process.tokenize(':')[-1].toLowerCase()}"
     outprefix = options.suffix ? "$options.suffix" : "${procname}"
     """
-    mothur '#
+    mothur "#
     chimera.${params.chimera_tool}(fasta=$fasta, count=$count, dereplicate=t);
-    remove.seqs(fasta=current, accnos=current, dups=f)'
+    remove.seqs(fasta=current, accnos=current, dups=f)"
 
     # rename outputs
     mv *.pick.fasta ${outprefix}.fasta
     mv *.denovo.${params.chimera_tool}.pick.count_table ${outprefix}.count_table
 
     # print version
-    mothur -v | tail -n+2 | head -1 | cut -d'=' -f2 > ${software}.version.txt
+    mothur -v | tail -n+2 | head -1 | cut -d"=" -f2 > ${software}.version.txt
     """
 }

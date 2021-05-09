@@ -1,5 +1,5 @@
 // Import generic module functions
-include { initOptions; saveFiles; getSoftwareName } from './functions'
+include { initOptions; saveFiles; getSoftwareName } from "./functions"
 
 options = initOptions(params.options)
 
@@ -21,11 +21,11 @@ process MOTHUR_SUMMARY_SHARED {
     def software = getSoftwareName(task.process)
     def ext = shared.getBaseName()
     """
-    mothur '#summary.shared(shared=$shared, calc=${params.calc}, distance=lt)'
+    mothur "#summary.shared(shared=$shared, calc=${params.calc}, distance=lt)"
 
     mv *.summary beta-diversity_${otu_id}.csv
 
     # print version
-    mothur -v | tail -n+2 | head -1 | cut -d'=' -f2 > ${software}.version.txt
+    mothur -v | tail -n+2 | head -1 | cut -d"=" -f2 > ${software}.version.txt
     """
 }

@@ -1,5 +1,5 @@
 // Import generic module functions
-include { initOptions; saveFiles; getSoftwareName } from './functions'
+include { initOptions; saveFiles; getSoftwareName } from "./functions"
 
 options = initOptions(params.options)
 
@@ -26,14 +26,14 @@ process MOTHUR_CLASSIFY_OTUS {
     def procname = "${task.process.tokenize(':')[-1].toLowerCase()}"
     outprefix = options.suffix ? "${options.suffix}.${otu_id}" : "${procname}.${otu_id}"
     """
-    mothur '#
+    mothur "#
     list.seqs(list=$list); get.seqs(taxonomy=$tax, accnos=current);
-    classify.otu(taxonomy=current, list=current, count=$count, probs=f)'
+    classify.otu(taxonomy=current, list=current, count=$count, probs=f)"
 
     # rename output
     mv *.cons.taxonomy ${outprefix}.cons.taxonomy
 
     # print version
-    mothur -v | tail -n+2 | head -1 | cut -d'=' -f2 > ${software}.version.txt
+    mothur -v | tail -n+2 | head -1 | cut -d"=" -f2 > ${software}.version.txt
     """
 }

@@ -1,5 +1,5 @@
 // Import generic module functions
-include { initOptions; saveFiles; getSoftwareName } from './functions'
+include { initOptions; saveFiles; getSoftwareName } from "./functions"
 
 options = initOptions(params.options)
 
@@ -29,10 +29,10 @@ process MOTHUR_SUBSAMPLE {
     def procname = "${task.process.tokenize(':')[-1].toLowerCase()}"
     outprefix = options.suffix ? "$options.suffix" : "${procname}.${otu_id}"
     """
-    mothur '#
-    sub.sample(list=$list, count=$count, size=$lvl, persample=true); 
-    make.shared(list=current, count=current)'
-             
+    mothur "#
+    sub.sample(list=$list, count=$count, size=$lvl, persample=true);
+    make.shared(list=current, count=current)"
+
     # rename outputs
     mv *.subsample.count_table ${outprefix}.count_table
     mv *.shared ${outprefix}.shared
@@ -40,6 +40,6 @@ process MOTHUR_SUBSAMPLE {
     [ -f *subsample*.list ] && mv *subsample*.list ${outprefix}.list || cp $list ${outprefix}.list
 
     # print version
-    mothur -v | tail -n+2 | head -1 | cut -d'=' -f2 > ${software}.version.txt
+    mothur -v | tail -n+2 | head -1 | cut -d"=" -f2 > ${software}.version.txt
     """
 }

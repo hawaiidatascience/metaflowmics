@@ -1,5 +1,5 @@
 // Import generic module functions
-include { initOptions; saveFiles; getSoftwareName } from './functions'
+include { initOptions; saveFiles; getSoftwareName } from "./functions"
 
 options = initOptions(params.options)
 
@@ -27,25 +27,25 @@ process MOTHUR_ALIGN_SEQS {
     def procname = "${task.process.tokenize(':')[-1].toLowerCase()}"
     outprefix = options.suffix ? "$options.suffix" : "${procname}"
     """
-    mothur '#
+    mothur "#
     align.seqs(fasta=$fasta, reference=$db_aln);
     filter.seqs(fasta=current, vertical=T);
 	screen.seqs(fasta=current, count=$count, minlength=${params.min_aln_len});
 	screen.seqs(fasta=current, count=current, optimize=start-end, criteria=${params.criteria});
-	summary.seqs(fasta=current)'
+	summary.seqs(fasta=current)"
 
     mv *.filter.good.good.fasta ${outprefix}.fasta
 
     # if it exists
-    if [ -f *.good.good.count_table ]; then 
+    if [ -f *.good.good.count_table ]; then
         mv *.good.good.count_table ${outprefix}.count_table
     elif [ -f *.good.count_table ]; then
         mv *.good.count_table ${outprefix}.count_table
     else
         cp $count ${outprefix}.count_table
     fi
-    
+
     # print version
-    mothur -v | tail -n+2 | head -1 | cut -d'=' -f2 > ${software}.version.txt
+    mothur -v | tail -n+2 | head -1 | cut -d"=" -f2 > ${software}.version.txt
     """
 }

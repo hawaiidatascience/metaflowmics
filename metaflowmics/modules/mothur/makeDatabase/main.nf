@@ -1,5 +1,5 @@
 // Import generic module functions
-include { initOptions; saveFiles; getSoftwareName } from './functions'
+include { initOptions; saveFiles; getSoftwareName } from "./functions"
 
 options = initOptions(params.options)
 
@@ -26,10 +26,10 @@ process MOTHUR_MAKE_DATABASE {
     def procname = "${task.process.tokenize(':')[-1].toLowerCase()}"
     outprefix = options.suffix ? "$options.suffix" : "${procname}.${otu_id}"
     """
-    mothur '#create.database(shared=$shared,repfasta=$repfasta,constaxonomy=$constax,count=$repcount)'
+    mothur "#create.database(shared=$shared,repfasta=$repfasta,constaxonomy=$constax,count=$repcount)"
     mv *.database ${outprefix}.database
 
     # print version
-    mothur -v | tail -n+2 | head -1 | cut -d'=' -f2 > ${software}.version.txt
+    mothur -v | tail -n+2 | head -1 | cut -d"=" -f2 > ${software}.version.txt
     """
 }

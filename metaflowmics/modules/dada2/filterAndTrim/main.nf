@@ -5,12 +5,12 @@ options = initOptions(params.options)
 
 process DADA2_FILTERANDTRIM {
     tag "$meta.id"
-    label 'process_low'
+    label "process_low"
     publishDir "${params.outdir}",
         mode: params.publish_dir_mode,
         saveAs: { filename -> saveFiles(filename:filename, options:params.options,
                                         publish_dir:getSoftwareName(task.process),
-                                        meta:meta, publish_by_meta:['id']) }
+                                        meta:meta, publish_by_meta:["id"]) }
 
     container "quay.io/biocontainers/bioconductor-dada2:1.18.0--r40h399db7b_1"
     conda (params.enable_conda ? "bioconda::bioconductor-dada2=1.18 conda-forge::r-ggplot2" : null)
@@ -52,13 +52,13 @@ process DADA2_FILTERANDTRIM {
 
     read_count <- do.call(filterAndTrim, params)[, "reads.out"]
     write(sprintf("qc,,$meta.id,%s,", read_count), "summary.csv")
-    
+
     # Plot if we kept all reads
     if (file.exists(io[["filt"]])) {
         fig <- plotQualityProfile(io)
         ggsave("quality-profile_${meta.id}.png", plot=fig, type="cairo-png" )
     }
 
-    writeLines(paste0(packageVersion('dada2')), "${software}.version.txt")    
+    writeLines(paste0(packageVersion("dada2")), "${software}.version.txt")
     """
 }

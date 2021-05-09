@@ -27,7 +27,7 @@ process VSEARCH_SINTAX{
     def software = getSoftwareName(task.process)
     """
     #!/usr/bin/env bash
-    
+
     vsearch \\
         --threads $task.cpus \\
         --db $database \\

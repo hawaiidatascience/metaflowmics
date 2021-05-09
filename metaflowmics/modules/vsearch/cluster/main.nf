@@ -1,11 +1,11 @@
 // Import generic module functions
-include { initOptions; saveFiles; getSoftwareName } from './functions'
+include { initOptions; saveFiles; getSoftwareName } from "./functions"
 
 options = initOptions(params.options)
 
 process VSEARCH_CLUSTER {
     tag "$otu_id"
-    label 'process_high'
+    label "process_high"
     publishDir "${params.outdir}",
         mode: params.publish_dir_mode,
         saveAs: { filename -> saveFiles(filename:filename, options:params.options,
@@ -43,6 +43,6 @@ process VSEARCH_CLUSTER {
         --centroids vsearch_OTUs-${otu_id}.fasta \\
         --otutabout vsearch_OTUs-${otu_id}.tsv
 
-    echo \$(vsearch --version 2>&1) | grep "RAM" | sed 's/vsearch v//' | sed 's/, .*//' > ${software}.version.txt
+    echo \$(vsearch --version 2>&1) | grep "RAM" | sed "s/vsearch v//" | sed "s/, .*//" > ${software}.version.txt
     """
 }

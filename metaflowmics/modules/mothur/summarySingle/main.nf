@@ -1,5 +1,5 @@
 // Import generic module functions
-include { initOptions; saveFiles; getSoftwareName } from './functions'
+include { initOptions; saveFiles; getSoftwareName } from "./functions"
 
 options = initOptions(params.options)
 
@@ -20,13 +20,13 @@ process MOTHUR_SUMMARY_SINGLE {
     def software = getSoftwareName(task.process)
     def ext = shared.getBaseName()
     """
-    mothur '#summary.single(shared=$shared, calc=$params.calc)'
+    mothur "#summary.single(shared=$shared, calc=$params.calc)"
 
     # summary
     if [ "$params.calc" = "nseqs-sobs" ]; then
         cut -f2- *.groups.summary | tail -n+2 \\
         | awk '{OFS=","}{print "$meta.step","$meta.otu_id",\$1,int(\$2),int(\$3)}' \\
-        | tr '\\t' ',' \\
+        | tr "\\t" "," \\
         > ${ext}.csv
         rm -f *.groups.summary
     else
@@ -34,6 +34,6 @@ process MOTHUR_SUMMARY_SINGLE {
     fi
 
     # print version
-    mothur -v | tail -n+2 | head -1 | cut -d'=' -f2 > ${software}.version.txt
+    mothur -v | tail -n+2 | head -1 | cut -d"=" -f2 > ${software}.version.txt
     """
 }

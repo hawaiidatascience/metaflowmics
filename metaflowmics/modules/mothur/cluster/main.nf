@@ -1,5 +1,5 @@
 // Import generic module functions
-include { initOptions; saveFiles; getSoftwareName } from './functions'
+include { initOptions; saveFiles; getSoftwareName } from "./functions"
 
 options = initOptions(params.options)
 
@@ -20,25 +20,25 @@ process MOTHUR_CLUSTER {
 
     output:
     tuple val(otu_id), path("${outprefix}.list"), emit: list
-    tuple val(otu_id), path("${outprefix}.shared"), emit: shared    
+    tuple val(otu_id), path("${outprefix}.shared"), emit: shared
     path "*.version.txt", emit: version
 
     script:
     def software = getSoftwareName(task.process)
-    def method = otu_id == 100 ? 'unique' : 'dgc'
+    def method = otu_id == 100 ? "unique" : "dgc"
     def otu_diff = (100-otu_id) / 100
     def procname = "${task.process.tokenize(':')[-1].toLowerCase()}"
-    def ext = ['rep.fasta', 'cons.taxonomy', 'shared', 'list', 'database']
+    def ext = ["rep.fasta", "cons.taxonomy", "shared", "list", "database"]
     outprefix = options.suffix ? "$options.suffix" : "${procname}.${otu_id}"
     """
-    mothur '#
+    mothur "#
     cluster(count=$count, fasta=$fasta, method=$method, cutoff=$otu_diff);
-    make.shared(count=current, list=current)'
+    make.shared(count=current, list=current)"
 
     mv *.list ${outprefix}.list
     mv *.shared ${outprefix}.shared
 
     # print version
-    mothur -v | tail -n+2 | head -1 | cut -d'=' -f2 > ${software}.version.txt
+    mothur -v | tail -n+2 | head -1 | cut -d"=" -f2 > ${software}.version.txt
     """
 }

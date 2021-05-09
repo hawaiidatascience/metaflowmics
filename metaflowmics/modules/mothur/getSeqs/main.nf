@@ -1,5 +1,5 @@
 // Import generic module functions
-include { initOptions; saveFiles; getSoftwareName } from './functions'
+include { initOptions; saveFiles; getSoftwareName } from "./functions"
 
 options = initOptions(params.options)
 
@@ -18,7 +18,7 @@ process MOTHUR_GET_SEQS {
 
     script:
     def ref_ext = ref.getExtension()
-    def arg = filt.getExtension().replaceAll('_table', '')
+    def arg = filt.getExtension().replaceAll("_table", "")
     """
     mothur "#list.seqs(${ref_ext}=$ref);get.seqs(accnos=current,$arg=$filt)"
     """
