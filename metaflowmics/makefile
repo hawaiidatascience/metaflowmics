@@ -39,3 +39,16 @@ gcp_wrapper_ITS:
 	@ make gcpITS NXF_MODE=google GOOGLE_APPLICATION_CREDENTIALS="${HOME}/.gcp_credentials.json"
 gcpITS:
 	nextflow run Pipeline-ITS --reads "${PWD}/tests/ITS/*_R1.fastq.gz" -profile gcp -work-dir 'gs://c-maiki-work/tmp'
+
+setup_containers:
+	module load tools/Singularity/3.7.1
+	mkdir -p ~/.singularity_images.cache
+	mkdir -p /tmp/sg && cd /tmp/sg
+	singularity pull --docker-login docker://nakor/bash:5.1.4
+	# docker://nakor/metaflowmics-r:0.0.1
+	# docker://nakor/metaflowmics-python:0.0.1
+	singularity pull quay.io/biocontainers/itsxpress:1.8.0--py_1
+	# quay.io/biocontainers/bioconductor-dada2:1.18.0--r40h399db7b_1
+	# quay.io/biocontainers/mothur:1.44.1--hf0cea05_2
+	# quay.io/biocontainers/vsearch:2.17.0--h95f258a_1
+	mv *.img ~/.singularity_images.cache
