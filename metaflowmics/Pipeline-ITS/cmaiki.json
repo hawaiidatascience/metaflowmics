@@ -1,0 +1,275 @@
+{
+    "id": "ITS-pipeline-uhhpc-1.0",
+    "name": "ITS-pipeline-uhhpc",
+    "icon": null,
+    "parallelism": "SERIAL",
+    "defaultProcessorsPerNode": 1,
+    "defaultMemoryPerNode": 16,
+    "defaultNodeCount": 1,
+    "defaultMaxRunTime": "72:00:00",
+    "defaultQueue": "shared",
+    "version": "1.0",
+    "isPublic": false,
+    "helpURI": "https://metagenomics-pipelines.readthedocs.io/en/latest/pipeline_ITS.html",
+    "label": "Run ITS pipeline",
+    "owner": "carisdak",
+    "shortDescription": "Analysis pipeline for fungal ITS data",
+    "longDescription": "Analysis pipeline for fungal ITS data",
+    "tags": [
+        "ITS",
+        "metagenomics"
+    ],
+    "ontology": [],
+    "executionType": "HPC",
+    "executionSystem": "agave-new-uhhpc-execution",
+    "deploymentPath": "ITS/ITS-pipeline-app-v1.0",
+    "deploymentSystem": "cmaiki-apps-deploy-storage",
+    "templatePath": "wrapper.sh",
+    "testPath": "test/test.sh",
+    "checkpointable": false,
+    "modules": [],
+    "inputs": [
+        {
+            "id": "reads",
+            "value": {
+                "visible": true,
+                "required": true,
+                "order": 0,
+                "enquote": false,
+                "default": "test/data"
+            },
+            "details": {
+                "label": "Path to the folder containing reads (fastq.gz format)",
+                "description": null,
+                "argument": null,
+                "showArgument": false,
+                "repeatArgument": false
+            },
+            "semantics": {
+                "minCardinality": 1,
+                "maxCardinality": 1,
+                "ontology": [],
+                "fileTypes": []
+            }
+        }
+    ],
+    "parameters": [
+        {
+            "id": "locus",
+            "value": {
+                "visible": true,
+                "required": false,
+                "type": "string",
+                "order": 0,
+                "enquote": false,
+                "default": "ITS1",
+                "validator": null
+            },
+            "details": {
+                "label": "Which locus? (ITS1 or ITS2)",
+                "description": null,
+                "argument": null,
+                "showArgument": false,
+                "repeatArgument": false
+            },
+            "semantics": {
+                "minCardinality": 0,
+                "maxCardinality": 1,
+                "ontology": []
+            }
+        },
+        {
+            "id": "paired_end",
+            "value": {
+                "visible": true,
+                "required": false,
+                "type": "bool",
+                "order": 0,
+                "enquote": false,
+                "default": false,
+                "validator": null
+            },
+            "details": {
+                "label": "Paired-end",
+                "description": null,
+                "argument": "",
+                "showArgument": false,
+                "repeatArgument": false
+            },
+            "semantics": {
+                "minCardinality": 0,
+                "maxCardinality": 1,
+                "ontology": []
+            }
+        },
+        {
+            "id": "max_expected_error",
+            "value": {
+                "visible": true,
+                "required": false,
+                "type": "number",
+                "order": 0,
+                "enquote": false,
+                "default": 3,
+                "validator": null
+            },
+            "details": {
+                "label": "Maximum number of expected errors per read (> 0)",
+                "description": null,
+                "argument": null,
+                "showArgument": false,
+                "repeatArgument": false
+            },
+            "semantics": {
+                "minCardinality": 0,
+                "maxCardinality": 1,
+                "ontology": []
+            }
+        },
+        {
+            "id": "clustering_thresholds",
+            "value": {
+                "visible": true,
+                "required": false,
+                "type": "string",
+                "order": 0,
+                "enquote": false,
+                "default": "100,97",
+                "validator": null
+            },
+            "details": {
+                "label": "Sequence similarity thresholds for OTU clustering (comma separated)",
+                "description": null,
+                "argument": null,
+                "showArgument": false,
+                "repeatArgument": false
+            },
+            "semantics": {
+                "minCardinality": 0,
+                "maxCardinality": -1,
+                "ontology": []
+            }
+        },
+        {
+            "id": "skip_lulu",
+            "value": {
+                "visible": true,
+                "required": false,
+                "type": "bool",
+                "order": 0,
+                "enquote": false,
+                "default": false,
+                "validator": null
+            },
+            "details": {
+                "label": "Skip LULU step?",
+                "description": null,
+                "argument": null,
+                "showArgument": false,
+                "repeatArgument": false
+            },
+            "semantics": {
+                "minCardinality": 0,
+                "maxCardinality": -1,
+                "ontology": []
+            }
+        },
+        {
+            "id": "tax_confidence",
+            "value": {
+                "visible": true,
+                "required": false,
+                "type": "number",
+                "order": 0,
+                "enquote": false,
+                "default": 50,
+                "validator": null
+            },
+            "details": {
+                "label": "The minimum bootstrap confidence for assigning a taxonomic level",
+                "description": null,
+                "argument": null,
+                "showArgument": false,
+                "repeatArgument": false
+            },
+            "semantics": {
+                "minCardinality": 0,
+                "maxCardinality": 1,
+                "ontology": []
+            }
+        },
+        {
+            "id": "alpha_diversity",
+            "value": {
+                "visible": true,
+                "required": false,
+                "type": "string",
+                "order": 0,
+                "enquote": false,
+                "default": "nseqs-sobs-chao-shannon-shannoneven",
+                "validator": null
+            },
+            "details": {
+                "label": "Alpha diversity metrics to compute (available in mothur)",
+                "description": null,
+                "argument": null,
+                "showArgument": false,
+                "repeatArgument": false
+            },
+            "semantics": {
+                "minCardinality": 0,
+                "maxCardinality": -1,
+                "ontology": []
+            }
+        },
+        {
+            "id": "beta_diversity",
+            "value": {
+                "visible": true,
+                "required": false,
+                "type": "string",
+                "order": 0,
+                "enquote": false,
+                "default": "braycurtis-thetayc-sharedsobs-sharedchao",
+                "validator": null
+            },
+            "details": {
+                "label": "Beta diversity metrics to compute (available in mothur)",
+                "description": null,
+                "argument": null,
+                "showArgument": false,
+                "repeatArgument": false
+            },
+            "semantics": {
+                "minCardinality": 0,
+                "maxCardinality": -1,
+                "ontology": []
+            }
+        },
+        {
+            "id": "is_test",
+            "value": {
+                "visible": true,
+                "required": false,
+                "type": "bool",
+                "order": 0,
+                "enquote": false,
+                "default": false,
+                "validator": null
+            },
+            "details": {
+                "label": "This is a test",
+                "description": null,
+                "argument": null,
+                "showArgument": false,
+                "repeatArgument": false
+            },
+            "semantics": {
+                "minCardinality": 0,
+                "maxCardinality": -1,
+                "ontology": []
+            }
+        }
+    ],
+    "outputs": []
+}
