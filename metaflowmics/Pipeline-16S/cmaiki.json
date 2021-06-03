@@ -22,7 +22,7 @@
     "ontology": [],
     "executionType": "HPC",
     "executionSystem": "agave-new-uhhpc-execution",
-    "deploymentPath": "16S/16S-pipeline-app-v1.0",
+    "deploymentPath": "16S-pipeline-app-v1.0",
     "deploymentSystem": "cmaiki-apps-deploy-storage",
     "templatePath": "wrapper.sh",
     "testPath": "test/test.sh",
