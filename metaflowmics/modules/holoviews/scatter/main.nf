@@ -46,13 +46,15 @@ process HOLOVIEWS_SCATTER {
     y_cols = ["prevalence"] + metadata.columns.tolist()
 
     for rank in ["Phylum", "Class"]:
-        if rank == "Class" and "Proteobacteria" in set(data.Phylum):
-            data = data[data.Phylum == "Proteobacteria"]
+        data_r = data[data[rank].notnull()]
+
+        if rank == "Class" and "Proteobacteria" in set(data_r.Phylum):
+            data_r = data_r[data_r.Phylum == "Proteobacteria"]
     
-        names = sorted(data[rank].unique())
+        names = sorted(data_r[rank].unique())
 
         scatters = [hv.Scatter(
-            data[data[rank] == name], "abundance", y_cols, label=name
+            data_r[data_r[rank] == name], "abundance", y_cols, label=name
         ).opts(**scatter_opt) for name in names]
 
         scatters = hv.Layout(scatters).cols(5)
