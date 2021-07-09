@@ -1,3 +1,45 @@
+process DOWNLOAD_IBOL {
+    tag "v$version"
+    label "process_low"
+
+    conda (params.enable_conda ? "bash:5.0.018" : null)
+    container "nakor/bash:5.1.4"
+
+    input:
+    each version
+    
+    output:
+    path "iBOL_COI*.tsv", emit: tsv
+    path "iBOL_COI*.faa", emit: faa
+
+    script:
+    url = "https://v3.boldsystems.org/data/datarelease/NewPackages"
+    name = "iBOL_phase_${version}_COI.tsv"
+    prefix = "iBOL_COI"
+    ranks = ['phylum', 'class', 'order', 'family', 'subfamily', 'genus', 'species']
+    tax_fmt = ranks.withIndex().collect{ r,i ->
+        symbol = r[0]
+        if (r=='subfamily') {symbol='sf'}
+        "${symbol}__\"\$${i+9}\""
+    }.join(',')
+    """
+    wget $url/${name}.zip && unzip ${name}.zip && rm -f ${name}.zip
+    
+    awk -F'\\t' '\$32 != ""' $name |
+      awk '{FS=OFS="\\t"} { 
+        if (\$14=="") \$14=gensub(/ .*/,"","g",\$15);
+        \$15=gensub(/sp\\./,"sp","g",\$15);
+        \$15=gensub(/ |:|\\//,"_","g",\$15);
+        print
+      }' > ${prefix}.tsv && rm -f $name
+    
+    tail -n+2 ${prefix}.tsv | 
+      awk -F'\\t' '{
+        print ">"\$28";"\$36";k__Animalia,$tax_fmt\\n"\$32
+      }' > ${prefix}.faa
+    """
+}
+
 process DOWNLOAD_UNITE {
     tag "$params.db_release"
     label "process_low"
