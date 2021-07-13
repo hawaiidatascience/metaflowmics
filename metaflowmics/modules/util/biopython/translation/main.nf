@@ -5,6 +5,7 @@ options = initOptions(params.options)
 
 
 process TRANSLATE {
+    tag "$meta"
     label "process_low"
     publishDir "${params.outdir}",
         mode: params.publish_dir_mode,
@@ -15,12 +16,12 @@ process TRANSLATE {
     conda (params.enable_conda ? "conda-forge::bipython conda-forge::pandas" : null)
 
     input:
-    path fasta
-    path info
+    tuple val(meta), path(fasta)
 
     output:
-    path "*.faa", emit: faa
-    // path "${fasta.getBaseName()}_missing.faa", emit: faa_missing
+    tuple val(meta), path("*_main.faa"), emit: main
+    tuple val(meta), path("*_mult.faa"), emit: mult
+    tuple val(meta), path("*_other.faa"), emit: other
     // path "summary.csv", emit: summary
 
     script:
@@ -31,8 +32,6 @@ process TRANSLATE {
     from Bio.SeqIO.FastaIO import SimpleFastaParser
     from Bio.Seq import Seq
     from Bio.Data import CodonTable
-
-    translation_info = pd.read_csv("$info", sep="\\t", header=None, index_col=0).iloc[:, -1].to_dict()
 
     def translate(seq, table):
         proteins = []
@@ -46,9 +45,15 @@ process TRANSLATE {
         return proteins
 
     with open("$fasta", "r") as reader, \\
-         open("${fasta.getBaseName()}.faa", "w") as writer, \\
-         open("${fasta.getBaseName()}_missing.faa", "w") as writer_missing:
+         open("${fasta.getBaseName()}_main.faa", "w") as writer, \\
+         open("${fasta.getBaseName()}_mult.faa", "w") as writer_mult, \\
+         open("${fasta.getBaseName()}_other.faa", "w") as writer_other:
         for (title, seq) in SimpleFastaParser(reader):
+
+            if any(x not in "ACGT" for x in seq):
+                writer_other.write(f">{title} | unknown_nucleotide \\n{seq}\\n")
+                continue
+
             lineage = dict(zip(
                 ["kingdom", "phylum", "class", "order", "family", "subfamily", "genus", "species"],
                 title.split(';')
@@ -56,15 +61,18 @@ process TRANSLATE {
 
             seq = Seq(seq)
 
-            table = translation_info.get(lineage["$params.level"])
-            if table is not None:
-                proteins = translate(seq, table)
-                for (frame, protein) in proteins:
-                    writer.write(f">{title} | frame={frame};table={table}\\n{protein}\\n")
-            else:
-                for table in CodonTable.ambiguous_generic_by_id.keys():
-                    proteins = translate(seq, table)
-                    for (frame, protein) in proteins:
-                        writer_missing.write(f">{title} | frame={frame};table={table}\\n{protein}\\n")
+            proteins = translate(seq, $params.table)
+
+            if len(proteins) == 0:
+                proteins = [prot for table in CodonTable.ambiguous_generic_by_id.keys()
+                            for prot in translate(seq, table)]
+                handle = writer_other
+            if len(proteins) == 1:
+                handle = writer
+            elif len(proteins) > 1:
+                handle = writer_mult
+            
+            for (frame, protein) in proteins:
+                handle.write(f">{title}|frame={frame};table={$params.table}\\n{protein}\\n")
     """
 }

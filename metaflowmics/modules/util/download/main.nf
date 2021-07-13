@@ -9,8 +9,8 @@ process DOWNLOAD_IBOL {
     each version
     
     output:
+    tuple val(version), path("iBOL_COI*.fna"), emit: fna
     path "iBOL_COI*.tsv", emit: tsv
-    path "iBOL_COI*.faa", emit: faa
 
     script:
     url = "https://v3.boldsystems.org/data/datarelease/NewPackages"
@@ -22,21 +22,22 @@ process DOWNLOAD_IBOL {
         if (r=='subfamily') {symbol='sf'}
         "${symbol}__\"\$${i+9}\""
     }.join(',')
+    regex = "[^A-Za-z0-9_-]"
     """
     wget $url/${name}.zip && unzip ${name}.zip && rm -f ${name}.zip
     
-    awk -F'\\t' '\$32 != ""' $name |
+    awk -F'\\t' '\$31 != ""' $name |
       awk '{FS=OFS="\\t"} { 
         if (\$14=="") \$14=gensub(/ .*/,"","g",\$15);
         \$15=gensub(/sp\\./,"sp","g",\$15);
-        \$15=gensub(/ |:|\\//,"_","g",\$15);
+        \$15=gensub(/$regex/,"_","g",\$15);
         print
       }' > ${prefix}.tsv && rm -f $name
     
     tail -n+2 ${prefix}.tsv | 
       awk -F'\\t' '{
-        print ">"\$28";"\$36";k__Animalia,$tax_fmt\\n"\$32
-      }' > ${prefix}.faa
+        print ">"\$28";"\$36";k__Animalia,$tax_fmt\\n"\$31
+      }' > ${prefix}.fna
     """
 }
 
