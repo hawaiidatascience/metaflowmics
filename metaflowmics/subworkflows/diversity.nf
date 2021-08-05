@@ -6,7 +6,7 @@ params.options = [:]
 module_dir = "../modules"
 
 include{ FASTTREE } from "$module_dir/fasttree/main.nf"
-include{ PHYLOSEQ_UNIFRAC } from "$module_dir/phyloseq/unifrac/main.nf" \
+include{ PHYLOSEQ_UNIFRAC } from "$module_dir/R/phyloseq/unifrac/main.nf" \
     addParams( method: params.unifrac )
 include{ MOTHUR_SUMMARY_SINGLE } from "$module_dir/mothur/summarySingle/main.nf" \
     addParams( calc: params.alpha_diversity)

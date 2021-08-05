@@ -29,13 +29,16 @@ process MUSCLE {
 
     n=\$(grep -c "^>" $fasta)
 
-    if [ "$arg" == "" ] && [ \$n -ge 1000 ] ; then
+    if [ "$arg" == "" ] && [ \$n -ge 500 ] ; then
         opt="-maxiters 1 -diags -sv -distance1 kbit20_3"
     else
         opt=""
     fi
 
-    cat $fasta | muscle $arg \$opt > ${fasta.getBaseName()}.afa
+    # Run muscle and convert to 2-line fasta
+    cat $fasta | muscle $arg \$opt \\
+        | awk '/^>/ {printf("\\n%s\\n",\$0);next; } { printf("%s",\$0);}  END {printf("\\n");}' \\
+        | tail -n+2 > ${fasta.getBaseName()}.afa
 
     echo \$(muscle --version 2>&1) | cut -d" " -f2  > ${software}.version.txt
     """

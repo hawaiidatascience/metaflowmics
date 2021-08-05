@@ -20,7 +20,7 @@ include { MOTHUR_SUBSAMPLE } from "$module_dir/mothur/subsample/main.nf" \
     addParams( options: [publish_dir: "5-subsampling"] )
 include { MOTHUR_DIST_SEQS } from "$module_dir/mothur/distSeqs/main.nf" \
     addParams( cutoff: 1-params.lulu_min_match/100, format: "vsearch" )
-include { LULU } from "$module_dir/lulu/main.nf" \
+include { LULU } from "$module_dir/R/lulu/main.nf" \
     addParams( options: [publish_dir: "6-lulu-filter"] )
 
 // `compile` sub-workflow

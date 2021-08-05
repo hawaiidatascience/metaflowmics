@@ -6,23 +6,23 @@ params.early_chimera_removal = params.early_chimera_removal ?: false
 
 module_dir = "../modules"
 
-include{ DADA2_FILTERANDTRIM } from "$module_dir/dada2/filterAndTrim/main.nf" \
+include{ DADA2_FILTERANDTRIM } from "$module_dir/R/dada2/filterAndTrim/main.nf" \
     addParams( options: [publish_dir: "1-quality-filtering"] )
-include{ DADA2_LEARNERRORS } from "$module_dir/dada2/learnErrors/main.nf" \
+include{ DADA2_LEARNERRORS } from "$module_dir/R/dada2/learnErrors/main.nf" \
     addParams( options: [publish_dir: "2-denoising"] )
-include{ DADA2_DADA } from "$module_dir/dada2/dada/main.nf" \
+include{ DADA2_DADA } from "$module_dir/R/dada2/dada/main.nf" \
     addParams( options: [publish_dir: "2-denoising"] )
-include{ BUILD_ASV_TABLE } from "$module_dir/util/dada2/main.nf" \
+include{ BUILD_ASV_TABLE } from "$module_dir/R/dada2_util/main.nf" \
     addParams( options: [publish_dir: "3-read-merging"] )
-include{ DADA2_MERGEPAIRS } from "$module_dir/dada2/mergePairs/main.nf" \
+include{ DADA2_MERGEPAIRS } from "$module_dir/R/dada2/mergePairs/main.nf" \
     addParams( options: [publish_dir: "3-read-merging"] )
 
 // If VSEARCH is used for chinera
-include{ DADA2_DEREPFASTQ } from "$module_dir/dada2/derepFastq/main.nf" \
+include{ DADA2_DEREPFASTQ } from "$module_dir/R/dada2/derepFastq/main.nf" \
     addParams( options: [publish_dir: "2.5-Chimera"] )
 include{ VSEARCH_CHIMERA } from "$module_dir/vsearch/chimera/main.nf" \
     addParams( options: [publish_dir: "2.5-Chimera"] )
-include{ SUBSET_READS_RDS } from "$module_dir/util/dada2/main.nf" \
+include{ SUBSET_READS_RDS } from "$module_dir/R/dada2_util/main.nf" \
     addParams( options: [publish_dir: "2.5-OTU_clustering"] )
 
 // Other imports

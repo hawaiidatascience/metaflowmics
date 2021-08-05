@@ -6,7 +6,7 @@ params.options = [:]
 module_dir = "../modules"
 subworkflow_dir = "../subworkflows"
 
-include{ DOWNLOAD_UNITE } from "$module_dir/util/download/main.nf" \
+include{ DOWNLOAD_UNITE } from "$module_dir/bash/download/main.nf" \
     addParams( db_release: "fungi" )
 include{ ITSXPRESS } from "$module_dir/itsxpress/main.nf" \
     addParams( options: [publish_dir: "interm/read_processing/itsxpress"] )
@@ -14,9 +14,9 @@ include{ VSEARCH_CLUSTER } from "$module_dir/vsearch/cluster/main.nf" \
     addParams( options: [publish_dir: "interm/contig_processing/clustering"] )
 include{ VSEARCH_USEARCH_GLOBAL } from "$module_dir/vsearch/usearchGlobal/main.nf" \
     addParams( options: [publish_dir: "interm/contig_processing/lulu"] )
-include{ LULU } from "$module_dir/lulu/main.nf" \
+include{ LULU } from "$module_dir/R/lulu/main.nf" \
     addParams( options: [publish_dir: "interm/contig_processing/lulu"] )
-include{ DADA2_ASSIGN_TAXONOMY } from "$module_dir/dada2/assignTaxonomy/main.nf" \
+include{ DADA2_ASSIGN_TAXONOMY } from "$module_dir/R/dada2/assignTaxonomy/main.nf" \
     addParams( options: [publish_dir: "interm/contig_processing/taxonomy"] )
 include{ SUMMARIZE_TABLE; READ_TRACKING } from "$module_dir/util/misc/main.nf" \
     addParams( options: [publish_dir: "read_tracking"], taxa_are_rows: "T" )

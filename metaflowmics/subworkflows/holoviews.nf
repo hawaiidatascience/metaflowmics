@@ -2,13 +2,13 @@
 
 params.options = [:]
 
-moduledir = "../modules"
+moduledir = "../modules/python/holoviews"
 
-include{ HOLOVIEWS_PREPARE } from "$moduledir/holoviews/util/main.nf"
-include{ HOLOVIEWS_BARS } from "$moduledir/holoviews/bars/main.nf" \
+include{ HOLOVIEWS_PREPARE } from "$moduledir/util/main.nf"
+include{ HOLOVIEWS_BARS } from "$moduledir/bars/main.nf" \
     addParams( min_abund: 0.01 )
-include{ HOLOVIEWS_SCATTER } from "$moduledir/holoviews/scatter/main.nf"
-include{ HOLOVIEWS_CLUSTERMAP } from "$moduledir/holoviews/heatmap/main.nf" \
+include{ HOLOVIEWS_SCATTER } from "$moduledir/scatter/main.nf"
+include{ HOLOVIEWS_CLUSTERMAP } from "$moduledir/heatmap/main.nf" \
     addParams( min_abund: 0.05 )
 
 

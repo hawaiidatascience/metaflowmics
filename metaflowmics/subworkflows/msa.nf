@@ -4,9 +4,9 @@ params.options = [:]
 
 moduledir = "../modules"
 
-include{ SPLIT_FASTA } from "$moduledir/util/biopython/split_fasta/main.nf" \
+include{ SPLIT_FASTA } from "$moduledir/python/biopython/split_fasta/main.nf" \
     addParams( sep: params.sep )
-include{ COMPUTE_MSA_REPRESENTATIVE ; UPDATE_MSA_WITH_REF } from "$moduledir/util/biopython/msa/main.nf" \
+include{ COMPUTE_MSA_REPRESENTATIVE ; UPDATE_MSA_WITH_REF } from "$moduledir/python/biopython/msa/main.nf" \
     addParams( sep: params.sep )
 include{ MUSCLE } from "$moduledir/muscle/main.nf"
 

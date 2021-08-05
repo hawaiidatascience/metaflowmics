@@ -17,3 +17,4 @@ unite*
 !sample_barcodes.csv
 build
 dada2mothur.R
+db_COI

@@ -15,7 +15,7 @@ include { dada2 } from "$subworkflow_dir/dada2.nf" \
 include { mothur } from "$subworkflow_dir/mothur.nf"
 
 // Other imports
-include{ DOWNLOAD_SILVA_FOR_MOTHUR } from "$module_dir/util/download/main.nf" \
+include{ DOWNLOAD_SILVA_FOR_MOTHUR } from "$module_dir/bash/download/main.nf" \
     addParams( db_release: params.silva_db )
 include{ READ_TRACKING } from "$module_dir/util/misc/main.nf" \
     addParams( options: [publish_dir: "read_tracking"] )
