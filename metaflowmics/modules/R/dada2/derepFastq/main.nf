@@ -33,11 +33,11 @@ process DADA2_DEREPFASTQ {
     library(stringr)
 
     for (read in c("${reads.join('", "')}")) {
-        orient <- ifelse(str_detect(read, "_R2.fastq"), "_R2",
-                    ifelse(str_detect(read, "_R1.fastq"), "_R1", ""))
+        orient <- ifelse(str_detect(read, "_R2.*.fastq"), "_R2",
+                    ifelse(str_detect(read, "_R1.*.fastq"), "_R1", ""))
         derep <- derepFastq(read)
-        saveRDS(derep, sprintf("${meta.id}-derep%s.RDS", orient))
-        uniquesToFasta(derep, sprintf("${meta.id}-derep%s.fasta", orient))
+        saveRDS(derep, sprintf("${meta.id}%s.derep.RDS", orient))
+        uniquesToFasta(derep, sprintf("${meta.id}%s.derep.fasta", orient))
     }
 
     # Write counts

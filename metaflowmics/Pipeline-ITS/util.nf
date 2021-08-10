@@ -21,6 +21,9 @@ def helpMessage() {
       --max_expected_errors  Discard reads with more than <max_expected_errors> errors. Default: 3
       --min_read_count       Discard samples with less than <minReads> reads. 
                                Default: 50
+    [Denoising]
+      --pool                 Pooling method for denoising with dada2. Choices are TRUE, FALSE or pseudo
+                               Default: FALSE
     [Taxonomy assignment]
       --tax_confidence     The minimum consensus for calling a taxonomy. 
                              Default: 50%
@@ -47,6 +50,7 @@ def saveParams() {
     summary['locus'] = params.locus
     summary['max expected errors'] = params.max_expected_error
     summary['min reads per sample'] = params.min_read_count
+    summary['Pooling method for denoising'] = params.pool
     summary['clustering similarity thresholds'] = params.clustering_thresholds
     summary['skip lulu'] = params.skip_lulu
 

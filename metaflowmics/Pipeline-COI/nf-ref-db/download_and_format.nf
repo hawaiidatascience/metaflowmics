@@ -2,7 +2,7 @@
 
 nextflow.enable.dsl=2
 params.options = [:]
-    
+
 module_dir = "../../modules"
 
 // Modules

@@ -74,7 +74,7 @@ workflow pipeline_16S {
 
 workflow {
     reads = Channel.fromFilePairs(params.reads, size: params.paired_end ? 2 : 1)
-        .map{[ [id: it[0]], it[1] ]}
+        .map{[ [id: it[0], paired_end: params.paired_end], it[1] ]}
     saveParams()
     pipeline_16S(reads)
 }

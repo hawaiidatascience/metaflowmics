@@ -34,10 +34,7 @@ include {UPDATE_MSA_WITH_REF as UPDATE_SUBFAMILY} from "$module_dir/python/biopy
 include {UPDATE_MSA_WITH_REF as UPDATE_GENUS} from "$module_dir/python/biopython/msa/main.nf" \
     addParams( level: 6, outdir: "$params.outdir/down/6-genus" )
 include {UPDATE_MSA_WITH_REF as UPDATE_SPECIES} from "$module_dir/python/biopython/msa/main.nf" \
-    addParams( level: 7, outdir: "$params.outdir/down/7-species" ) 
-include {UPDATE_MSA_WITH_REF as UPDATE_STRAINS} from "$module_dir/python/biopython/msa/main.nf" \
-    addParams( level: 8, outdir: "$params.outdir/down/8-strains" ) 
-
+    addParams( level: 7, outdir: "$params.outdir/down/7-species" )
 
 workflow {
 
@@ -54,34 +51,31 @@ workflow {
 
     phylum_update = UPDATE_PHYLUM(
         phylum_aln.afa.collectFile(name: "phyla.afa"),
-        kingdom_aln.afa.collectFile(name: "kingdom.updated.afa")
+        kingdom_aln.afa.collectFile(name: "kingdom.updated.afa", storeDir: "$params.outdir/down")
     )    
     class_update = UPDATE_CLASS(
         class_aln.afa.collectFile(name: "classes.afa"),
-        phylum_update.afa.flatten().collectFile(name: "phyla.updated.afa")
+        phylum_update.afa.flatten().collectFile(name: "phyla.updated.afa", storeDir: "$params.outdir/down")
     )
     order_update = UPDATE_ORDER(
         order_aln.afa.collectFile(name: "orders.afa"),
-        class_update.afa.flatten().collectFile(name: "orders.updated.afa")
+        class_update.afa.flatten().collectFile(name: "orders.updated.afa", storeDir: "$params.outdir/down")
     )
     family_update = UPDATE_FAMILY(
         family_aln.afa.collectFile(name: "families.afa"),
-        order_update.afa.flatten().collectFile(name: "orders.updated.afa")
+        order_update.afa.flatten().collectFile(name: "orders.updated.afa", storeDir: "$params.outdir/down")
     )
     subfamily_update = UPDATE_SUBFAMILY(
         subfamily_aln.afa.collectFile(name: "subfamilies.afa"),
-        family_update.afa.flatten().collectFile(name: "families.updated.afa")
+        family_update.afa.flatten().collectFile(name: "families.updated.afa", storeDir: "$params.outdir/down")
     )
     genus_update = UPDATE_GENUS(
         genus_aln.afa.collectFile(name: "genera.afa"),
-        subfamily_update.afa.flatten().collectFile(name: "subfamilies.updated.afa")
+        subfamily_update.afa.flatten().collectFile(name: "subfamilies.updated.afa", storeDir: "$params.outdir/down")
     )
     species_update = UPDATE_SPECIES(
         species_aln.afa.collectFile(name: "species.afa"),
-        genus_update.afa.flatten().collectFile(name: "genera.updated.afa")
+        genus_update.afa.flatten().collectFile(name: "genera.updated.afa", storeDir: "$params.outdir/down")
     )
-    strain_updates = UPDATE_STRAINS(
-        fasta,
-        species_update.afa.flatten().collectFile(name: "species.updated.afa")
-    )
+    species_update.afa.flatten().collectFile(name: "species.updated.afa", storeDir: "$params.outdir/down")
 }

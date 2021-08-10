@@ -42,10 +42,10 @@ process DADA2_FILTERANDTRIM {
     )[1:$n,]
 
     if ("$params.paired_end" == "true") {
-        io <- list(fwd="${reads[0]}", filt="${meta.id}-trimmed_R1.fastq.gz",
-                   rev="${reads[1]}", filt.rev="${meta.id}-trimmed_R2.fastq.gz")
+        io <- list(fwd="${reads[0]}", filt="${meta.id}_R1.trimmed.fastq.gz",
+                   rev="${reads[1]}", filt.rev="${meta.id}_R2.trimmed.fastq.gz")
     } else {
-        io <- list(fwd="${reads[0]}", filt="${meta.id}-trimmed.fastq.gz")
+        io <- list(fwd="${reads[0]}", filt="${meta.id}.trimmed.fastq.gz")
     }
 
     params <- c(io, filt_params, list(rm.phix=${rmphix}))

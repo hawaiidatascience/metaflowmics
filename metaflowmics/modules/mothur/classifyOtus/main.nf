@@ -6,10 +6,7 @@ options = initOptions(params.options)
 process MOTHUR_CLASSIFY_OTUS {
     tag "$otu_id"
     label "process_medium"
-    publishDir "${params.outdir}",
-        mode: params.publish_dir_mode,
-        saveAs: { filename -> saveFiles(filename:filename, options:params.options,
-                                        publish_dir:getSoftwareName(task.process)) }
+    publishDir "${params.outdir}", mode: params.publish_dir_mode
 
     container "quay.io/biocontainers/mothur:1.44.1--hf0cea05_2"
     conda (params.enable_conda ? "bioconda::mothur:1.44.1" : null)
@@ -23,8 +20,7 @@ process MOTHUR_CLASSIFY_OTUS {
 
     script:
     def software = getSoftwareName(task.process)
-    def procname = "${task.process.tokenize(':')[-1].toLowerCase()}"
-    outprefix = options.suffix ? "${options.suffix}.${otu_id}" : "${procname}.${otu_id}"
+    outprefix = options.suffix ? "${options.suffix}.${otu_id}" : "annotations.${otu_id}"
     """
     mothur "#
     list.seqs(list=$list); get.seqs(taxonomy=$tax, accnos=current);

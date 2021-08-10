@@ -25,39 +25,27 @@ process DADA2_LEARNERRORS {
 
     script:
     def software = getSoftwareName(task.process)
+    def suffix = meta.paired_end ? "_R${meta.orient}" : ""
+    def outprefix = "${meta.id}${suffix}"
     """
     #!/usr/bin/env Rscript
 
     library(dada2)
     library(stringr)
     library(ggplot2)
-
-    inputs <- c("${reads.join('", "')}")
     
-    for (input in inputs) {
-        orient <- ifelse(str_detect(input, '_R2.'), '_R2',
-                    ifelse(str_detect(input, '_R1.'), '_R1', ''))
-        if (tools::file_ext(input) == 'RDS') {
-            input <- readRDS(input)
-        }
+    files <- sort(list.files(".", pattern="${suffix}.*.RDS"))
+    sample_names <- gsub("${suffix}.*.RDS", "", files)
+    reads <- lapply(files, readRDS)
+    names(reads) <- sample_names
 
-        tryCatch(
-            expr={ errors <- learnErrors(input, multithread=TRUE, randomize=TRUE, nbases=1e7)
-                   saveRDS(errors, sprintf("${meta.id}-errors%s.RDS", orient)) 
-                   fig <- plotErrors(errors, nominalQ=TRUE)
-                   ggsave(sprintf("${meta.id}-errorProfile%s.png", orient), plot=fig, type="cairo-png") },
-            error=function(e) { print(e) }
-        )
-    }
-
-    outputs <- list.files(pattern="-errors.*\\\\.RDS\$")
-    if (length(outputs) < length(inputs)) {
-        # Something went wrong (usually happens when there are too few reads
-        # We discard the sample
-        for (f in outputs) {
-            file.remove(f)
-        }
-    }
+    tryCatch(
+        expr={ errors <- learnErrors(reads, multithread=TRUE, randomize=TRUE, nbases=1e7)
+               saveRDS(errors, "${outprefix}.errors.RDS") 
+               fig <- plotErrors(errors, nominalQ=TRUE)
+               ggsave("profile_${outprefix}.png", plot=fig, type="cairo-png") },
+        error=function(e) { print(e) }            
+    )
 
     writeLines(paste0(packageVersion('dada2')), "${software}.version.txt")    
     """

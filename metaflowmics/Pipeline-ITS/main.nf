@@ -52,7 +52,13 @@ workflow pipeline_ITS {
     )
 
     // ===== Denoising into ASVs =====
-    asvs = dada2(its.fastq)
+    asvs = dada2(
+        its.fastq.map{meta, contig ->
+            meta_upd = meta.clone()
+            meta_upd.paired_end = false
+            [meta_upd, contig]
+        }
+    )
     
     // ===== Cluster ASVs into OTUs =====
     otus = VSEARCH_CLUSTER(
@@ -117,7 +123,7 @@ workflow pipeline_ITS {
 
 workflow {
     reads = Channel.fromFilePairs(params.reads, size: params.paired_end ? 2 : 1)
-        .map{[ [id: it[0]], it[1] ]}
+        .map{[ [id: it[0], paired_end: params.paired_end], it[1] ]}
 
     saveParams()
     pipeline_ITS(reads)

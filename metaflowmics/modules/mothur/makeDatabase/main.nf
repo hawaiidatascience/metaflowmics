@@ -6,10 +6,7 @@ options = initOptions(params.options)
 process MOTHUR_MAKE_DATABASE {
     tag "$otu_id"
     label "process_high"
-    publishDir "${params.outdir}",
-        mode: params.publish_dir_mode,
-        saveAs: { filename -> saveFiles(filename:filename, options:params.options,
-                                        publish_dir:getSoftwareName(task.process)) }
+    publishDir "${params.outdir}", mode: params.publish_dir_mode
 
     container "quay.io/biocontainers/mothur:1.44.1--hf0cea05_2"
     conda (params.enable_conda ? "bioconda::mothur:1.44.1" : null)
@@ -23,8 +20,7 @@ process MOTHUR_MAKE_DATABASE {
 
     script:
     def software = getSoftwareName(task.process)
-    def procname = "${task.process.tokenize(':')[-1].toLowerCase()}"
-    outprefix = options.suffix ? "$options.suffix" : "${procname}.${otu_id}"
+    outprefix = options.suffix ? "$options.suffix" : "mothur.${otu_id}"
     """
     mothur "#create.database(shared=$shared,repfasta=$repfasta,constaxonomy=$constax,count=$repcount)"
     mv *.database ${outprefix}.database

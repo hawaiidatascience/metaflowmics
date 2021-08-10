@@ -207,6 +207,8 @@ workflow compile {
         ).database
     }
 
+    shared.map{it[1].copyTo("$params.outdir/abundance.${it[0]}.shared")}
+
     emit:
     constaxonomy=cons.taxonomy
     repfasta=rep.fasta

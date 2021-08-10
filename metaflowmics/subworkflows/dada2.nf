@@ -8,22 +8,18 @@ module_dir = "../modules"
 
 include{ DADA2_FILTERANDTRIM } from "$module_dir/R/dada2/filterAndTrim/main.nf" \
     addParams( options: [publish_dir: "1-quality-filtering"] )
+include{ DADA2_DEREPFASTQ } from "$module_dir/R/dada2/derepFastq/main.nf" \
+    addParams( options: [publish_dir: "2.5-Chimera"] )
 include{ DADA2_LEARNERRORS } from "$module_dir/R/dada2/learnErrors/main.nf" \
     addParams( options: [publish_dir: "2-denoising"] )
 include{ DADA2_DADA } from "$module_dir/R/dada2/dada/main.nf" \
+    addParams( options: [publish_dir: "2-denoising"] )
+include{ DADA2_CHIMERA } from "$module_dir/R/dada2/removeBimeraDenovo/main.nf" \
     addParams( options: [publish_dir: "2-denoising"] )
 include{ BUILD_ASV_TABLE } from "$module_dir/R/dada2_util/main.nf" \
     addParams( options: [publish_dir: "3-read-merging"] )
 include{ DADA2_MERGEPAIRS } from "$module_dir/R/dada2/mergePairs/main.nf" \
     addParams( options: [publish_dir: "3-read-merging"] )
-
-// If VSEARCH is used for chinera
-include{ DADA2_DEREPFASTQ } from "$module_dir/R/dada2/derepFastq/main.nf" \
-    addParams( options: [publish_dir: "2.5-Chimera"] )
-include{ VSEARCH_CHIMERA } from "$module_dir/vsearch/chimera/main.nf" \
-    addParams( options: [publish_dir: "2.5-Chimera"] )
-include{ SUBSET_READS_RDS } from "$module_dir/R/dada2_util/main.nf" \
-    addParams( options: [publish_dir: "2.5-OTU_clustering"] )
 
 // Other imports
 include{ SUMMARIZE_TABLE } from "$module_dir/util/misc/main.nf" \
@@ -39,29 +35,43 @@ workflow dada2 {
 
     // Remove low quality reads
     qc = DADA2_FILTERANDTRIM( reads )
+    derep = DADA2_DEREPFASTQ( qc.fastq ).rds
 
-    // Dereplicate reads
-    derep = DADA2_DEREPFASTQ( qc.fastq )
+    // Swith channel to (meta, read)
+    derep = derep.transpose().map{ meta, read ->
+        def meta_upd = meta.clone() 
+        meta_upd['orient'] = (read.getSimpleName() =~ /_R2/ ? "2" : "1")
+        [meta_upd, read]
+    }
     
     // Remove chimera first for ITS pipeline
-    // Ask Anthony if dada2 removeBimeraDenovo is OK
+    // Requires single end reads or merged paired-end at this stage
     if ( params.early_chimera_removal ) {
-        chimera_filt = VSEARCH_CHIMERA( derep.fasta )
-        chimera_filt = SUBSET_READS_RDS( derep.rds.join(chimera_filt.fasta) )
-        tracked_reads = tracked_reads.mix(chimera_filt.summary)
-    } else {
-        chimera_filt = derep
+        nochim = DADA2_CHIMERA( derep )
+        tracked_reads = tracked_reads.mix(nochim.summary)
+        derep = nochim.rds
     }
 
-    // Build Illumina reads error model
-    error_model = DADA2_LEARNERRORS( chimera_filt.rds )
-    // Denoising
-    dada = DADA2_DADA( chimera_filt.rds.join(error_model.rds) )
-
+    if ( params.pool != "F" ) {
+        derep = derep.map{
+            meta, reads ->
+            [[id:"all", orient: meta.orient, paired_end: meta.paired_end], reads]
+        }.groupTuple(by: 0)
+        
+        err = DADA2_LEARNERRORS( derep ).rds
+        dada = DADA2_DADA( derep.join(err) )
+        
+    } else {
+        // Build Illumina reads error model
+        err = DADA2_LEARNERRORS( derep )
+        // Denoising
+        dada = DADA2_DADA( derep.join(err.rds) )
+    }
+        
     // Make raw ASV table
     if ( params.paired_end ) {
         merged = DADA2_MERGEPAIRS(
-            chimera_filt.rds.collect{it[1]},
+            derep.collect{it[1]},
             dada.denoised.collect{it[1]}
         )
         fasta_dup = Channel.empty()
@@ -86,3 +96,4 @@ workflow dada2 {
     count_table = merged.count_table
     tracking = tracked_reads
 }
+

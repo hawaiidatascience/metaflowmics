@@ -4,57 +4,6 @@ include { initOptions; saveFiles; getSoftwareName } from './functions'
 options = initOptions(params.options)
 
 
-process SUBSET_READS_RDS {
-    tag "$meta.id"
-    label "process_low"
-    publishDir "${params.outdir}",
-        mode: params.publish_dir_mode,
-        saveAs: { filename -> saveFiles(filename:filename, options:params.options,
-                                        meta:meta) }
-
-    container "nakor/metaflowmics-r:0.0.1"
-    conda (params.enable_conda ? "conda-forge::r-stringr bioconda::bioconductor-dada2=1.18 conda-forge::r-seqinr" : null)
-
-    input:
-    tuple val(meta), path(rds), path(fasta)
-
-    output:
-    tuple val(meta), path("*.RDS"), emit: rds
-    path "summary.csv", emit: summary
-
-    script:
-    """
-    #!/usr/bin/env Rscript
-    library(stringr)
-    library(dada2)
-    library(seqinr)
-
-    ## Extract non chimeric sequences from derep file
-    derep <- readRDS("$rds")
-    seq.clean <- names(read.fasta("$fasta", seqtype="DNA"))
-
-    ## Get indices from no chimeric sequences
-    indices <- as.numeric(sapply(seq.clean,
-        function(x) str_extract(x,"[0-9]+")))
-
-    ## Check the longest sequence in indices 
-    ## To prevent error in case the longest sequence is removed
-    seq.lengths <- sapply(names(derep[["uniques"]][indices]), nchar)
-
-    ## Subset the indices from derep-class object
-    derep[["uniques"]] <- derep[["uniques"]][indices]
-    derep[["quals"]] <- derep[["quals"]][indices, 1:max(seq.lengths)]
-    derep[["map"]] <- derep[["map"]][which(derep[["map"]] %in% indices)]
-    
-    saveRDS(derep, "${meta.id}-nochim.RDS")
-
-    # Write counts
-    counts <- getUniques(derep)
-    data <- sprintf("Chimera,,${meta.id},%s,%s",sum(counts),sum(counts>0))
-    write(data, "summary.csv")
-    """
-}
-
 process BUILD_ASV_TABLE {
     label "process_medium"
     publishDir "${params.outdir}",
@@ -82,9 +31,9 @@ process BUILD_ASV_TABLE {
     library(seqinr)
 
     # Collect denoised reads
-    denoised <- list.files(path=".", pattern="*-denoised.RDS")
+    denoised <- list.files(path=".", pattern="*.denoised.RDS")
 
-    sample_names <- unname(sapply(denoised, function(x) gsub("-denoised.RDS", "", x)))
+    sample_names <- unname(sapply(denoised, function(x) gsub(".denoised.RDS", "", x)))
     merged <- lapply(denoised, function (x) readRDS(x))
     names(merged) <- sample_names
     

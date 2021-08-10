@@ -32,12 +32,12 @@ process DADA2_MERGEPAIRS {
 
     library(dada2)
 
-    derepF <- list.files(path=".", pattern="*-derep_R1.RDS")
-    derepR <- list.files(path=".", pattern="*-derep_R2.RDS")
-    denoisedF <- list.files(path=".", pattern="*-denoised_R1.RDS")
-    denoisedR <- list.files(path=".", pattern="*-denoised_R2.RDS")
+    derepF <- list.files(path=".", pattern="_R1.derep.RDS")
+    derepR <- list.files(path=".", pattern="_R2.derep.RDS")
+    denoisedF <- list.files(path=".", pattern="_R1.denoised.RDS")
+    denoisedR <- list.files(path=".", pattern="_R2.denoised.RDS")
 
-    sample_names <- unname(sapply(denoisedF, function(x) gsub("-denoised_R1.RDS", "", x)))
+    sample_names <- unname(sapply(denoisedF, function(x) gsub("_R1.denoised.RDS", "", x)))
 
     merged <- mergePairs(
         derepF=lapply(derepF, readRDS),

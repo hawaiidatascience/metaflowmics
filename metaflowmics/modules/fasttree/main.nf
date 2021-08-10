@@ -26,7 +26,7 @@ process FASTTREE {
     def procname = "${task.process.tokenize(':')[-1].toLowerCase()}" 
     def outprefix = options.suffix ? "$options.suffix" : "${procname}.${otu_id}"
     """
-    FastTree -nt $repfasta > fasttree_${otu_id}.nwk
+    FastTree -nt $repfasta > fasttree.${otu_id}.nwk
 
     fasttree 2>&1 >/dev/null | head -1 | sed 's/.*version \\([0-9\\.]*\\).*/\\1/g' \\
     > ${software}.version.txt

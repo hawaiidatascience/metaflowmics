@@ -27,6 +27,9 @@ def helpMessage() {
                             Default: 2
     --keep_phix           Keep reads matching phiX genome.
                             Default: false
+    [Denoising]
+    --pool                Pooling method for denoising with dada2. Choices are TRUE, FALSE or pseudo
+                            Default: FALSE
     [Read merging]
     --min_overlap    Minimum overlap between forward and reverse read. Default: 20
     --max_mismatch   Maximum number of mismatches in the overlap between forward and reverse read. 
@@ -88,6 +91,7 @@ def saveParams() {
     summary['max number of expected errors'] = params.max_expected_error
     summary['quality truncation'] = params.trunc_quality
     summary['keep phix genome'] = params.keep_phix
+    summary['Pooling method for denoising'] = params.pool
     summary['min overlap for merging'] = params.min_overlap
     summary['max mismatches for merging'] = params.max_mismatch
     summary['Percentile for start/end contig filtering'] = params.criteria

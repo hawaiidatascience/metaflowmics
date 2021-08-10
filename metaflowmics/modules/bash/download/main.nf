@@ -38,7 +38,7 @@ process DOWNLOAD_IBOL {
         if (\$14=="") \$14=gensub(/ .*/,"","g",\$15);
         \$15=gensub(/$regex/,"_","g",\$15);
         \$15=gensub(/_+/,"_","g",\$15);
-        \$15=gensub(/sp_\$/,"sp","g",\$15);
+        \$15=gensub(/_\$/,"","g",\$15);
         print
       }' > ${prefix}.tsv \\
     && rm -f $name
