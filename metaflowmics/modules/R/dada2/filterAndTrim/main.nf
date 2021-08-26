@@ -27,7 +27,7 @@ process DADA2_FILTERANDTRIM {
     script:
     def software = getSoftwareName(task.process)
     def rmphix = params.keep_phix ? "TRUE" : "FALSE"
-    def n = params.paired_end ? 2 : 1
+    def n = meta.paired_end ? 2 : 1
     """
     #!/usr/bin/env Rscript
 
@@ -41,7 +41,7 @@ process DADA2_FILTERANDTRIM {
         maxEE=c($params.max_expected_error)
     )[1:$n,]
 
-    if ("$params.paired_end" == "true") {
+    if ("$meta.paired_end" == "true") {
         io <- list(fwd="${reads[0]}", filt="${meta.id}_R1.trimmed.fastq.gz",
                    rev="${reads[1]}", filt.rev="${meta.id}_R2.trimmed.fastq.gz")
     } else {

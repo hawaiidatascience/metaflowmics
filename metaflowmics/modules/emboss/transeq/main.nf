@@ -4,11 +4,12 @@ include { initOptions; saveFiles; getSoftwareName } from "./functions"
 options = initOptions(params.options)
 
 process EMBOSS_TRANSEQ {
-    tag "$meta.id"
     label "process_high"
     publishDir "${params.outdir}",
         mode: params.publish_dir_mode,
-        saveAs: { filename -> saveFiles(filename:filename, options:params.options, publish_dir:getSoftwareName(task.process), meta:meta, publish_by_meta:['id']) }
+        saveAs: { filename -> saveFiles(filename:filename, options:params.options,
+                                        publish_dir:getSoftwareName(task.process)) }
+
     container "nakor/metaflowmics-biotools:0.0.1"
     conda (params.enable_conda ? "bioconda::emboss=6.6.0" : null)
 
@@ -16,7 +17,7 @@ process EMBOSS_TRANSEQ {
     tuple val(meta), path(fasta)
 
     output:
-    tuple val(meta), path("*.faa"), emit: faa
+    tuple val(meta), path("*.faa"), emit: faa // raw output from transeq
     tuple val(meta), path("*_single.faa"), emit: single
     tuple val(meta), path("*_multiple.faa"), emit: multiple
     path "*.version.txt", emit: version
@@ -29,11 +30,11 @@ process EMBOSS_TRANSEQ {
 
     ## 1) Translate the sequence
     ## 2) Replace title suffix pattern from "_{frame}" to " {frame}"
-    ## 3) Reformat to two-line fasta
+    ## 3) Reformat to two-line fasta and remove short sequences
     ## 4) Put the commas back in the lineage header
     ## 5) Remove trailing stop codons
 
-    transeq -auto \\
+    transeq -auto -trim \\
       -outseq stdout \\
       -sequence $fasta \\
       -table $params.table \\

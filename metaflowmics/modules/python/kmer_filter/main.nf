@@ -6,17 +6,20 @@ options = initOptions(params.options)
 
 process KMER_FILTER {
     label "process_high"
-    publishDir params.outdir, mode: "copy"
-    
+    publishDir "${params.outdir}",
+        mode: params.publish_dir_mode,
+        saveAs: { filename -> saveFiles(filename:filename, options:params.options,
+                                        publish_dir:getSoftwareName(task.process)) }
+
     container "nakor/metaflowmics-python:0.0.1"
     conda (params.enable_conda ? "conda-forge::numpy" : null)
 
     input:
-    path query
+    tuple val(meta), path(query)
     path db
 
     output:
-    path "*.fasta"
+    tuple val(meta), path("*.fasta")
 
     script:
     prefix = "${query.getBaseName()}_curated"
@@ -40,7 +43,7 @@ process KMER_FILTER {
     N = len(alphabet)
     k = $params.k
 
-    kmer_usage = set(np.load("$db")[:100])
+    kmer_usage = set(np.load("$db")[:$params.n_sub])
     kmer_db = {''.join(x) for i, x in enumerate(product(alphabet, repeat=k)) if i in kmer_usage}
 
     with open("$query") as r, open("${prefix}.fasta", "w") as w:
@@ -51,6 +54,8 @@ process KMER_FILTER {
             selected = ()
 
             for (t, s) in entries:
+                # remove potential gaps
+                s = s.replace('-', '')
                 # compute kmer counts
                 score = sum(1 for i in range(len(s)-k+1) if s[i:i+k] in kmer_db)
 

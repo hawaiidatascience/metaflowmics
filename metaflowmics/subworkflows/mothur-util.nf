@@ -2,26 +2,26 @@ module_dir = "../modules"
 
 // `preprocess` sub-workflow
 include { MOTHUR_ALIGN_SEQS } from "$module_dir/mothur/alignSeqs/main.nf" \
-    addParams( options: [publish_dir: "1-MSA-filter"] )
+    addParams( options: [publish_dir: "MSA-filter"] )
 include { MOTHUR_CHIMERA } from "$module_dir/mothur/chimera/main.nf" \
-    addParams( options: [publish_dir: "2-chimera-filter"] )
+    addParams( options: [publish_dir: "chimera-filter"] )
 include { MOTHUR_CLASSIFY_SEQS } from "$module_dir/mothur/classifySeqs/main.nf" \
     addParams( options: [publish_dir: "raw"] )
 include { MOTHUR_CLUSTER } from "$module_dir/mothur/cluster/main.nf" \
-    addParams( options: [publish_dir: "3-clustering"] )
+    addParams( options: [publish_dir: "clustering"] )
 
 // `refine` sub-workflow
 include { MOTHUR_REMOVE_LINEAGE } from "$module_dir/mothur/removeLineage/main.nf" \
-    addParams( options: [publish_dir: "4-lineage-filter"] )
+    addParams( options: [publish_dir: "lineage-filter"] )
 include { MOTHUR_REMOVE_RARE } from "$module_dir/mothur/removeRare/main.nf" \
-    addParams( options: [publish_dir: "4-rare-otu-filter"] )
+    addParams( options: [publish_dir: "rare-otu-filter"] )
 include { GET_SUBSAMPLING_THRESHOLD } from "$module_dir/util/misc/main.nf"
 include { MOTHUR_SUBSAMPLE } from "$module_dir/mothur/subsample/main.nf" \
-    addParams( options: [publish_dir: "5-subsampling"] )
+    addParams( options: [publish_dir: "subsampling"] )
 include { MOTHUR_DIST_SEQS } from "$module_dir/mothur/distSeqs/main.nf" \
     addParams( cutoff: 1-params.lulu_min_match/100, format: "vsearch" )
 include { LULU } from "$module_dir/R/lulu/main.nf" \
-    addParams( options: [publish_dir: "6-lulu-filter"] )
+    addParams( options: [publish_dir: "lulu-filter"] )
 
 // `compile` sub-workflow
 include { MOTHUR_CLASSIFY_OTUS } from "$module_dir/mothur/classifyOtus/main.nf"

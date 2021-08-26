@@ -6,7 +6,10 @@ options = initOptions(params.options)
 
 process COUNT_KMERS {
     label "process_high"
-    publishDir params.outdir, mode: "copy"
+    publishDir "${params.outdir}",
+        mode: params.publish_dir_mode,
+        saveAs: { filename -> saveFiles(filename:filename, options:params.options,
+                                        publish_dir:getSoftwareName(task.process)) }
 
     container "nakor/metaflowmics-python:0.0.1"
     conda (params.enable_conda ? "conda-forge::numpy" : null)
@@ -45,6 +48,8 @@ process COUNT_KMERS {
 
     with open("$fasta") as r:
         for i, (_, s) in enumerate(SimpleFastaParser(r)):
+            # remove potential gaps
+            s = s.replace('-', '')
             # compute kmer counts
             kmer_indices = [kmer_idx[s[i:i+k]] for i in range(len(s)-k+1) if s[i:i+k] in kmer_idx]
             occurrences = np.bincount(kmer_indices, minlength=N**k)

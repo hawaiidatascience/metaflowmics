@@ -39,7 +39,7 @@ include {UPDATE_MSA_WITH_REF as UPDATE_SPECIES} from "$module_dir/python/biopyth
 workflow {
 
     fasta = Channel.fromPath(params.fasta)
-
+    
     species_aln = get_representatives_species( fasta )
     genus_aln = get_representatives_genus( species_aln.repr )
     subfamily_aln = get_representatives_subfamily( genus_aln.repr )
@@ -59,7 +59,7 @@ workflow {
     )
     order_update = UPDATE_ORDER(
         order_aln.afa.collectFile(name: "orders.afa"),
-        class_update.afa.flatten().collectFile(name: "orders.updated.afa", storeDir: "$params.outdir/down")
+        class_update.afa.flatten().collectFile(name: "classes.updated.afa", storeDir: "$params.outdir/down")
     )
     family_update = UPDATE_FAMILY(
         family_aln.afa.collectFile(name: "families.afa"),

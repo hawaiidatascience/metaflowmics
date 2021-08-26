@@ -33,7 +33,10 @@ process DOWNLOAD_IBOL {
     wget $url/${name}.zip && unzip ${name}.zip && rm -f ${name}.zip
     
     grep -v WITHDRAWN $name |
-      awk -F'\\t' '(\$31 != "") && (\$9!="Proteobacteria")' |
+      awk -F'\\t' '(\$31 != "") &&
+                   (\$9 != "Proteobacteria") && 
+                   (\$31 ~/^[ACGT]*\$/) &&
+                   (length(\$31) > $params.min_length)' |
       awk '{FS=OFS="\\t"} { 
         if (\$14=="") \$14=gensub(/ .*/,"","g",\$15);
         \$15=gensub(/$regex/,"_","g",\$15);
@@ -43,7 +46,7 @@ process DOWNLOAD_IBOL {
       }' > ${prefix}.tsv \\
     && rm -f $name
     
-    tail -n+2 ${prefix}.tsv | 
+    tail -n+2 ${prefix}.tsv |
       awk -F'\\t' '{
         if (\$36=="") \$36=\$28;
         print ">k__Animalia,$tax_fmt,id__"\$36"\\n"\$31

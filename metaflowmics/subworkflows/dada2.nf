@@ -7,19 +7,17 @@ params.early_chimera_removal = params.early_chimera_removal ?: false
 module_dir = "../modules"
 
 include{ DADA2_FILTERANDTRIM } from "$module_dir/R/dada2/filterAndTrim/main.nf" \
-    addParams( options: [publish_dir: "1-quality-filtering"] )
+    addParams( options: [publish_dir: "quality-filtering"] )
 include{ DADA2_DEREPFASTQ } from "$module_dir/R/dada2/derepFastq/main.nf" \
-    addParams( options: [publish_dir: "2.5-Chimera"] )
+    addParams( options: [publish_dir: "chimera"] )
 include{ DADA2_LEARNERRORS } from "$module_dir/R/dada2/learnErrors/main.nf" \
-    addParams( options: [publish_dir: "2-denoising"] )
+    addParams( options: [publish_dir: "denoising"] )
 include{ DADA2_DADA } from "$module_dir/R/dada2/dada/main.nf" \
-    addParams( options: [publish_dir: "2-denoising"] )
+    addParams( options: [publish_dir: "denoising"] )
 include{ DADA2_CHIMERA } from "$module_dir/R/dada2/removeBimeraDenovo/main.nf" \
-    addParams( options: [publish_dir: "2-denoising"] )
-include{ BUILD_ASV_TABLE } from "$module_dir/R/dada2_util/main.nf" \
-    addParams( options: [publish_dir: "3-read-merging"] )
+    addParams( options: [publish_dir: "denoising"] )
 include{ DADA2_MERGEPAIRS } from "$module_dir/R/dada2/mergePairs/main.nf" \
-    addParams( options: [publish_dir: "3-read-merging"] )
+    addParams( options: [publish_dir: "read-merging"] )
 
 // Other imports
 include{ SUMMARIZE_TABLE } from "$module_dir/util/misc/main.nf" \
@@ -67,20 +65,12 @@ workflow dada2 {
         // Denoising
         dada = DADA2_DADA( derep.join(err.rds) )
     }
-        
+
     // Make raw ASV table
-    if ( params.paired_end ) {
-        merged = DADA2_MERGEPAIRS(
-            derep.collect{it[1]},
-            dada.denoised.collect{it[1]}
-        )
-        fasta_dup = Channel.empty()
-    } else {
-        merged = BUILD_ASV_TABLE(
-            dada.denoised.collect{it[1]}
-        )
-        fasta_dup = merged.fasta_dup
-    }
+    merged = DADA2_MERGEPAIRS(
+        derep.collect{it[1]},
+        dada.denoised.collect{it[1]}
+    )
 
     // Read tracking
     merge_summary = SUMMARIZE_TABLE(
@@ -92,7 +82,7 @@ workflow dada2 {
 
     emit:
     fasta = merged.fasta
-    fasta_dup = fasta_dup // only for single_end 
+    fasta_dup = merged.fasta_dup // only for single_end 
     count_table = merged.count_table
     tracking = tracked_reads
 }

@@ -13,11 +13,13 @@ test:
 
 testITS:
 	nextflow run Pipeline-ITS -resume --reads "../tests/ITS/*R1.fastq.gz" -profile $(CONF) \
+	&& nextflow run Pipeline-ITS -resume --reads "../tests/ITS/*R1.fastq.gz" -profile $(CONF) --pool T \
 	&& nextflow run Pipeline-ITS -resume --reads "../tests/ITS/*R{1,2}.fastq.gz" -profile $(CONF) --paired_end \
 	&& nextflow run Pipeline-ITS -resume --reads "../tests/ITS/*R1.fastq.gz" -profile $(CONF) --skip_lulu
 
 test16S:
 	nextflow run Pipeline-16S -resume --reads "../tests/16S/*_R{1,2}.fastq.gz" -profile $(CONF) --silva_db seed --compute_mothur_db \
+	&& nextflow run Pipeline-16S -resume --reads "../tests/16S/*_R1.fastq.gz" -profile $(CONF) --single_end --silva_db seed --pool T \
 	&& nextflow run Pipeline-16S -resume --reads "../tests/16S/*_R1.fastq.gz" -profile $(CONF) --single_end --silva_db seed \
 	&& nextflow run Pipeline-16S -resume --reads "../tests/16S/*_R{1,2}.fastq.gz" -profile $(CONF) --skip_subsampling --skip_lulu --silva_db seed \
 	&& nextflow run Pipeline-16S -resume --reads "../tests/16S/*_R{1,2}.fastq.gz" -profile $(CONF) --skip_unifrac --silva_db seed
