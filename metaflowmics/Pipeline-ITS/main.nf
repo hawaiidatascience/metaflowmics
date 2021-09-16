@@ -79,8 +79,8 @@ workflow pipeline_ITS {
             matchlist.tsv.join(otus_table).join(otus_fasta)
         )
         tracked_files = tracked_files.mix(lulu.summary)
-        otu_fastas = lulu.fasta
-        otu_tables = lulu.abundance
+        otus_fasta = lulu.fasta
+        otus_table = lulu.abundance
     }
 
     // ===== Taxonomy assignment with Sintax =====
@@ -104,7 +104,7 @@ workflow pipeline_ITS {
     summary = READ_TRACKING( tracked_files )
 
 	// Save fasta to result folder
-	otu_fastas.map{it[1].copyTo("$params.outdir/results")}
+	otus_fasta.map{it[1].copyTo("$params.outdir/results")}
 	
     // Conversion to mothur format
     mothur_files = CONVERT_TO_MOTHUR_FORMAT(
