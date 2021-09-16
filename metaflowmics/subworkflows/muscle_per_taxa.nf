@@ -3,7 +3,7 @@
 nextflow.enable.dsl = 2
 
 params.options = [:]
-moduledir = "../../../modules"
+moduledir = "../modules"
 
 include{ SPLIT_FASTA } from "$moduledir/python/biopython/split_fasta/main.nf"
 include{ MUSCLE } from "$moduledir/muscle/main.nf"
@@ -12,15 +12,14 @@ include{ COMPUTE_MSA_REPRESENTATIVE } from "$moduledir/python/biopython/msa/main
 
 
 // Main workflow
-workflow compute_representatives {
+workflow align_tax_groups {
     take:
     fasta
 
     main:
     // Split fasta in taxonomic groups
     grouped_taxa = SPLIT_FASTA(
-        fasta.collectFile(name: "repr_lvl-${params.level}.faa"),
-        [field: params.level]
+        fasta.collectFile(name: "repr_lvl-${params.field}.faa")
     )
 
     // Align each taxonomic group

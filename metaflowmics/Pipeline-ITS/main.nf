@@ -103,6 +103,9 @@ workflow pipeline_ITS {
 
     summary = READ_TRACKING( tracked_files )
 
+	// Save fasta to result folder
+	otu_fastas.map{it[1].copyTo("$params.outdir/results")}
+	
     // Conversion to mothur format
     mothur_files = CONVERT_TO_MOTHUR_FORMAT(
         otus_table.join(taxonomy)

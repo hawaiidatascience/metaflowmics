@@ -27,7 +27,7 @@ process MOTHUR_CLASSIFY_SEQS {
     def procname = "${task.process.tokenize(':')[-1].toLowerCase()}"
     outprefix = options.suffix ? "$options.suffix" : "${procname}"
     """
-    mothur "#classify.seqs(fasta=$fasta, count=$count, template=$db_aln, taxonomy=$db_tax)"
+    mothur "#classify.seqs(fasta=$fasta, count=$count, template=$db_aln, taxonomy=$db_tax, cutoff=$params.classification_consensus)"
 
     # rename output
     mv *.wang.taxonomy ${outprefix}.taxonomy

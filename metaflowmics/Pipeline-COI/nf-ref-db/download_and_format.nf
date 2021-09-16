@@ -2,6 +2,7 @@
 
 nextflow.enable.dsl=2
 params.options = [:]
+params.custom_db = ""
 
 module_dir = "../../modules"
 subworkflow_dir = "../../subworkflows"
@@ -23,16 +24,28 @@ workflow download_COI_db {
         (2..25).collect{String.format('%.2f', it/4)}
     )
 
-    db = DOWNLOAD_IBOL(versions)
-    db_tsv = db.tsv.collectFile(
-        keepHeader: true,
-        skip: 1,
-        storeDir: "$params.outdir/download",
-        name: "iBOL_COI.tsv"
-    )
-    
+    if (!params.custom_db.isEmpty()) {
+        db = Channel.fromPath(params.custom_db).multiMap{it ->
+            fna: ["ext", it]
+        }
+    } else {
+        db = DOWNLOAD_IBOL(versions)
+        db_tsv = db.tsv.collectFile(
+            keepHeader: true,
+            skip: 1,
+            storeDir: "$params.outdir/download",
+            name: "iBOL_COI.tsv"
+        )
+    }
+ 
     // Clean missing data in taxonomy
-    db_clean = CLEAN_TAXONOMY(db.fna)
+    db_clean = CLEAN_TAXONOMY(db.fna).map{it[1]}
+
+    // Save the fna to a single file for later use
+    db_clean.collectFile(
+        storeDir: params.outdir,
+        name: "iBOL_COI.fna"
+    )
 
     // Translate sequences
     db_translated = translate( db_clean )
@@ -40,9 +53,7 @@ workflow download_COI_db {
     // Remove duplicates
     db_no_dup = CDHIT(
         db_translated.faa
-            .map{it[1]}
             .collectFile(name: "iBOL_COI.faa")
-            .map{[[id: "db"], it]}
     )
 }
 

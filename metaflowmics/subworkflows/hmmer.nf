@@ -2,15 +2,17 @@
 
 nextflow.enable.dsl=2
 params.options = [:]
+params.sync = true
 
 module_dir = "../modules"
 
 include{ HMMER_HMMBUILD } from "$module_dir/hmmer/hmmbuild/main.nf" \
     addParams( options: [args: "--amino"] )
 include{ HMMER_HMMALIGN } from "$module_dir/hmmer/hmmalign/main.nf" \
-    addParams( options: [publish_dir: "hmmalign", args: "--amino"] )
-include{ BACKTRANSLATE } from "$module_dir/python/biopython/backtranslation/main.nf" \
-    addParams( options: [publish_dir: "backtranslate"] )
+    addParams( options: [args: "--amino", publish_dir: "hmmalign"] )
+include{ EMBOSS_TRANALIGN } from "$module_dir/emboss/tranalign/main.nf" \
+    addParams( options: [publish_dir: "tranalign"] )
+include{ SYNC_SEQIDS } from "$module_dir/python/biopython/sync_seqids/main.nf"
 
 
 workflow hmmer_COI {
@@ -27,22 +29,29 @@ workflow hmmer_COI {
     msa_prot = HMMER_HMMALIGN(
         faa,
         hmmdb
-    )
+    ).afa
 
+    if (params.sync) {
+        fna = SYNC_SEQIDS(
+            msa_prot,
+            fna.collect() // make it a list for SYNC_SEQIDS
+        ).fna
+    }
+    
     // Reverse translate to get the DNA alignment
-    msa_nucl = BACKTRANSLATE(
-        msa_prot.afa.join(fna)
+    msa_nucl = EMBOSS_TRANALIGN(
+        msa_prot.combine(fna)
     )
     
     emit:
     afa_nucl = msa_nucl.fna
-    afa_prot = msa_prot.afa
+    afa_prot = msa_prot
 }
 
 workflow {
     hmmer_COI(
-        Channel.fromPath(params.fna).map{[[id: "db"], it]},
-        Channel.fromPath(params.faa).map{[[id: "db"], it]},
-        Channel.fromPath(params.db)
+        Channel.fromPath(params.fna),
+        Channel.fromPath(params.faa),
+        file(params.db, checkIfExists: true)
     )
 }

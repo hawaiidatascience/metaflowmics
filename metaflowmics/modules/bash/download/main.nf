@@ -22,35 +22,73 @@ process DOWNLOAD_IBOL {
     url = "https://v3.boldsystems.org/data/datarelease/NewPackages"
     name = "iBOL_phase_${version}_COI.tsv"
     prefix = "iBOL_COI_$version"
-    ranks = ['phylum', 'class', 'order', 'family', 'subfamily', 'genus', 'species']
-    tax_fmt = ranks.withIndex().collect{ r,i ->
-        symbol = r[0]
-        if (r=='subfamily') {symbol='sf'}
-        "${symbol}__\"\$${i+9}\""
-    }.join(',')
-    regex = "[^A-Za-z0-9_-]"
+    
+    tax_cols = (9..15).collect{"\$$it"}.join('";"')
     """
-    wget $url/${name}.zip && unzip ${name}.zip && rm -f ${name}.zip
+    wget -c $url/${name}.zip && unzip ${name}.zip && rm -f ${name}.zip
     
     grep -v WITHDRAWN $name |
-      awk -F'\\t' '(\$31 != "") &&
+      awk -F'\\t' 'NR==1 ||
+                   ((\$31 != "") &&
                    (\$9 != "Proteobacteria") && 
                    (\$31 ~/^[ACGT]*\$/) &&
-                   (length(\$31) > $params.min_length)' |
-      awk '{FS=OFS="\\t"} { 
-        if (\$14=="") \$14=gensub(/ .*/,"","g",\$15);
-        \$15=gensub(/$regex/,"_","g",\$15);
-        \$15=gensub(/_+/,"_","g",\$15);
-        \$15=gensub(/_\$/,"","g",\$15);
-        print
-      }' > ${prefix}.tsv \\
+                   (length(\$31) > $params.min_length))' \\
+       > ${prefix}.tsv \\
     && rm -f $name
-    
+
     tail -n+2 ${prefix}.tsv |
       awk -F'\\t' '{
         if (\$36=="") \$36=\$28;
-        print ">k__Animalia,$tax_fmt,id__"\$36"\\n"\$31
+        print ">"\$36" Metazoa;"$tax_cols"\\n"\$31
       }' > ${prefix}.fna
+    """
+}
+
+process DOWNLOAD_IBOL_2 {
+    tag "$taxon"
+    label "process_low"
+    publishDir "${params.outdir}/download", mode: params.publish_dir_mode
+    
+    conda (params.enable_conda ? "bash:5.0.018" : null)
+    container "nakor/bash:5.1.4"
+
+    input:
+    each taxon
+    
+    output:
+    tuple val(meta), path("iBOL_COI*.fna"), emit: fna
+    path "iBOL_COI*.tsv", emit: tsv
+
+    script:
+    meta = [id: taxon]
+    url = "http://v3.boldsystems.org/index.php/API_Public"
+    query = "combined?format=tsv&taxon=$taxon"
+    prefix = "iBOL_COI_$taxon"
+    tax_cols = (9..21).step(2).collect{"\$$it"}.join('";"')
+
+    ext = file("$params.external/${taxon}.tsv")
+    dl_cmd = ext.exists() ?
+        "cat $ext" :
+        "wget -qO- \"$url/$query\""
+    """
+    $dl_cmd |
+        sed -r 's/\\r//g' |
+        tr -d '\\xa0' | 
+        grep -v "SUPPRESSED" |
+        sed 's/\\t /\\t/g' |
+        sed '/^>/!s/-//g' |
+        awk -F'\\t' 'NR==1 ||
+        (\$13 != "") &&
+        (\$45 ~/^[ACGT-]*\$/) &&
+        (length(\$45) > $params.min_length)' \\
+    > ${prefix}.tsv
+
+    tail -n+2 ${prefix}.tsv |
+      awk -F'\\t' '{
+        if (\$44 ~/ */) \$44=\$42;
+        print ">"\$44" Metazoa;"$tax_cols"\\n"\$45
+      }' \\
+    > ${prefix}.fna
     """
 }
 

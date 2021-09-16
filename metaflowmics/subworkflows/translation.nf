@@ -25,17 +25,18 @@ workflow translate {
 
     ref = params.db ?
         file(params.db, checkIfExists: true) :
-        all_orf.single.map{it[1]}.collectFile(name: "ref.faa")
+        all_orf.single.collectFile(name: "ref.faa").first() // make it a value channel
     
-    kmer_db = COUNT_KMERS( ref )
-
+    kmer_db = COUNT_KMERS( ref ).freqs
+    
     mult_orf_picked = KMER_FILTER(
         all_orf.multiple,
-        kmer_db.freqs
+        kmer_db
     )
 
     translated = all_orf.single.mix(mult_orf_picked)
+        .collectFile(name: 'translated.faa')
 
     emit:
-    faa = translated
+    faa = translated // make it a value channel
 }

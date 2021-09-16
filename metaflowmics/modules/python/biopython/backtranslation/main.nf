@@ -33,14 +33,16 @@ process BACKTRANSLATE {
     from Bio.codonalign import build
 
     msa = {aln.id: aln for aln in AlignIO.read("$afa", "fasta")}
+    msa_clean = []
 
     dna_all = []
     for dna in SeqIO.parse("$fna", "fasta"):
 
         if dna.id not in msa:
             continue
-
-        dna.description = msa[dna.id].description
+    
+        prot = msa[dna.id]
+        dna.description = prot.description
 
         frame = int(dna.description.split()[-1])
         offset = (frame-1) % 3
@@ -50,16 +52,19 @@ process BACKTRANSLATE {
         if frame > 3:
            dna.seq = dna.seq.reverse_complement()
 
+        prot_seq = prot.seq.ungap('-').ungap('.').upper()
+        
+        if len(prot_seq) > len(dna):
+            # a partial codon was translated
+            prot_seq = prot_seq.tomutable()
+            prot_seq.pop()
+            prot_seq = prot_seq.toseq()
+            
+        prot.seq = prot_seq
+        msa_clean.append(prot)
         dna_all.append(dna)
 
-    msa_clean = MultipleSeqAlignment([
-        SeqRecord(
-            Seq(str(msa[seq.id].seq.upper()).replace('.', '-')),
-            id=seq.id,
-            description=seq.description
-        ) for seq in dna_all
-    ])
-
+    msa_clean = MultipleSeqAlignment(msa_clean)
     codon_aln = build(msa_clean, dna_all, codon_table=CodonTable.generic_by_id[5])
 
     with open("${meta.id}.codons.afa", "w") as writer:

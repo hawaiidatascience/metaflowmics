@@ -153,11 +153,15 @@ process GET_SUBSAMPLING_THRESHOLD {
 
 process CONVERT_TO_MOTHUR_FORMAT {
     label "process_low"
+    publishDir "${params.outdir}",
+        mode: params.publish_dir_mode,
+        saveAs: { filename -> saveFiles(filename:filename, options:params.options, publish_dir:getSoftwareName(task.process)) }	
+
     container "nakor/metaflowmics-r:0.0.1"
     conda (params.enable_conda ? "conda-forge::r-data.table" : null)
 
     input:
-    tuple val(otu_id), path(abundance), path(taxonomy)
+    tuple val(otu_id), path("abundance.tsv"), path("taxonomy.csv")
 
     output:
     tuple val(otu_id), path("*.shared"), emit: shared
@@ -169,7 +173,7 @@ process CONVERT_TO_MOTHUR_FORMAT {
 
     library(data.table)
 
-    abund <- data.frame(fread("$abundance"), row.names=1, check.names=F)
+    abund <- data.frame(fread("abundance.tsv"), row.names=1, check.names=F)
 
     if ($params.taxa_are_rows) {
         abund <- t(abund)
@@ -182,9 +186,9 @@ process CONVERT_TO_MOTHUR_FORMAT {
         abund
     )
     colnames(shared) <- c('label', 'Group', 'numOtus', colnames(abund))
-    write.table(shared, "${abundance.getBaseName()}.shared", quote=F, sep='\\t', row.names=F)
+    write.table(shared, "OTU.${otu_id}.shared", quote=F, sep='\\t', row.names=F)
 
-    tax <- data.frame(fread("$taxonomy"), row.names=1, check.names=F)
+    tax <- data.frame(fread("taxonomy.csv"), row.names=1, check.names=F)
     rownames(tax) <- gsub(';.*', '', rownames(tax))
     rank_names <- colnames(tax)
 
@@ -196,6 +200,6 @@ process CONVERT_TO_MOTHUR_FORMAT {
     colnames(tax) <- c('OTU', 'Size', 'Taxonomy')
     tax[, 'Taxonomy'] <- gsub('[a-z]__', '', tax[, 'Taxonomy'])
 
-    write.table(tax, "${taxonomy.getBaseName()}.taxonomy", quote=F, sep='\\t', row.names=F)
+    write.table(tax, "OTU.${otu_id}.taxonomy", quote=F, sep='\\t', row.names=F)
     """
 }

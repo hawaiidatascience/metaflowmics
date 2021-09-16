@@ -21,24 +21,37 @@ process CLEAN_TAXONOMY {
     """
     #!/usr/bin/env python
 
+    import re
     import pandas as pd
     from Bio.SeqIO.FastaIO import SimpleFastaParser
 
-    def format_lineage(lineage):
+
+    def format_taxon_name(taxon):
+        taxon_clean = re.sub("[^A-Za-z0-9_-]", "_", taxon.strip())
+        taxon_clean = re.sub("__+", "_", taxon_clean)
+        return taxon_clean
+
+    def fill_missing_taxa(lineage):
         cleaned = []
-        parent = lineage[0].split('__')[1]
-        for x in lineage:
-            if x[-2:] == "__":
-                cleaned.append(f"{x}unknown_{parent}")
+        parent = lineage[0]
+        for r, x in enumerate(lineage):
+            if not x:
+                cleaned.append(f"unknown_{parent}_r{r}")
             else:
                 cleaned.append(x)
-                parent = x.split('__')[1]
+                parent = x
         return cleaned
 
     with open("$fasta", "r") as reader, \\
          open("${fasta.getBaseName()}_clean.fasta", "w") as writer:
         for i, (title, seq) in enumerate(SimpleFastaParser(reader)):
-            lineage = ",".join(format_lineage(title.split(",")))
-            writer.write(f'>{lineage}\\n{seq}\\n')
+            info = title.strip().split()
+            lineage = " ".join(info[1:])
+            lineage = lineage.split("$params.sep")
+            lineage = [format_taxon_name(taxon) for taxon in lineage]
+            lineage = "$params.sep".join(
+              fill_missing_taxa(lineage)
+            )
+            writer.write(f'>{info[0]} {lineage}\\n{seq}\\n')
     """
 }

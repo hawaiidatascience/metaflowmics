@@ -2,6 +2,7 @@
 include { initOptions; saveFiles; getSoftwareName } from "./functions"
 
 options = initOptions(params.options)
+params.no_aln = false
 
 process MOTHUR_ALIGN_SEQS {
     label "process_high"
@@ -26,10 +27,11 @@ process MOTHUR_ALIGN_SEQS {
     def software = getSoftwareName(task.process)
     def procname = "${task.process.tokenize(':')[-1].toLowerCase()}"
     outprefix = options.suffix ? "$options.suffix" : "${procname}"
+    align_cmd = params.no_aln ? "" : "align.seqs(fasta=$fasta, reference=$db_aln);"
+    current = params.no_aln ? "$fasta" : "current"
     """
-    mothur "#
-    align.seqs(fasta=$fasta, reference=$db_aln);
-    filter.seqs(fasta=current, vertical=T);
+    mothur "#$align_cmd
+    filter.seqs(fasta=$current, vertical=T);
 	screen.seqs(fasta=current, count=$count, minlength=${params.min_aln_len});
 	screen.seqs(fasta=current, count=current, optimize=start-end, criteria=${params.criteria});
 	summary.seqs(fasta=current)"

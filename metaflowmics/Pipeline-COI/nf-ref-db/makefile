@@ -1,12 +1,12 @@
 ROOT ?= $(PWD)/iBOL-database
-ITER = 1
+ITER = 2
 OUTDIR ?= $(ROOT)/iter-$(ITER)
 DB ?= $(ROOT)/dl/cdhit/cdhit.repr.fa
 
 
 dl:
 	nextflow download_and_format.nf -w work/dl -profile local -resume \
-	--outdir $(ROOT)/dl
+	--outdir $(ROOT)/dl $(ARGS)
 
 align:
 	nextflow progressive_alignment.nf -w work/updown -profile local -resume \
@@ -19,14 +19,21 @@ flag:
 	  --outdir $(OUTDIR)
 
 dna_align:
-	sed '/^>/!s/[-.]//g' $(OUTDIR)/down/species.updated.afa > $(OUTDIR)/species.faa
-	cd ../../subworkflows \
+	sed '/^>/!s/[-.]//g' $(OUTDIR)/down/species.updated.afa > $(OUTDIR)/species.faa \
+	&& python synchronize_fasta.py \
+	--query $(ROOT)/dl/iBOL_COI.fna \
+	--ref $(OUTDIR)/species.faa \
+	--output $(OUTDIR)/species.fna \
+	&& cd ../../subworkflows \
 	&& nextflow hmmer.nf -w $(PWD)/work/dna_aln -profile local -resume \
-	--fna $(ROOT)/dl/iBOL_COI.fna \
+	--fna $(OUTDIR)/species.fna \
 	--faa $(OUTDIR)/species.faa \
 	--db $(OUTDIR)/down/species.updated.afa \
 	--outdir $(OUTDIR)/MSA_backtranslated \
 	&& rm -rf ../../subworkflows/.nextflow*
+
+mothur:
+	./convert_to_mothur.sh $(INDIR)/species.codons.afa
 
 all:
 	@make dl
@@ -34,8 +41,5 @@ all:
 	@make flag ITER=1
 	@make align ITER=2 FAA=$(ROOT)/iter-1/species.updated.kept.faa
 	@make dna_align ITER=2
-
-mothur:
-	sed 's/,/;/g' $(AFA) | sed -r 's/[kpcofgs]f?__//g' | sed -r 's/>(.*)(id__[^ ]*)(.*)/>\2\t\3\t\1/g' > $(AFA).align
-	grep '^>' $(AFA).align | cut -c2- | cut -f1,3 > $(AFA).tax
+	@make mothur INDIR=$(ROOT)/iter-2/MSA_backtranslated/tranalign
 

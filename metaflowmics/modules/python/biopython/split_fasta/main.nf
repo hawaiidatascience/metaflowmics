@@ -18,7 +18,6 @@ process SPLIT_FASTA {
 
     input:
     path fasta
-    val info
 
     output:
     path "*.main.faa", emit: main
@@ -36,13 +35,14 @@ process SPLIT_FASTA {
     
     with open("$fasta", "r") as reader:
         for (title, seq) in SimpleFastaParser(reader):
-            tax = title.split(",")[$info.field]
+            lineage = title.split()[1]
+            tax = lineage.split("$params.sep")[$params.field]
             sequences[tax].append(f">{title}\\n{seq}")
 
     for (taxa, entries) in sequences.items():        
         seq_str = "\\n".join(entries) + "\\n"
 
-        if len(entries) == 1:
+        if len(entries) < $params.min_group_size:
             fname = f"{taxa}.others.faa"
         else:
             fname = f"{taxa}.main.faa"

@@ -4,7 +4,6 @@ include { initOptions; saveFiles; getSoftwareName } from "./functions"
 options = initOptions(params.options)
 
 process CDHIT {
-    tag "$meta.id"
     label "process_high"
     publishDir "${params.outdir}",
         mode: params.publish_dir_mode,
@@ -15,11 +14,11 @@ process CDHIT {
     conda (params.enable_conda ? "bioconda::cd-hit=4.8.1" : null)
 
     input:
-    tuple val(meta), path(fasta)
+    path fasta
 
     output:
-    tuple val(meta), path("*.clstr"), emit: cluster
-    tuple val(meta), path("*.repr.fa"), emit: repr
+    path "*.clstr", emit: cluster
+    path "*.repr.fa", emit: repr
     path "*.version.txt", emit: version
 
     script:
