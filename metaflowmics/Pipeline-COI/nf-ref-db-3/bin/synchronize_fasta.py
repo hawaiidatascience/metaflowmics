@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 from Bio.SeqIO.FastaIO import SimpleFastaParser
 
 import argparse

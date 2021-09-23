@@ -18,7 +18,8 @@ process COMPUTE_MSA_REPRESENTATIVE {
     path "*.repr.fa", emit: repr
 
     script:
-    prefix = fasta.getSimpleName()
+    def prefix = fasta.getSimpleName()
+	def skip_gap = params.skip_gap ? "if letter == '-': continue" :""
     """
     #!/usr/bin/env python
 
@@ -34,8 +35,8 @@ process COMPUTE_MSA_REPRESENTATIVE {
     with open("$fasta", "r") as reader:
         for (title, seq) in SimpleFastaParser(reader):
             for (i, letter) in enumerate(seq):
-                if letter != '-':
-                    freqs[i][letter] += 1
+	            $skip_gap
+	            freqs[i][letter] += 1
 
     freqs = pd.DataFrame(freqs).fillna(0).astype(int)
 
@@ -96,3 +97,4 @@ process UPDATE_MSA_WITH_REF {
                 writer.write(f">{title}\\n{seq_updated}\\n")    
     """    
 }
+

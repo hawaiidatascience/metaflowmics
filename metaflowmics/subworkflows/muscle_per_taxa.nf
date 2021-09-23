@@ -33,4 +33,3 @@ workflow align_tax_groups {
     afa = afa_per_taxa.mix(grouped_taxa.others.flatten())
     repr = afa_representatives.mix(grouped_taxa.others.flatten())
 }
-

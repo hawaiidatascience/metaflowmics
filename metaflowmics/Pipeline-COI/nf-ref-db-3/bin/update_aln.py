@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import argparse
 from functools import lru_cache
 from itertools import groupby
