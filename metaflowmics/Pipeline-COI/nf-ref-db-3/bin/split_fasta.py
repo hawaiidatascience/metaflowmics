@@ -10,7 +10,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--fasta', type=str)
     parser.add_argument('--field', type=int)    
-    parser.add_argument('--min-group-size', type=int, default=5)    
+    parser.add_argument('--min-group-size', type=int, default=2)    
     parser.add_argument('--sep', type=str, default=";")    
     args = parser.parse_args()
 

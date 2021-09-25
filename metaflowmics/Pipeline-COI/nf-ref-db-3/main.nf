@@ -23,6 +23,15 @@ include {update_aln as update_phylum} from "$subworkflow_dir/update_aln.nf" \
 	addParams( field: 1, outdir: "$params.outdir/down/1-phylum" )
 include {update_aln as update_class} from "$subworkflow_dir/update_aln.nf" \
 	addParams( field: 2, outdir: "$params.outdir/down/2-class" )
+include {update_aln as update_order} from "$subworkflow_dir/update_aln.nf" \
+	addParams( field: 3, outdir: "$params.outdir/down/3-order" )
+include {update_aln as update_family} from "$subworkflow_dir/update_aln.nf" \
+	addParams( field: 4, outdir: "$params.outdir/down/4-family" )
+include {update_aln as update_genus} from "$subworkflow_dir/update_aln.nf" \
+	addParams( field: 5, outdir: "$params.outdir/down/5-genus" )
+include {update_aln as update_species} from "$subworkflow_dir/update_aln.nf" \
+	addParams( field: 6, outdir: "$params.outdir/down/6-species" )
+
 // include {UPDATE_MSA_WITH_REF as UPDATE_PHYLUM} from "$module_dir/python/biopython/msa/main.nf" \
 //     addParams( field: 1, outdir: "$params.outdir/down/1-phylum" )
 // include {UPDATE_MSA_WITH_REF as UPDATE_CLASS} from "$module_dir/python/biopython/msa/main.nf" \
@@ -59,7 +68,32 @@ workflow {
 		class_aln.repr,
 		phylum_update.afa
 	)
-    // phylum_update = UPDATE_PHYLUM(
+
+	order_update = update_order(
+		order_aln.afa,
+		order_aln.repr,
+		class_update.afa
+	)
+
+	family_update = update_family(
+		family_aln.afa,
+		family_aln.repr,
+		order_update.afa
+	)
+
+	genus_update = update_genus(
+		genus_aln.afa,
+		genus_aln.repr,
+		family_update.afa
+	)
+
+	species_update = update_species(
+		species_aln.afa,
+		species_aln.repr,
+		genus_update.afa
+	)
+
+	// phylum_update = UPDATE_PHYLUM(
     //     phylum_aln.afa.collectFile(name: "phyla.afa"),
     //     kingdom_aln.afa.collectFile(name: "kingdom.updated.afa", storeDir: "$params.outdir/down")
     // )    

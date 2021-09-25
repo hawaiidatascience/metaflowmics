@@ -81,6 +81,10 @@ workflow align_tax_groups {
     // Get one representative for each aligned fasta to speed up computation
     afa_representatives = COMPUTE_MSA_REPRESENTATIVE(afa_per_taxa).repr
 
+	// Symlink in output folder the small taxa to keep track of taxa
+	file(params.outdir).mkdirs()
+	grouped_taxa.others.flatten().map{it.mklink("$params.outdir/${it.getName()}", overwrite: true)}
+
     emit:
     // Re-introduce the sequences for taxa with one sequence
     afa = afa_per_taxa.mix(grouped_taxa.others.flatten())

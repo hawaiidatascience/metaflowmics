@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from pathlib import Path
 import argparse
 from functools import lru_cache
 from itertools import groupby
@@ -12,7 +13,7 @@ import pandas as pd
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--afa', type=str)
-    parser.add_argument('--repr', type=str)
+    parser.add_argument('--ref', type=str)
     parser.add_argument('--update', type=str)
     parser.add_argument('--freqs', type=str)
     args = parser.parse_args()
@@ -106,7 +107,7 @@ def find_optimal_mapping(letters, total_len, counts):
     location is defined as the one for which the sum of occurences
     for each letter at the chosen column is maximal
     """
-    @lru_cache
+    @lru_cache()
     def bfs(letters, ngaps, pos=1):
         """
         2 options: 1) we put down a letter
@@ -135,16 +136,25 @@ def find_optimal_mapping(letters, total_len, counts):
 if __name__ == '__main__':
     args = parse_args()
 
-    (_, consensus) = next(SimpleFastaParser(open(args.ref)))
-    (_, updated) = next(SimpleFastaParser(open(args.update)))
-    
+    for key in ["ref", "update"]:
+        value = getattr(args, key)
+        if Path(value).is_file():
+            (_, seq) = next(SimpleFastaParser(open(value)))
+            setattr(args, key, seq)
+
     parser = SimpleFastaParser(open(args.afa))
 
     counts = pd.read_csv(args.freqs)
 
-    (reference_itv, counts, contracted_idx) = make_template(consensus, updated, counts)
+    (reference_itv, counts, contracted_idx) = make_template(args.ref, args.update, counts)
 
-    for (title, seq) in parser:
-        print(seq)
-        print(map_on_template(reference_itv, seq, counts))
+    output = Path(args.afa).with_suffix(".updated.afa")
+    with open(output, "w") as handle:
+        for (title, seq) in parser:
+            updated_seq = map_on_template(reference_itv, seq, counts)
+            handle.write(f">{title}\n{updated_seq}\n")
 
+    if contracted_idx.size > 0:
+        with open("inserts.txt", "w") as handle:
+            for idx in contracted_idx:
+                handle.write(f"{idx}\n")

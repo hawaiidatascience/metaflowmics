@@ -1,34 +1,36 @@
 #!/usr/bin/env nextflow
 
+/*
+Backalignment procedure:
+ - We collect the alignment at rank r-1
+ - ADD_GAPS(): We check with rank r if there are gaps that were deleted --> we add them back
+ - COMPUTE_FREQS(): Look at AA frequencies at each position to optimization query/ref mapping
+ - UPDATE_MSA: 
+*/
+
 nextflow.enable.dsl = 2
 
-
-process UPDATE_MSA {
+process ADD_GAPS {
 	label "process_low"
-	publishDir params.outdir, mode: params.publish_dir_mode
 	container "nakor/metaflowmics-python:0.0.1"
 	conda (params.enable_conda ? "conda-forge::biopython conda-forge:pandas" : null)
 
 	input:
-	tuple path(query), val(ref), val(ref_upd)
-	path freqs
+	path("representative.afa")
+	path("representative_aligned.afa")
 
 	output:
-	path "*.updated.afa", emit: afa
+	path("representative_aligned_with_gaps.afa")
 
 	script:
 	"""
-	update_aln \\
-	--afa $query \\
-	--repr $ref \\
-	--update $ref_upd \\
-	--freqs $freqs
+	add_gaps.py --repr representative.afa --upd representative_aligned.afa
 	"""
 }
 
+
 process COMPUTE_FREQS {
 	label "process_low"
-	publishDir params.outdir, mode: params.publish_dir_mode
 	container "nakor/metaflowmics-python:0.0.1"
 	conda (params.enable_conda ? "conda-forge::biopython conda-forge:pandas" : null)
 
@@ -55,10 +57,34 @@ process COMPUTE_FREQS {
 	            freqs[i][letter] += 1
 
 	freqs = pd.DataFrame(freqs).fillna(0).astype(int)
-	freqs.to_csv("freqs_${fasta.getBaseName()}.csv")
+	freqs.to_csv("freqs_${fasta.getSimpleName()}.csv", index=False)
 	"""
 }
 
+process UPDATE_MSA {
+	tag "$taxa"
+	label "process_low"
+	publishDir params.outdir, mode: params.publish_dir_mode
+	container "nakor/metaflowmics-python:0.0.1"
+	conda (params.enable_conda ? "conda-forge::biopython conda-forge:pandas" : null)
+
+	input:
+	tuple val(taxa), path(query), path("reference.afa"), path("updated_ref.afa")
+	path freqs
+
+	output:
+	path "*.updated.afa", emit: afa
+	path "inserts.txt", optional: true, emit: txt
+
+	script:
+	"""
+	update_aln.py \\
+	--afa $query \\
+	--ref reference.afa \\
+	--update updated_ref.afa \\
+	--freqs $freqs
+	"""
+}
 
 workflow update_aln {
 	take:
@@ -67,29 +93,40 @@ workflow update_aln {
 	reference_updated
 
 	main:
+	// Get all reference sequences
+	all_refs = reference.collectFile(name: "level-${params.field}.afa")
+	all_upds = reference_updated.collectFile(name: "level-${params.field}-updated.afa")
+	
+	// Compare references and updated reference to add gaps to the update if they were removed
+	reference_updated = ADD_GAPS(all_refs, all_upds).first()
+	
+	// !!! Then fix UPDATE_MSA to not take that into account
+	
 	// Get amino acid frequency at each position of the reference
 	freqs = COMPUTE_FREQS(reference_updated)
+
 	// Get sequences
-	reference_seq = reference
-		.splitFasta(record: [id: true, seqString: true ])
-		.map{[it.id, it.seqString]}
-	reference_upd_seq = reference_updated
-		.splitFasta(record: [id: true, seqString: true ])
-		.map{[it.id, it.seqString]}
+	reference_seq = all_refs
+		.splitFasta(record: [id: true, desc: true, seqString: true])
+		.collectFile(){it -> ["${it.desc.tokenize(";")[params.field]}.afa", ">$it.id $it.desc\n$it.seqString\n"]}
+		.map{[it.getBaseName(), it]}
+
+	reference_upd_seq = all_upds
+		.splitFasta(record: [id: true, desc: true, seqString: true])
+		.collectFile(){it -> ["${it.desc.tokenize(";")[params.field]}.afa", ">$it.id $it.desc\n$it.seqString\n"]}
+		.map{[it.getBaseName(), it]}
+
 	// Split alignments per taxa
-	query_per_taxa = query.map{[it.getName().tokenize(".")[0], it]} // don't forget the field
+	query_per_taxa = query.map{[it.getName().tokenize(".")[1], it]} // don't forget the field
+
 	// Update the alignment
-	reference.view()
-	reference_seq.view()
-	reference_updated.view()
-	reference_upd_seq.view()
-	query_per_taxa.view()
-	// query.join(reference_seq).join(reference_upd_seq).view()
 	query_updated = UPDATE_MSA(
-		query_per_taxa.join(reference_seq).join(reference_upd_seq),
+		query_per_taxa.combine(reference_seq, by: 0).combine(reference_upd_seq, by: 0),
 		freqs
 	)
 
+	query_updated.txt.view()
+
 	emit:
-	afa = query_updated
+	afa = query_updated.afa
 }
