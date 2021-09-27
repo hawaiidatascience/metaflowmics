@@ -19,3 +19,5 @@ build
 dada2mothur.R
 iBOL-database
 ref_db
+data
+target

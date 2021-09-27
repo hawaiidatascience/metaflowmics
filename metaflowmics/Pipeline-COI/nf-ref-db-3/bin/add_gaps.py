@@ -27,7 +27,7 @@ def get_intervals(seq, gap_chars={"-", "."}):
     )
     return intervals
 
-def map_alignment(ref, other, gap_chars={"-", "."}):
+def map_alignment(ref, other, seq_id, gap_chars={"-", "."}):
     """
     Map intervals of representative sequences on its aligned version
     Report contracted intervals that need to backpropagate in the other alignments at this level
@@ -44,13 +44,16 @@ def map_alignment(ref, other, gap_chars={"-", "."}):
 
     return inserts
 
-def add_gaps(seq, inserts):
+def add_gaps(seq, inserts, seq_id, repres):
     seq_with_gaps = ""
     for i, aa in enumerate(seq):
         if i in inserts:
             seq_with_gaps += "-"*inserts[i]
         seq_with_gaps += aa
 
+    if i+1 in inserts:
+        seq_with_gaps += "-"*inserts[i+1]
+        
     return seq_with_gaps
 
 if __name__ == '__main__':
@@ -63,9 +66,9 @@ if __name__ == '__main__':
         for (title, seq) in SimpleFastaParser(open(fname)):
             sequences[title][ftype] = seq
 
-    inserts = pd.Series(0, index=range(len(seq))) # make sure seq is an updated alignment
+    inserts = pd.Series(0, index=range(len(seq)+1)) # make sure seq is an updated alignment
     for seq_id, aln in sequences.items():
-        new_inserts = map_alignment(aln["repr"], aln["upd"]).reindex(index=inserts.index)
+        new_inserts = map_alignment(aln["repr"], aln["upd"], seq_id).reindex(index=inserts.index)
         more_inserts = inserts < new_inserts
         inserts.loc[more_inserts] = new_inserts[more_inserts]
 
@@ -74,5 +77,5 @@ if __name__ == '__main__':
     # Update {upd} with new IDs
     with open("representative_aligned_with_gaps.afa", "w") as writer:
         for seq_id, aln in sequences.items():
-            with_gaps = add_gaps(aln["upd"], inserts)
+            with_gaps = add_gaps(aln["upd"], inserts, seq_id, aln["repr"])
             writer.write(f">{seq_id}\n{with_gaps}\n")

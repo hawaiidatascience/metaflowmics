@@ -89,29 +89,34 @@ process UPDATE_MSA {
 workflow update_aln {
 	take:
 	query
-	reference
-	reference_updated
+	repr
+	repr_aln
 
 	main:
+
+	if (params.field < 3) {
+		repr_aln.view{"<${params.field}> $it"}
+	}
+	
 	// Get all reference sequences
-	all_refs = reference.collectFile(name: "level-${params.field}.afa")
-	all_upds = reference_updated.collectFile(name: "level-${params.field}-updated.afa")
+	all_repr = repr.collectFile(name: "level-${params.field}.afa").first()
+	all_repr_aln = repr_aln.collectFile(name: "level-${params.field}-aln.afa").first()
 	
 	// Compare references and updated reference to add gaps to the update if they were removed
-	reference_updated = ADD_GAPS(all_refs, all_upds).first()
+	all_repr_aln = ADD_GAPS(all_repr, all_repr_aln)
 	
 	// !!! Then fix UPDATE_MSA to not take that into account
 	
 	// Get amino acid frequency at each position of the reference
-	freqs = COMPUTE_FREQS(reference_updated)
+	freqs = COMPUTE_FREQS(all_repr_aln)
 
 	// Get sequences
-	reference_seq = all_refs
+	repr_per_taxa = all_repr
 		.splitFasta(record: [id: true, desc: true, seqString: true])
 		.collectFile(){it -> ["${it.desc.tokenize(";")[params.field]}.afa", ">$it.id $it.desc\n$it.seqString\n"]}
 		.map{[it.getBaseName(), it]}
 
-	reference_upd_seq = all_upds
+	repr_aln_per_taxa = all_repr_aln
 		.splitFasta(record: [id: true, desc: true, seqString: true])
 		.collectFile(){it -> ["${it.desc.tokenize(";")[params.field]}.afa", ">$it.id $it.desc\n$it.seqString\n"]}
 		.map{[it.getBaseName(), it]}
@@ -121,7 +126,7 @@ workflow update_aln {
 
 	// Update the alignment
 	query_updated = UPDATE_MSA(
-		query_per_taxa.combine(reference_seq, by: 0).combine(reference_upd_seq, by: 0),
+		query_per_taxa.combine(repr_per_taxa, by: 0).combine(repr_aln_per_taxa, by: 0),
 		freqs
 	)
 
