@@ -5,7 +5,7 @@ include { initOptions; saveFiles; getSoftwareName } from './functions'
 options = initOptions(params.options)
 
 process HOLOVIEWS_PREPARE {
-    tag "$otu_id"
+    tag "$meta.id"
     label "process_medium"
     label "plot"
 
@@ -13,10 +13,10 @@ process HOLOVIEWS_PREPARE {
     conda (params.enable_conda ? "conda-forge::datatable pandas>=1" : null)
 
     input:
-    tuple val(otu_id), file(shared), file(tax)
+    tuple val(meta), file(shared), file(tax)
 
     output:
-    tuple val(otu_id), file("metagenome.csv")
+    tuple val(meta), file("metagenome.csv")
 
     script:
     def software = getSoftwareName(task.process)

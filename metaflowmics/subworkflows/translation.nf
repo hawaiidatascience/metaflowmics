@@ -16,7 +16,7 @@ include{ KMER_FILTER } from "$module_dir/python/kmer_filter/main.nf" \
     addParams( options: [publish_dir: "kmer_orf_picking"],
               k: 2, feature: 'prot', n_sub: 50 )
 
-workflow translate {
+workflow TRANSLATE {
     take:
     fasta
 
@@ -25,7 +25,7 @@ workflow translate {
 
     ref = params.db ?
         file(params.db, checkIfExists: true) :
-        all_orf.single.collectFile(name: "ref.faa").first() // make it a value channel
+        all_orf.single.map{it[1]}.collectFile(name: "ref.faa").first() // make it a value channel
     
     kmer_db = COUNT_KMERS( ref ).freqs
     
@@ -35,8 +35,13 @@ workflow translate {
     )
 
     translated = all_orf.single.mix(mult_orf_picked)
+		.map{it[1]}
         .collectFile(name: 'translated.faa')
+		.first() // make it a value channel
+
+	// put the metadata back
+	translated = fasta.combine(translated).map{[it[0], it[2]]}
 
     emit:
-    faa = translated // make it a value channel
+    faa = translated
 }

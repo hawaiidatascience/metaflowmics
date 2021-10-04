@@ -4,7 +4,7 @@ include { initOptions; saveFiles; getSoftwareName } from "./functions"
 options = initOptions(params.options)
 
 process DADA2_ASSIGN_TAXONOMY {
-    tag "${otu_id}"
+    tag "${meta.id}"
     label "process_high"
 
     publishDir "${params.outdir}",
@@ -17,12 +17,12 @@ process DADA2_ASSIGN_TAXONOMY {
     conda (params.enable_conda ? "bioconda::bioconductor-dada2=1.18 conda-forge::r-ggplot2" : null)
 
     input:
-    tuple val(otu_id), path(fasta)
-    path db
+    tuple val(meta), path(fasta)
+    tuple val(db_meta), path(db)
 
     output:
-    tuple val(otu_id), path("taxonomy*.csv"), emit: taxonomy
-    tuple val(otu_id), path("confidence*.csv"), emit: confidence
+    tuple val(meta), path("taxonomy*.csv"), emit: taxonomy
+    tuple val(meta), path("confidence*.csv"), emit: confidence
     path "*.version.txt", emit: version
 
     script:
@@ -42,10 +42,10 @@ process DADA2_ASSIGN_TAXONOMY {
         outputBootstraps=TRUE
     )
     taxa = cbind(seq_ids, assignments\$tax)
-    write.table(taxa, "taxonomy_${otu_id}.csv", quote=F, row.names=F, sep=",")
+    write.table(taxa, "taxonomy_${meta.id}.csv", quote=F, row.names=F, sep=",")
 
     scores <- cbind(seq_ids, assignments\$boot)
-    write.table(scores, "confidence_${otu_id}.csv", quote=F, row.names=F, sep=",")
+    write.table(scores, "confidence_${meta.id}.csv", quote=F, row.names=F, sep=",")
 
     writeLines(paste0(packageVersion("dada2")), "${software}.version.txt")
     """

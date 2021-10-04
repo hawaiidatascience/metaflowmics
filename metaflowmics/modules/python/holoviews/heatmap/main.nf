@@ -6,7 +6,7 @@ options = initOptions(params.options)
 
 
 process HOLOVIEWS_CLUSTERMAP {
-    tag "$otu_id"
+    tag "$meta.id"
     label "process_low"
     label "plot"
     publishDir "${params.outdir}",
@@ -18,10 +18,10 @@ process HOLOVIEWS_CLUSTERMAP {
     conda (params.enable_conda ? "conda-forge::datatable pandas>=1" : null)
 
     input:
-    tuple val(otu_id), file(mg)
+    tuple val(meta), file(mg)
 
     output:
-    tuple val(otu_id), file("clustermap*.html")
+    tuple val(meta), file("clustermap*.html")
 
     script:
     def software = getSoftwareName(task.process)
@@ -86,6 +86,6 @@ process HOLOVIEWS_CLUSTERMAP {
         data=data, kdims=kdims, vdims=vdims
     ).opts(**hm_opt).redim.values(Group=group_order, OTU=feature_order)
 
-    hv.save(hm, f"clustermap_${otu_id}.html")
+    hv.save(hm, f"clustermap_${meta.id}.html")
     """
 }

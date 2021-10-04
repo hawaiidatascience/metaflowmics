@@ -34,13 +34,13 @@ workflow hmmer_COI {
     if (params.sync) {
         fna = SYNC_SEQIDS(
             msa_prot,
-            fna.collect() // make it a list for SYNC_SEQIDS
+            fna.collect{it[1]} // make it a list for SYNC_SEQIDS
         ).fna
     }
     
     // Reverse translate to get the DNA alignment
     msa_nucl = EMBOSS_TRANALIGN(
-        msa_prot.combine(fna)
+        msa_prot.join(fna)
     )
     
     emit:

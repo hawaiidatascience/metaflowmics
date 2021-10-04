@@ -4,7 +4,7 @@ include { initOptions; saveFiles; getSoftwareName } from "./functions"
 options = initOptions(params.options)
 
 process VSEARCH_SINTAX{
-    tag "$otu_id"
+    tag "$meta.id"
     label "process_high"
     publishDir "${params.outdir}",
         mode: params.publish_dir_mode,
@@ -16,11 +16,11 @@ process VSEARCH_SINTAX{
     conda (params.enable_conda ? "bioconda::vsearch=2.17.0" : null)
 
     input:
-    tuple val(otu_id), path(fasta)
+    tuple val(meta), path(fasta)
     path database
 
     output:
-    tuple val(otu_id), path("annotations_*.tsv"), emit: taxonomy
+    tuple val(meta), path("annotations_*.tsv"), emit: taxonomy
     path "*.version.txt", emit: version
 
     script:
@@ -33,7 +33,7 @@ process VSEARCH_SINTAX{
         --db $database \\
         --sintax $fasta \\
         --sintax_cutoff $params.tax_confidence \\
-        --tabbedout annotations_sintax-${otu_id}.tsv
+        --tabbedout annotations_sintax-${meta.id}.tsv
 
     echo \$(vsearch --version 2>&1) | grep "RAM" | sed "s/vsearch v//" | sed "s/, .*//" > ${software}.version.txt
     """

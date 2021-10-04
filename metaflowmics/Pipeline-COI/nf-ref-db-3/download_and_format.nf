@@ -29,10 +29,10 @@ workflow download_COI_db {
     )
     
     // Clean missing data in taxonomy
-    db_clean = CLEAN_TAXONOMY(db.fna).map{it[1]}
+    db_clean = CLEAN_TAXONOMY(db.fna)
 
     // Save the fna to a single file for later use
-    db_clean.collectFile(
+    db_clean.map{it[1]}.collectFile(
         storeDir: params.outdir,
         name: "iBOL_COI.fna"
     )

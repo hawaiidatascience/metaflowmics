@@ -4,14 +4,14 @@ include { initOptions; saveFiles; getSoftwareName } from "./functions"
 options = initOptions(params.options)
 
 process MOTHUR_SUMMARY_SHARED {
-    tag "$otu_id"
+    tag "$meta.id"
     label "process_low"
 
     container "quay.io/biocontainers/mothur:1.44.1--hf0cea05_2"
     conda (params.enable_conda ? "bioconda::mothur:1.44.1" : null)
 
     input:
-    tuple val(otu_id), file(shared)
+    tuple val(meta), file(shared)
 
     output:
     path "*.csv", emit: csv
@@ -23,7 +23,7 @@ process MOTHUR_SUMMARY_SHARED {
     """
     mothur "#summary.shared(shared=$shared, calc=${params.calc}, distance=lt)"
 
-    mv *.summary beta-diversity_${otu_id}.csv
+    mv *.summary beta-diversity.${meta.id}.csv
 
     # print version
     mothur -v | tail -n+2 | head -1 | cut -d"=" -f2 > ${software}.version.txt

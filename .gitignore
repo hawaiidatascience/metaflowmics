@@ -16,8 +16,9 @@ silva*
 unite*
 !sample_barcodes.csv
 build
-dada2mothur.R
 iBOL-database
 ref_db
 data
 target
+*.npy
+*.html

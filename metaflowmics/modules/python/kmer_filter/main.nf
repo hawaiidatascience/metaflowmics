@@ -15,11 +15,11 @@ process KMER_FILTER {
     conda (params.enable_conda ? "conda-forge::numpy" : null)
 
     input:
-    path query
+    tuple val(meta), path(query)
     path db
 
     output:
-    path "*.fasta"
+    tuple val(meta), path("*.fasta")
 
     script:
     prefix = "${query.getBaseName()}_curated"

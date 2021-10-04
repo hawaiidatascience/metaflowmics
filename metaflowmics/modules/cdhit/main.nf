@@ -14,11 +14,11 @@ process CDHIT {
     conda (params.enable_conda ? "bioconda::cd-hit=4.8.1" : null)
 
     input:
-    path fasta
+    tuple val(meta), path(fasta)
 
     output:
-    path "*.clstr", emit: cluster
-    path "*.repr.fa", emit: repr
+    tuple val(meta), path("*.clstr"), emit: cluster
+    tuple val(meta), path("*.repr.fa"), emit: repr
     path "*.version.txt", emit: version
 
     script:

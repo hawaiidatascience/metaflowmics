@@ -5,6 +5,7 @@ options = initOptions(params.options)
 
 
 process SYNC_SEQIDS {
+	tag "$meta.id"
     label "process_low"
     publishDir "${params.outdir}",
         mode: params.publish_dir_mode,
@@ -15,13 +16,13 @@ process SYNC_SEQIDS {
     conda (params.enable_conda ? "conda-forge::biopython conda-forge::pandas" : null)
 
     input:
-    path ref_fa
+    tuple val(meta), path(ref_fa)
     path files
 
     output:
-    path "*.sync.{fna,fasta}", optional: true, emit: fna
-    path "*.sync.faa", optional: true, emit: faa
-    path "*.sync.count_table", optional: true, emit: count_table
+    tuple val(meta), path("*.sync.{fna,fasta}"), optional: true, emit: fna
+    tuple val(meta), path("*.sync.faa"), optional: true, emit: faa
+    tuple val(meta), path("*.sync.count_table"), optional: true, emit: count_table
 
     script:
     """

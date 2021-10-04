@@ -9,7 +9,7 @@ edition = "2018"
 seq_io = "0.3.1"
 csv = "1.1.6"
 itertools = "0.10.1"
-pav_regression = "0.2.3"
+pav_regression = { git = "https://github.com/sanity/pav.rs" }
 ndarray = "0.15.3"
 ndarray-npy = "0.8.0"
 clap = "2.33.3"

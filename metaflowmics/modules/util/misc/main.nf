@@ -11,16 +11,17 @@ process SUMMARIZE_TABLE {
     conda (params.enable_conda ? "conda-forge::r-data.table" : null)
 
     input:
-    tuple val(step), val(otu_id), path(table)
+    tuple val(meta), val(step), path(table)
 
     output:
-    file('summary.csv')
+    tuple val(meta), file('summary.csv')
 
     script:
     drop = 'NULL'
     sep = 'auto'
     rownames = 1
     taxa_are_rows = 'T'
+	otu_id = meta.otu_id ?: ''
     
     if (table.getExtension() == 'count_table') {
         drop = "'total'"
@@ -66,12 +67,13 @@ process READ_TRACKING {
     conda (params.enable_conda ? "conda-forge::r-dplyr conda-forge::tidyr" : null)
 
     input:
-    path counts
+    tuple val(label), path(counts)
 
     output:
     file('summary-per-sample-per-step*.csv')
 
     script:
+	def outprefix = "summary-per-sample-per-step.$label"
     """
     #!/usr/bin/env Rscript    
 
@@ -79,7 +81,7 @@ process READ_TRACKING {
     library(dplyr)
     library(tidyr)
 
-    data <- read.csv('summary.csv', header=F)
+    data <- read.csv("$counts", header=F)
     colnames(data) <- c('step', 'otu_id', 'sample', 'total', 'nuniq')
 
     # Order the step according to total count and uniques
@@ -108,13 +110,13 @@ process READ_TRACKING {
               bind_rows(after_clustering %>% filter(otu_id==id)) %>%
               select(-otu_id) %>%
               pivot_wider(names_from=step, values_from=label, values_fill="0")
-            write.table(summary_i, sprintf('summary-per-sample-per-step-%s.csv', id), quote=F, row.names=F, sep=',')
+            write.table(summary_i, sprintf('${outprefix}.%s.csv', id), quote=F, row.names=F, sep=',')
         }
     } else { # reads were all filtered before clustering
         summary <- summary %>% 
             select(-otu_id) %>% 
             pivot_wider(names_from=step, values_from=label, values_fill="0")
-        write.table(summary, 'summary-per-sample-per-step.csv', quote=F, row.names=F, sep=',')
+        write.table(summary, '${outprefix}.csv', quote=F, row.names=F, sep=',')
     }
     """
 }
@@ -161,11 +163,11 @@ process CONVERT_TO_MOTHUR_FORMAT {
     conda (params.enable_conda ? "conda-forge::r-data.table" : null)
 
     input:
-    tuple val(otu_id), path("abundance.tsv"), path("taxonomy.csv")
+    tuple val(meta), path("abundance.tsv"), path("taxonomy.csv")
 
     output:
-    tuple val(otu_id), path("*.shared"), emit: shared
-    tuple val(otu_id), path("*.taxonomy"), emit: taxonomy
+    tuple val(meta), path("*.shared"), emit: shared
+    tuple val(meta), path("*.taxonomy"), emit: taxonomy
 
     script:
     """
@@ -180,13 +182,13 @@ process CONVERT_TO_MOTHUR_FORMAT {
     }
     
     shared <- cbind(
-        rep(1-$otu_id/100, nrow(abund)),
+        rep(1-$meta.otu_id/100, nrow(abund)),
         rownames(abund),
         rep(ncol(abund), nrow(abund)),
         abund
     )
     colnames(shared) <- c('label', 'Group', 'numOtus', colnames(abund))
-    write.table(shared, "OTU.${otu_id}.shared", quote=F, sep='\\t', row.names=F)
+    write.table(shared, "${meta.id}.shared", quote=F, sep='\\t', row.names=F)
 
     tax <- data.frame(fread("taxonomy.csv"), row.names=1, check.names=F)
     rownames(tax) <- gsub(';.*', '', rownames(tax))
@@ -200,6 +202,6 @@ process CONVERT_TO_MOTHUR_FORMAT {
     colnames(tax) <- c('OTU', 'Size', 'Taxonomy')
     tax[, 'Taxonomy'] <- gsub('[a-z]__', '', tax[, 'Taxonomy'])
 
-    write.table(tax, "OTU.${otu_id}.taxonomy", quote=F, sep='\\t', row.names=F)
+    write.table(tax, "OTU.${meta.id}.taxonomy", quote=F, sep='\\t', row.names=F)
     """
 }

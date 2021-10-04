@@ -8,11 +8,11 @@ module_dir = "../modules"
 subworkflow_dir = "../subworkflows"
 
 // DADA2 module imports
-include { dada2 } from "$subworkflow_dir/dada2.nf" \
+include { DADA2 } from "$subworkflow_dir/dada2.nf" \
     addParams( outdir: "$params.outdir/interm/read_processing",
               early_chimera_removal: false, format: "mothur" )
 // mothur module imports
-include { mothur } from "$subworkflow_dir/mothur.nf"
+include { MOTHUR } from "$subworkflow_dir/mothur.nf"
 
 // Other imports
 include{ DOWNLOAD_SILVA_FOR_MOTHUR } from "$module_dir/bash/download/main.nf" \
@@ -21,9 +21,9 @@ include{ READ_TRACKING } from "$module_dir/util/misc/main.nf" \
     addParams( options: [publish_dir: "read_tracking"] )
 
 // Subworkflows
-include { holoviews } from "$subworkflow_dir/holoviews.nf" \
+include { HOLOVIEWS } from "$subworkflow_dir/holoviews.nf" \
     addParams( options: [publish_dir: "figures"] )
-include { diversity } from "$subworkflow_dir/diversity.nf" \
+include { DIVERSITY } from "$subworkflow_dir/diversity.nf" \
     addParams( options: [publish_dir: "postprocessing"] )
 
 // Functions
@@ -36,37 +36,61 @@ workflow pipeline_16S {
     reads
 
     main:
-    // Read trimming, QC, denoising and merging
-    asvs = dada2( reads )
-    
+	/*
+	 ========================================================================================
+     Read trimming, QC, denoising and merging
+	 ========================================================================================
+	 */	
+	asvs = DADA2( reads )
+
+	/*
+	 ========================================================================================
+	 Contigs curation with mothur (subworkflow)
+	 ========================================================================================
+	 */	
+	
     // Download SILVA db for mothur
     db = DOWNLOAD_SILVA_FOR_MOTHUR()
 
-    // OTU curation with mothur
-    otus = mothur(
+    otus = MOTHUR(
         asvs.fasta,
         asvs.count_table,
-        db.align,
-        db.tax
+        db.tax.mix(db.align)
     )
-
-    // Read tracking through the pipeline
+	
+	/*
+	 ========================================================================================
+     Read tracking through the pipeline
+	 ========================================================================================
+	 */
+	
     READ_TRACKING(
-        reads.map{"raw,,${it[0].id},${it[1][0].countFastq()}"}
-            .collectFile(newLine: true)
-            .mix(asvs.tracking)
-            .mix(otus.tracking)
-            .collectFile(name: "summary.csv")
+		otus.tracking.combine(
+			reads.map{"raw,,${it[0].id},${it[1][0].countFastq()}"}.collectFile(newLine: true)
+				.mix(asvs.tracking).collectFile(name: "summary.csv")
+		)
+			.map{[it[0], it[1..-1]]}.transpose()
+			.collectFile(){[it[0], it[1]]}
+			.map{[it.getSimpleName(), it]}
     )
 
-    // Visualization
-    holoviews(
+	
+	/*
+	 ========================================================================================
+	 Interactive visualization with holoviews python package
+	 ========================================================================================
+	 */	
+    HOLOVIEWS(
         otus.shared,
         otus.constaxonomy,
     )
 
-    // Postprocessing
-    diversity(
+	/*
+	 ========================================================================================
+	 Diversity metrics (alpha, beta + phylogenetic tree)
+	 ========================================================================================
+	 */	
+    DIVERSITY(
         otus.repfasta,
         otus.shared
     )

@@ -4,7 +4,7 @@ include { initOptions; saveFiles; getSoftwareName } from "./functions"
 options = initOptions(params.options)
 
 process VSEARCH_USEARCH_GLOBAL {
-    tag "$otu_id"
+    tag "$meta.id"
     label "process_high"
     publishDir "${params.outdir}",
         mode: params.publish_dir_mode,
@@ -16,10 +16,10 @@ process VSEARCH_USEARCH_GLOBAL {
     conda (params.enable_conda ? "bioconda::vsearch=2.17.0" : null)
 
     input:
-    tuple val(otu_id), path(fasta)
+    tuple val(meta), path(fasta)
 
     output:
-    tuple val(otu_id), path("matchlist-*.tsv"), emit: tsv
+    tuple val(meta), path("matchlist-*.tsv"), emit: tsv
     path "*.version.txt", emit: version
 
     script:
@@ -33,7 +33,7 @@ process VSEARCH_USEARCH_GLOBAL {
         --id ${params.lulu_min_match/100} \\
         --db $fasta --self \\
         --iddef 1 \\
-        --userout matchlist-${otu_id}.tsv \\
+        --userout matchlist-${meta.id}.tsv \\
         -userfields query+target+id \\
         --maxaccepts 0 \\
         --query_cov .9 \\

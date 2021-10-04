@@ -5,16 +5,17 @@ params.options = [:]
 options        = initOptions(params.options)
 
 process HMMER_HMMBUILD {
+	tag "$meta.id"
     label 'process_medium'
 
     conda (params.enable_conda ? "bioconda::hmmer=3.3.2" : null)
     container "quay.io/biocontainers/hmmer:3.3.2--h1b792b2_1"
 
     input:
-    path fasta
+    tuple val(meta), path(fasta)
 
     output:
-    path "hmmdb", emit: hmm
+    tuple val(meta), path("hmmdb"), emit: hmm
     path "*.version.txt", emit: version
 
     script:

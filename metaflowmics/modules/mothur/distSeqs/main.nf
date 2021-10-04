@@ -4,7 +4,7 @@ include { initOptions; saveFiles; getSoftwareName } from "./functions"
 options = initOptions(params.options)
 
 process MOTHUR_DIST_SEQS {
-    tag "meta"
+    tag "$meta.id"
     label "process_high"
 
     container "quay.io/biocontainers/mothur:1.44.1--hf0cea05_2"
@@ -14,14 +14,14 @@ process MOTHUR_DIST_SEQS {
     tuple val(meta), file(fasta)
 
     output:
-    tuple val(meta), path("${outprefix}.dist"), emit: dist
+    tuple val(meta), path("$outprefix*.dist"), emit: dist
     path "*.version.txt", emit: version
 
     script:
     def software = getSoftwareName(task.process)
-    def procname = "${task.process.tokenize(':')[-1].toLowerCase()}"
     def cutoff = params.cutoff ?: 1
-    outprefix = options.suffix ? "$options.suffix" : "${procname}.${meta}"
+    def procname = "${task.process.tokenize(':')[-1].toLowerCase()}"
+    outprefix = "${procname}.${meta.id}"	
     """
     # Manually rename sequences
     # sed "/^>/s/.*\\(Otu[0-9]*\\)\\(.*\\)/>\\1\\t\\1\\2/" $fasta > renamed.fasta

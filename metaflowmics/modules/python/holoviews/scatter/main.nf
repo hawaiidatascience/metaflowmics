@@ -5,7 +5,7 @@ include { initOptions; saveFiles; getSoftwareName } from "./functions"
 options = initOptions(params.options)
 
 process HOLOVIEWS_SCATTER {
-    tag "$otu_id"
+    tag "$meta.id"
     label "process_low"
     label "plot"
     publishDir "${params.outdir}",
@@ -17,10 +17,10 @@ process HOLOVIEWS_SCATTER {
     conda (params.enable_conda ? "conda-forge::datatable pandas>=1" : null)
 
     input:
-    tuple val(otu_id), file(mg)
+    tuple val(meta), file(mg)
 
     output:
-    tuple val(otu_id), file("scatter*.html")
+    tuple val(meta), file("scatter*.html")
 
     script:
     def software = getSoftwareName(task.process)
@@ -58,6 +58,6 @@ process HOLOVIEWS_SCATTER {
         ).opts(**scatter_opt) for name in names]
 
         scatters = hv.Layout(scatters).cols(5)
-        hv.save(scatters, f"scatterplot-{rank}_${otu_id}.html")
+        hv.save(scatters, f"scatterplot-{rank}_${meta.id}.html")
     """
 }

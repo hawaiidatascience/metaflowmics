@@ -4,7 +4,7 @@ include { initOptions; saveFiles; getSoftwareName } from "./functions"
 options = initOptions(params.options)
 
 process MOTHUR_CLASSIFY_OTUS {
-    tag "$otu_id"
+    tag "$meta.id"
     label "process_medium"
     publishDir "${params.outdir}", mode: params.publish_dir_mode
 
@@ -12,15 +12,16 @@ process MOTHUR_CLASSIFY_OTUS {
     conda (params.enable_conda ? "bioconda::mothur:1.44.1" : null)
 
     input:
-    tuple val(otu_id), file(list), file(count), file(tax)
+    tuple val(meta), file(list), file(count), file(tax)
 
     output:
-    tuple val(otu_id), path("${outprefix}.cons.taxonomy"), emit: taxonomy
+    tuple val(meta), path("*.cons.taxonomy"), emit: taxonomy
     path "*.version.txt", emit: version
 
     script:
     def software = getSoftwareName(task.process)
-    outprefix = options.suffix ? "${options.suffix}.${otu_id}" : "annotations.${otu_id}"
+    def procname = "${task.process.tokenize(':')[-1].toLowerCase()}"
+    def outprefix = "${procname}.${meta.id}"
     """
     mothur "#
     list.seqs(list=$list); get.seqs(taxonomy=$tax, accnos=current);

@@ -24,7 +24,7 @@ include{ SUMMARIZE_TABLE } from "$module_dir/util/misc/main.nf" \
     addParams( options: [publish_dir: "read-tracking"] )
 
 
-workflow dada2 {
+workflow DADA2 {
     take:
     reads // (meta, fwd, rev) tuples
 
@@ -55,10 +55,9 @@ workflow dada2 {
             meta, reads ->
             [[id:"all", orient: meta.orient, paired_end: meta.paired_end], reads]
         }.groupTuple(by: 0)
-        
+
         err = DADA2_LEARNERRORS( derep ).rds
         dada = DADA2_DADA( derep.join(err) )
-        
     } else {
         // Build Illumina reads error model
         err = DADA2_LEARNERRORS( derep )
@@ -74,8 +73,8 @@ workflow dada2 {
 
     // Read tracking
     merge_summary = SUMMARIZE_TABLE(
-        merged.count_table.map{["read-merging", "", it]}
-    )
+        merged.count_table.map{[it[0], "read-merging", it[1]]}
+    ).map{it[1]}
     tracked_reads = tracked_reads.mix(
         qc.summary.mix(dada.summary).mix(merge_summary)
     )

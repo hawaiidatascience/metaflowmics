@@ -12,7 +12,7 @@ include{ HOLOVIEWS_CLUSTERMAP } from "$moduledir/heatmap/main.nf" \
     addParams( min_abund: 0.05 )
 
 
-workflow holoviews {
+workflow HOLOVIEWS {
     take:
     shared
     constaxonomy

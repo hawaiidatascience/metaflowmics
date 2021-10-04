@@ -13,8 +13,8 @@ include{ MOTHUR_SUMMARY_SINGLE } from "$module_dir/mothur/summarySingle/main.nf"
 include{ MOTHUR_SUMMARY_SHARED } from "$module_dir/mothur/summaryShared/main.nf" \
     addParams( calc: params.beta_diversity)
 
-// Main workflow
-workflow diversity {
+
+workflow DIVERSITY {
     take:
     repfasta
     shared
@@ -22,7 +22,7 @@ workflow diversity {
     main:
     if (params.alpha_diversity != "") {
         MOTHUR_SUMMARY_SINGLE(
-            shared.map{[[otu_id: it[0], step: ''], it[1]]}
+            shared.map{ [it[0], "", it[1]] }
         )
     }
     if (params.beta_diversity != "") {

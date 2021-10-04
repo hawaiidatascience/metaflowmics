@@ -15,14 +15,15 @@ process HMMER_HMMALIGN {
     container "quay.io/biocontainers/hmmer:3.3.2--h1b792b2_1"
 
     input:
-    path fasta
-    path hmm
+    tuple val(meta), path(fasta)
+    tuple val(db_meta), path(hmm)
 
     output:
-    path "*.afa", emit: afa
+    tuple val(meta_upd), path("*.afa"), emit: afa
     path "*.version.txt", emit: version
 
     script:
+	meta_upd = meta + db_meta
     def software = getSoftwareName(task.process)
     def prefix   = fasta.getBaseName()
     def fastacmd = fasta.getExtension() == 'gz' ? "gunzip -c $fasta" : "cat $fasta"

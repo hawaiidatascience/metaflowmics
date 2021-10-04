@@ -5,7 +5,7 @@ include { initOptions; saveFiles; getSoftwareName } from "./functions"
 options = initOptions(params.options)
 
 process HOLOVIEWS_BARS {
-    tag "$otu_id"
+    tag "$meta.id"
     label "process_low"
     label "plot"
     publishDir "${params.outdir}",
@@ -17,10 +17,10 @@ process HOLOVIEWS_BARS {
     conda (params.enable_conda ? "conda-forge::datatable pandas>=1" : null)
 
     input:
-    tuple val(otu_id), file(mg)
+    tuple val(meta), file(mg)
 
     output:
-    tuple val(otu_id), file("barplot*.html")
+    tuple val(meta), file("barplot*.html")
 
     script:
     def software = getSoftwareName(task.process)
@@ -91,7 +91,7 @@ process HOLOVIEWS_BARS {
             .redim.values(**{rank: sorted_taxa, "Group": sorted_groups})
             .opts(**plot_opts)
         )
-        hv.save(bars, f"barplot-{rank}_${otu_id}.html")
+        hv.save(bars, f"barplot-{rank}_${meta.id}.html")
 
     """
 }

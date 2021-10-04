@@ -4,7 +4,7 @@ include { initOptions; saveFiles; getSoftwareName } from "./functions"
 options = initOptions(params.options)
 
 process VSEARCH_CLUSTER {
-    tag "$otu_id"
+    tag "${meta.id}.$otu_id"
     label "process_high"
     publishDir "${params.outdir}",
         mode: params.publish_dir_mode,
@@ -16,18 +16,21 @@ process VSEARCH_CLUSTER {
     conda (params.enable_conda ? "bioconda::vsearch=2.17.0" : null)
 
     input:
-    path fasta
+    tuple val(meta), path(fasta)
     each otu_id
 
     output:
-    tuple val(otu_id), path("vsearch_OTUs-*.tsv"), emit: tsv
-    tuple val(otu_id), path("vsearch_OTUs-*.fasta"), emit: fasta
+    tuple val(meta_upd), path("vsearch_OTUs-*.tsv"), emit: tsv
+    tuple val(meta_upd), path("vsearch_OTUs-*.fasta"), emit: fasta
     // path "summary.csv", emit: summary
     path "*.version.txt", emit: version
 
     script:
     def software = getSoftwareName(task.process)
-    def otu_id_pct = otu_id / 100
+    // def otu_id_pct = otu_id / 100
+	meta_upd = meta.clone()
+	meta_upd["id"] = "${meta.id}.${otu_id}"
+	meta_upd["otu_id"] = otu_id	
     """
     #!/usr/bin/env bash
     vsearch $options.args \\
@@ -35,7 +38,7 @@ process VSEARCH_CLUSTER {
         --sizein \\
         --sizeout \\
         --fasta_width 0 \\
-        --id ${otu_id_pct} \\
+        --id ${otu_id/100} \\
         --strand plus \\
         --cluster_size ${fasta} \\
         --uc clusters${otu_id}.uc \\

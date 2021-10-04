@@ -20,13 +20,14 @@ process DADA2_MERGEPAIRS {
 
     output:
     path "*.RDS", emit: rds
-    path "ASVs-100.{count_table,tsv}", emit: count_table
-    path "ASVs-100.fasta", emit: fasta
-    path "ASVs_duplicates_to_cluster.fasta", optional: true, emit: fasta_dup
+    tuple val(meta), path("ASVs-100.{count_table,tsv}"), emit: count_table
+    tuple val(meta), path("ASVs-100.fasta"), emit: fasta
+	tuple val(meta), path("ASVs_duplicates_to_cluster.fasta"), optional: true, emit: fasta_dup
     path "*_summary.tsv", emit: merge_summary, optional: true
     path "*.version.txt", emit: version
 
     script:
+	meta = [id: "OTUs"]
     def software = getSoftwareName(task.process)
     """
     #!/usr/bin/env Rscript

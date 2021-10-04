@@ -4,7 +4,7 @@ include { initOptions; saveFiles; getSoftwareName } from "./functions"
 options = initOptions(params.options)
 
 process MOTHUR_REMOVE_RARE {
-    tag "$otu_id"
+    tag "$meta.id"
     label "process_medium"
     publishDir "${params.outdir}",
         mode: params.publish_dir_mode,
@@ -15,18 +15,18 @@ process MOTHUR_REMOVE_RARE {
     conda (params.enable_conda ? "bioconda::mothur:1.44.1" : null)
 
     input:
-    tuple val(otu_id), file(list), file(count)
+    tuple val(meta), file(list), file(count)
 
     output:
-    tuple val(otu_id), path("${outprefix}.list"), emit: list
-    tuple val(otu_id), path("${outprefix}.shared"), emit: shared
-    tuple val(otu_id), path("${outprefix}.count_table"), emit: count_table
+    tuple val(meta), path("${outprefix}.list"), emit: list
+    tuple val(meta), path("${outprefix}.shared"), emit: shared
+    tuple val(meta), path("${outprefix}.count_table"), emit: count_table
     path "*.version.txt", emit: version
 
     script:
     def software = getSoftwareName(task.process)
     def procname = "${task.process.tokenize(':')[-1].toLowerCase()}"
-    outprefix = options.suffix ? "$options.suffix" : "${procname}.${otu_id}"
+    outprefix = "${procname}.${meta.id}"
     """
     mothur "#
     remove.rare(count=$count, list=$list, nseqs=${params.min_abundance});

@@ -2,8 +2,9 @@
 
 from pathlib import Path
 import argparse
+from scipy.special import comb
 from functools import lru_cache
-from itertools import groupby
+from itertools import groupby, combinations
 
 from Bio.SeqIO.FastaIO import SimpleFastaParser
 import numpy as np
@@ -101,36 +102,27 @@ def map_on_template(template, query, counts, gap_chars={"-", "."}):
     return query_aligned
 
 def find_optimal_mapping(letters, total_len, counts):
-    """
-    Recursive function to find the optimal placement of letters
-    such that the total string is length <total_len>. The optimal
-    location is defined as the one for which the sum of occurences
-    for each letter at the chosen column is maximal
-    """
-    @lru_cache()
-    def bfs(letters, ngaps, pos=1):
-        """
-        2 options: 1) we put down a letter
-                   2) we put down a gap
-        We stop when we have no more letters or no more gaps
-        """
-        if not letters:
-            return (0, [])
+    print(f"Optimal mapping for n={total_len} and k={len(letters)}")
 
-        (score1, sol1) = bfs(letters[1:], ngaps, pos+1)
-        score1 += counts[letters[0]][pos]
+    counts = np.array([ct for ct in counts.loc[list(letters)]])
+    max_score = counts.max(axis=1).sum()
+    n_combs = comb(total_len, len(letters), exact=True)
 
-        if ngaps > 0:
-            (score2, sol2) = bfs(letters, ngaps-1, pos+1)
-            if score2 > score1:
-                return (score2, sol2)
+    letter_selector = np.arange(len(letters))
+    best_score, best_sol = (0, [])
 
-        return (score1, [pos]+sol1)
+    for k, positions in enumerate(combinations(range(total_len), len(letters))):
+        score = counts[letter_selector, positions].sum()
 
-    (score, positions) = bfs(letters, total_len-len(letters)-1, pos=0)
+        if score >= best_score:
+            best_score, best_sol = (score, positions)
+
+        if n_combs > 1e6 and (score >= max_score*0.5 or k > 1e7):
+            break
+
     letter_map = dict(zip(positions, letters))
     opt_aln = "".join(letter_map.get(i, '-') for i in range(total_len))
-    
+
     return opt_aln
 
 if __name__ == '__main__':

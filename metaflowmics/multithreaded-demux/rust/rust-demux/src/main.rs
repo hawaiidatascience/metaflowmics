@@ -1,5 +1,4 @@
 use std::error::Error;
-use std::convert::From;
 
 use csv::ReaderBuilder;
 use ndarray_npy::write_npy;
@@ -23,12 +22,14 @@ fn main() {
 		args.value_of("fwd").expect("Could not find fwd fastq file"),
 		&fwd, 4, 10000000
 	);
-	let freqs = normalize_counts(&counts);
-	let interp = interpolate_counts(&freqs);
+	let mut freqs = counts.mapv(|elem| elem as f64);
+	normalize_counts(&mut freqs);
 
+	let mut interp = interpolate_counts(&freqs);
 	write_npy("freqs_raw.npy", &freqs)
 		.expect("Could not write numpy array");
 
+	normalize_counts(&mut interp);
 	write_npy("freqs_interp.npy", &interp)
 		.expect("Could not write numpy array");
 

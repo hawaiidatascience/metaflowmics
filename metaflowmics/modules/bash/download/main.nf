@@ -100,10 +100,12 @@ process DOWNLOAD_UNITE {
     container "nakor/bash:5.1.4"
 
     output:
-    path "*.fasta", emit: fasta
+    tuple val(meta), path("*.fasta"), emit: fasta
 
     script:
-    root_url = "https://files.plutof.ut.ee/public/orig"
+	meta = [db_name: "unite_$params.db_release", db_type: "nucl"]
+    def root_url = "https://files.plutof.ut.ee/public/orig"
+
     if (params.db_release == 'fungi') {
         url_base = "${root_url}/1E/66"
         file = "1E662B6EB320312A61E7E3218327F34C7DB09CFF8E4686A89EF47886822DA6AB.gz"
@@ -134,14 +136,16 @@ process DOWNLOAD_SILVA_FOR_MOTHUR {
     container "nakor/bash:5.1.4"
 
     output:
-    path "*.tax", emit: tax
-    path "*.align", emit: align
+    tuple val(tax_info), path("*.tax"), emit: tax
+    tuple val(aln_info), path("*.align"), emit: align
 
     script:
-    url_base = "https://mothur.s3.us-east-2.amazonaws.com/wiki"
-    file = "silva.${params.db_release}_v138.tgz"
+    def url_base = "https://mothur.s3.us-east-2.amazonaws.com/wiki"
+	db_name = "silva.${params.db_release}_v138"
+	tax_info = [id: "${db_name}.tax", db_name: db_name, db_type: "tax"]
+	aln_info = [id: "${db_name}.nucl", db_name: db_name, db_type: "nucl"]	
     """
-    wget -qO- $url_base/$file | tar xz
+    wget -qO- ${url_base}/${db_name}.tgz | tar xz
     """
 }
 

@@ -4,7 +4,7 @@ include { initOptions; saveFiles; getSoftwareName } from "./functions"
 options = initOptions(params.options)
 
 process MOTHUR_CLUSTER {
-    tag "$otu_id"
+    tag "${meta.id}.${otu_id}"
     label "process_high"
     publishDir "${params.outdir}",
         mode: params.publish_dir_mode,
@@ -15,24 +15,28 @@ process MOTHUR_CLUSTER {
     conda (params.enable_conda ? "bioconda::mothur:1.44.1" : null)
 
     input:
-    tuple file(fasta), file(count)
+    tuple val(meta), path(fasta), path(count), path(tax)
     each otu_id
 
     output:
-    tuple val(otu_id), path("${outprefix}.list"), emit: list
-    tuple val(otu_id), path("${outprefix}.shared"), emit: shared
+    tuple val(meta_upd), path("*.list"), emit: list
+    tuple val(meta_upd), path("*.shared"), emit: shared
+	tuple val(meta_upd), path(fasta), emit:fasta
+	tuple val(meta_upd), path(count), emit:count_table
+	tuple val(meta_upd), path(tax), emit:taxonomy
     path "*.version.txt", emit: version
 
     script:
-    def software = getSoftwareName(task.process)
-    def method = otu_id == 100 ? "unique" : "dgc"
-    def otu_diff = (100-otu_id) / 100
-    def procname = "${task.process.tokenize(':')[-1].toLowerCase()}"
+	meta_upd = meta.clone()
+	meta_upd.id = "${meta.id}.${otu_id}"
+	meta_upd.otu_id = otu_id
     def ext = ["rep.fasta", "cons.taxonomy", "shared", "list", "database"]
-    outprefix = options.suffix ? "$options.suffix" : "${procname}.${otu_id}"
+    def software = getSoftwareName(task.process)
+    def procname = "${task.process.tokenize(':')[-1].toLowerCase()}"
+    def outprefix = "${procname}.${meta_upd.id}"
     """
     mothur "#
-    cluster(count=$count, fasta=$fasta, method=$method, cutoff=$otu_diff);
+    cluster(count=$count, fasta=$fasta, method=${otu_id == 100 ? "unique" : "dgc"}, cutoff=${(100-meta_upd.otu_id) / 100});
     make.shared(count=current, list=current)"
 
     mv *.list ${outprefix}.list

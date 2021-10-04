@@ -4,7 +4,7 @@ include { initOptions; saveFiles; getSoftwareName } from './functions'
 options = initOptions(params.options)
 
 process LULU {
-    tag "$otu_id"
+    tag "$meta.id"
     label "process_high"
     publishDir "${params.outdir}",
         mode: params.publish_dir_mode,
@@ -16,12 +16,12 @@ process LULU {
     // no conda repository for LULU
 
     input:
-    tuple val(otu_id), path(matchlist), path(abundance), path(fasta)
+    tuple val(meta), path(matchlist), path(abundance), path(fasta)
 
     output:
-    tuple val(otu_id), path("abundance_table-lulu-*.{csv,shared}"), emit: abundance
-    tuple val(otu_id), path("*.fasta"), emit: fasta
-    tuple val(otu_id), path("mapping_discarded*.txt"), emit: discarded, optional: true
+    tuple val(meta), path("abundance_table-lulu-*.{csv,shared}"), emit: abundance
+    tuple val(meta), path("*.fasta"), emit: fasta
+    tuple val(meta), path("mapping_discarded*.txt"), emit: discarded, optional: true
     path "*.summary", emit: summary
     path "*.version.txt", emit: version
 
@@ -64,34 +64,34 @@ process LULU {
 
     if ("$ext"=='shared') {
         shared <- cbind(
-            rep(1-${otu_id}/100, ncol(otutab)),
+            rep(1-${meta.otu_id}/100, ncol(otutab)),
             colnames(otutab),
             rep(nrow(otutab), ncol(otutab)),
             t(otutab)
         )
         colnames(shared) <- c('label', 'Group', 'numOtus', rownames(otutab))
-        write.table(shared, "abundance_table-lulu-${otu_id}.shared", quote=F, sep='\\t', row.names=F)
+        write.table(shared, "abundance_table-lulu-${meta.id}.shared", quote=F, sep='\\t', row.names=F)
     } else {
         abund <- cbind(
             rownames(otutab),
             otutab
         )
         colnames(abund) <- c("OTU", colnames(otutab))
-        write.table(abund, "abundance_table-lulu-${otu_id}.csv", quote=F, sep=',', row.names=F)
+        write.table(abund, "abundance_table-lulu-${meta.id}.csv", quote=F, sep=',', row.names=F)
     }
 
-    write.table(res\$otu_map[res\$discarded_otus,], "mapping_discarded-${otu_id}.txt", quote=F)
-    write.fasta(fasta, names(fasta), "sequences-${otu_id}.fasta")
+    write.table(res\$otu_map[res\$discarded_otus,], "mapping_discarded-${meta.id}.txt", quote=F)
+    write.fasta(fasta, names(fasta), "sequences-${meta.id}.fasta")
 
     # Write counts
     summary <- cbind(
         rep("LULU", ncol(otutab)),
-        rep("$otu_id", ncol(otutab)),
+        rep("$meta.id", ncol(otutab)),
         colnames(otutab),
         colSums(otutab),
         colSums(otutab > 0)
     )
-    write.table(summary, "lulu_${otu_id}.summary", quote=F, sep=',', row.names=F, col.names=F)    
+    write.table(summary, "lulu_${meta.id}.summary", quote=F, sep=',', row.names=F, col.names=F)    
 
     writeLines(paste0(packageVersion('lulu')), "${software}.version.txt")
     """

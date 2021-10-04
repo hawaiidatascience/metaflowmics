@@ -10,10 +10,10 @@ process MOTHUR_SUMMARY_SINGLE {
     conda (params.enable_conda ? "bioconda::mothur:1.44.1" : null)
 
     input:
-    tuple val(meta), file(shared)
+    tuple val(meta), val(step), file(shared)
 
     output:
-    path "*.csv", emit: summary
+    tuple val(meta), path("*.csv"), emit: summary
     path "*.version.txt", emit: version
 
     script:
@@ -25,7 +25,7 @@ process MOTHUR_SUMMARY_SINGLE {
     # summary
     if [ "$params.calc" = "nseqs-sobs" ]; then
         cut -f2- *.groups.summary | tail -n+2 \\
-        | awk '{OFS=","}{print "$meta.step","$meta.otu_id",\$1,int(\$2),int(\$3)}' \\
+        | awk '{OFS=","}{print "$step","$meta.otu_id",\$1,int(\$2),int(\$3)}' \\
         | tr "\\t" "," \\
         > ${ext}.csv
         rm -f *.groups.summary

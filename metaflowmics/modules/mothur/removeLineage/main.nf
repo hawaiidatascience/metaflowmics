@@ -4,7 +4,7 @@ include { initOptions; saveFiles; getSoftwareName } from "./functions"
 options = initOptions(params.options)
 
 process MOTHUR_REMOVE_LINEAGE {
-    tag "$otu_id"
+    tag "$meta.id"
     label "process_medium"
     publishDir "${params.outdir}",
         mode: params.publish_dir_mode,
@@ -15,19 +15,19 @@ process MOTHUR_REMOVE_LINEAGE {
     conda (params.enable_conda ? "bioconda::mothur:1.44.1" : null)
 
     input:
-    tuple val(otu_id), file(count), file(taxonomy), file(list)
+    tuple val(meta), file(count), file(taxonomy), file(list)
 
     output:
-    tuple val(otu_id), path("${outprefix}.count_table"), emit: count_table
-    tuple val(otu_id), path("${outprefix}.taxonomy"), emit: taxonomy
-    tuple val(otu_id), path("${outprefix}.list"), emit: list
-    tuple val(otu_id), path("${outprefix}.shared"), emit: shared
+    tuple val(meta), path("${outprefix}.count_table"), emit: count_table
+    tuple val(meta), path("${outprefix}.taxonomy"), emit: taxonomy
+    tuple val(meta), path("${outprefix}.list"), emit: list
+    tuple val(meta), path("${outprefix}.shared"), emit: shared
     path "*.version.txt", emit: version
 
     script:
     def software = getSoftwareName(task.process)
     def procname = "${task.process.tokenize(':')[-1].toLowerCase()}"
-    outprefix = options.suffix ? options.suffix : procname
+    outprefix = "${procname}.${meta.id}"
     """
     mothur "#remove.lineage(taxonomy=$taxonomy, count=$count, list=$list, taxon="$params.taxa_to_filter"); make.shared(list=current, count=current)"
 

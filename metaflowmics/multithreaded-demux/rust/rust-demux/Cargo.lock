@@ -415,9 +415,8 @@ dependencies = [
 
 [[package]]
 name = "pav_regression"
-version = "0.2.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8437f936c4444ecfe855507e025008cc652ed023c907d0f900a637bb37ceef7c"
+version = "0.2.4"
+source = "git+https://github.com/sanity/pav.rs#cedccec2c4ab3b8a6a7640afb43a7008f9c69d26"
 dependencies = [
  "ordered-float",
 ]

@@ -2,7 +2,7 @@ nextflow.enable.dsl = 2
 
 params.options = [:]
 module_dir = "../../modules"
-subworkflow_dir = "../../subworkflows"
+subworkflow_dir = ".subworkflows"
 
 include {align_tax_groups as align_species} from "$subworkflow_dir/muscle_per_taxa.nf" \
     addParams( field: 6, outdir: "$params.outdir/up/1-species" )

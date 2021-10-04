@@ -4,6 +4,7 @@ include { initOptions; saveFiles; getSoftwareName } from "./functions"
 options = initOptions(params.options)
 
 process MOTHUR_CHIMERA {
+	tag "$meta.id"
     label "process_high"
     publishDir "${params.outdir}",
         mode: params.publish_dir_mode,
@@ -14,17 +15,17 @@ process MOTHUR_CHIMERA {
     conda (params.enable_conda ? "bioconda::mothur:1.44.1" : null)
 
     input:
-    tuple file(fasta), file(count)
+    tuple val(meta), path(fasta), path(count)
 
     output:
-    path "${outprefix}.fasta", emit: fasta
-    path "${outprefix}.count_table", emit: count_table
+    tuple val(meta), path("${outprefix}.fasta"), emit: fasta
+    tuple val(meta), path("${outprefix}.count_table"), emit: count_table
     path "*.version.txt", emit: version
 
     script:
     def software = getSoftwareName(task.process)
     def procname = "${task.process.tokenize(':')[-1].toLowerCase()}"
-    outprefix = options.suffix ? "$options.suffix" : "${procname}"
+    outprefix = "${procname}.${meta.id}"
     """
     mothur "#
     chimera.${params.chimera_tool}(fasta=$fasta, count=$count, dereplicate=t);

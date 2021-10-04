@@ -14,10 +14,10 @@ process EMBOSS_TRANALIGN {
     conda (params.enable_conda ? "bioconda::emboss=6.6.0" : null)
 
     input:
-    tuple path(afa), path(fna)
+    tuple val(meta), path(afa), path(fna)
 
     output:
-    path "*.codons.afa", emit: fna
+    tuple val(meta), path("*.codons.afa"), emit: fna
     path "*.version.txt", emit: version
 
     script:

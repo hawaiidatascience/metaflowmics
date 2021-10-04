@@ -14,16 +14,16 @@ process MOTHUR_MAKE_SHARED {
     conda (params.enable_conda ? "bioconda::mothur:1.44.1" : null)
 
     input:
-    tuple val(otu_id), file(list), file(count)
+    tuple val(meta), file(list), file(count)
 
     output:
-    tuple val(otu_id), path("${outprefix}.shared"), emit: shared
+    tuple val(meta), path("*.shared"), emit: shared
     path "*.version.txt", emit: version
 
     script:
     def software = getSoftwareName(task.process)
     def procname = "${task.process.tokenize(':')[-1].toLowerCase()}"
-    outprefix = options.suffix ? "$options.suffix" : "${procname}"
+    def outprefix = "${procname}.${meta.id}"
     """
     mothur "#make.shared(count=$count, list=$list)"
 

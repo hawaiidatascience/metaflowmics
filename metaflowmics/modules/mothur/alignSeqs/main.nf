@@ -2,9 +2,9 @@
 include { initOptions; saveFiles; getSoftwareName } from "./functions"
 
 options = initOptions(params.options)
-params.no_aln = false
 
 process MOTHUR_ALIGN_SEQS {
+	tag "$meta.id"
     label "process_high"
     publishDir "${params.outdir}",
         mode: params.publish_dir_mode,
@@ -15,37 +15,23 @@ process MOTHUR_ALIGN_SEQS {
     conda (params.enable_conda ? "bioconda::mothur:1.44.1" : null)
 
     input:
-    tuple file(fasta), file(count)
-    path db_aln
+    tuple val(meta), path(fasta), val(db_meta), file(db_aln)
 
     output:
-    path "${outprefix}.fasta", emit: fasta
-    path "${outprefix}.count_table", emit: count_table
+    tuple val(meta_upd), path("*.fasta"), emit: fasta
     path "*.version.txt", emit: version
 
     script:
+	meta_upd = meta + db_meta
     def software = getSoftwareName(task.process)
     def procname = "${task.process.tokenize(':')[-1].toLowerCase()}"
-    outprefix = options.suffix ? "$options.suffix" : "${procname}"
-    align_cmd = params.no_aln ? "" : "align.seqs(fasta=$fasta, reference=$db_aln);"
-    current = params.no_aln ? "$fasta" : "current"
+    def outprefix = "${procname}.${meta.id}"
     """
-    mothur "#$align_cmd
-    filter.seqs(fasta=$current, vertical=T);
-	screen.seqs(fasta=current, count=$count, minlength=${params.min_aln_len});
-	screen.seqs(fasta=current, count=current, optimize=start-end, criteria=${params.criteria});
-	summary.seqs(fasta=current)"
+    mothur "#
+	align.seqs(fasta=$fasta, reference=$db_aln);
+	filter.seqs(fasta=current, vertical=T);"
 
-    mv *.filter.good.good.fasta ${outprefix}.fasta
-
-    # if it exists
-    if [ -f *.good.good.count_table ]; then
-        mv *.good.good.count_table ${outprefix}.count_table
-    elif [ -f *.good.count_table ]; then
-        mv *.good.count_table ${outprefix}.count_table
-    else
-        cp $count ${outprefix}.count_table
-    fi
+	mv *.filter.fasta ${outprefix}.fasta
 
     # print version
     mothur -v | tail -n+2 | head -1 | cut -d"=" -f2 > ${software}.version.txt

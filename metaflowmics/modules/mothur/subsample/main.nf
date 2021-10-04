@@ -4,7 +4,7 @@ include { initOptions; saveFiles; getSoftwareName } from "./functions"
 options = initOptions(params.options)
 
 process MOTHUR_SUBSAMPLE {
-    tag "$otu_id"
+    tag "$meta.id"
     label "process_medium"
     publishDir "${params.outdir}",
         mode: params.publish_dir_mode,
@@ -15,22 +15,22 @@ process MOTHUR_SUBSAMPLE {
     conda (params.enable_conda ? "bioconda::mothur:1.44.1" : null)
 
     input:
-    tuple val(otu_id), file(list), file(count)
-    val lvl
+    tuple val(meta), file(list), file(count)
+    each level
 
     output:
-    tuple val(otu_id), path("${outprefix}.shared"), emit: shared
-    tuple val(otu_id), path("${outprefix}.list"), emit: list
-    tuple val(otu_id), path("${outprefix}.count_table"), emit: count_table
+    tuple val(meta), path("*.shared"), emit: shared
+    tuple val(meta), path("*.list"), emit: list
+    tuple val(meta), path("*.count_table"), emit: count_table
     path "*.version.txt", emit: version
 
     script:
     def software = getSoftwareName(task.process)
     def procname = "${task.process.tokenize(':')[-1].toLowerCase()}"
-    outprefix = options.suffix ? "$options.suffix" : "${procname}.${otu_id}"
+    def outprefix = "${procname}.${meta.id}"
     """
     mothur "#
-    sub.sample(list=$list, count=$count, size=$lvl, persample=true);
+    sub.sample(list=$list, count=$count, size=$level, persample=true);
     make.shared(list=current, count=current)"
 
     # rename outputs

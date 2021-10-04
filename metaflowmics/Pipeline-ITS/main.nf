@@ -16,21 +16,23 @@ include{ VSEARCH_USEARCH_GLOBAL } from "$module_dir/vsearch/usearchGlobal/main.n
     addParams( options: [publish_dir: "interm/contig_processing/lulu"] )
 include{ LULU } from "$module_dir/R/lulu/main.nf" \
     addParams( options: [publish_dir: "interm/contig_processing/lulu"] )
-include{ DADA2_ASSIGN_TAXONOMY } from "$module_dir/R/dada2/assignTaxonomy/main.nf" \
-    addParams( options: [publish_dir: "interm/contig_processing/taxonomy"] )
+// include{ DADA2_ASSIGN_TAXONOMY } from "$module_dir/R/dada2/assignTaxonomy/main.nf" \
+//     addParams( options: [publish_dir: "interm/contig_processing/taxonomy"] )
 include{ SUMMARIZE_TABLE; READ_TRACKING } from "$module_dir/util/misc/main.nf" \
     addParams( options: [publish_dir: "read_tracking"], taxa_are_rows: "T" )
 include{ CONVERT_TO_MOTHUR_FORMAT } from "$module_dir/util/misc/main.nf" \
     addParams( options: [publish_dir: "results"], taxa_are_rows: "T" )
 
 // subworkflow imports
-include { dada2 } from "$subworkflow_dir/dada2.nf" \
+include { DADA2 } from "$subworkflow_dir/dada2.nf" \
     addParams( outdir: "$params.outdir/interm/read_processing",
               trunc_len: 0, trunc_quality: 2, min_read_len: 20, paired_end: false,
               early_chimera_removal: true, format: "VSEARCH", min_overlap: -1, max_mismatch: -1 )
-include { holoviews } from "$subworkflow_dir/holoviews.nf" \
+include { TAXONOMY } from "$subworkflow_dir/taxonomy.nf" \
+     addParams( outdir: "$params.outdir/interm/contig_processing/taxonomy" )
+include { HOLOVIEWS } from "$subworkflow_dir/holoviews.nf" \
     addParams( options: [publish_dir: "figures"] )
-include { diversity } from "$subworkflow_dir/diversity.nf" \
+include { DIVERSITY } from "$subworkflow_dir/diversity.nf" \
     addParams( options: [publish_dir: "postprocessing"], skip_unifrac: true, unifrac: '' )
 
 // Functions
@@ -46,29 +48,35 @@ workflow pipeline_ITS {
     tracked_files = Channel.empty()
     raw_counts = reads.map{["raw", it[1][0].countFastq(), it]}
 
+	/*
+	 ========================================================================================
+	 Read trimming, QC, denoising and merging
+	 ========================================================================================
+	 */	
     // ===== Extract ITS marker =====
     its = ITSXPRESS(
         raw_counts.filter{it[1] > params.min_read_count}.map{it[2]}
     )
 
     // ===== Denoising into ASVs =====
-    asvs = dada2(
-        its.fastq.map{meta, contig ->
-            meta_upd = meta.clone()
-            meta_upd.paired_end = false
-            [meta_upd, contig]
-        }
-    )
-    
-    // ===== Cluster ASVs into OTUs =====
+    asvs = DADA2(its.fastq)
+
+	/*
+	 ========================================================================================
+	 Contigs processing
+	 ========================================================================================
+	 */		
     otus = VSEARCH_CLUSTER(
         asvs.fasta_dup,
         params.clustering_thresholds.split(",").findAll({it!="100"}).collect{it as int}
     )
-    otus_fasta = asvs.fasta.map{[100, it]}.mix(otus.fasta)
-    otus_table = asvs.count_table.map{[100, it]}.mix(otus.tsv)
+    otus_fasta = asvs.fasta.mix(otus.fasta)
+    otus_table = asvs.count_table.mix(otus.tsv).map{
+		it[0].otu_id = it[0].otu_id ?: 100
+		it
+	}
 
-    otus_summary = SUMMARIZE_TABLE(otus_table.map{["clustering", it[0], it[1]]})
+    otus_summary = SUMMARIZE_TABLE(otus_table.map{[it[0], "clustering", it[1]]}).map{it[1]}
 
     // ===== Optional co-occurrence pattern correction =====
     if (!params.skip_lulu) {
@@ -83,14 +91,23 @@ workflow pipeline_ITS {
         otus_table = lulu.abundance
     }
 
-    // ===== Taxonomy assignment with Sintax =====
+	/*
+	 ========================================================================================
+	 Taxonomic assignment (VSEARCH's sintax)
+	 ========================================================================================
+	 */		
     unite_db = DOWNLOAD_UNITE()
-    taxonomy = DADA2_ASSIGN_TAXONOMY(
+    taxonomy = TAXONOMY(
         otus_fasta,
+		otus_table,
         unite_db
     ).taxonomy
 
-    // ===== Track read in the pipeline =====    
+	/*
+	 ========================================================================================
+	 Read tracking through the pipeline
+	 ========================================================================================
+	 */		
     tracked_files = tracked_files
         .mix(
             raw_counts.map{"raw,,${it[2][0].id},${it[1]}"}
@@ -100,6 +117,7 @@ workflow pipeline_ITS {
         .mix(asvs.tracking)
         .mix(otus_summary)
         .collectFile(name: "summary.csv")
+		.map{["unite", it]}
 
     summary = READ_TRACKING( tracked_files )
 
@@ -111,14 +129,22 @@ workflow pipeline_ITS {
         otus_table.join(taxonomy)
     )
 
-    // ===== Diversity =====
-    diversity(
+	/*
+	 ========================================================================================
+	 Diversity metrics (alpha, beta)
+	 ========================================================================================
+	 */		
+    DIVERSITY(
         otus_fasta,
         mothur_files.shared
     )
     
-    // ===== Plots =====
-    holoviews(
+	/*
+	 ========================================================================================
+	 Interactive visualization with holoviews python package
+	 ========================================================================================
+	 */	
+    HOLOVIEWS(
         mothur_files.shared,
         mothur_files.taxonomy
     )

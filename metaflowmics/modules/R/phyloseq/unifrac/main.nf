@@ -4,7 +4,7 @@ include { initOptions; saveFiles; getSoftwareName } from "./functions"
 options = initOptions(params.options)
 
 process PHYLOSEQ_UNIFRAC {
-    tag "$otu_id"
+    tag "$meta.id"
     label "process_high"
     publishDir "${params.outdir}",
         mode: params.publish_dir_mode,
@@ -15,10 +15,10 @@ process PHYLOSEQ_UNIFRAC {
     conda (params.enable_conda ? "bioconda::bioconductor-phyloseq::1.34.0 conda-forge::r-data.table" : null)
 
     input:
-    tuple val(otu_id), path(shared), path(tree)
+    tuple val(meta), path(shared), path(tree)
 
     output:
-    tuple val(otu_id), path("unifrac*.csv"), emit: csv
+    tuple val(meta), path("unifrac*.csv"), emit: csv
     path "*.version.txt", emit: version
 
     script:
@@ -43,7 +43,7 @@ process PHYLOSEQ_UNIFRAC {
 
     dists <- UniFrac(ps, weighted=("$params.unifrac"=="weighted"), parallel=TRUE)
 
-    write.csv(as.matrix(dists), "unifrac_${params.unifrac}_${otu_id}.csv")
+    write.csv(as.matrix(dists), "unifrac_${params.unifrac}_${meta.id}.csv")
 
     writeLines(paste0(packageVersion("phyloseq")), "${software}.version.txt")
     """

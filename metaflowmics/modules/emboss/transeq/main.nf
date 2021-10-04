@@ -14,12 +14,12 @@ process EMBOSS_TRANSEQ {
     conda (params.enable_conda ? "bioconda::emboss=6.6.0" : null)
 
     input:
-    path fasta
+    tuple val(meta), path(fasta)
 
     output:
-    path "*.faa", emit: faa // raw output from transeq
-    path "*_single.faa", emit: single
-    path "*_multiple.faa", emit: multiple
+    tuple val(meta), path("*.faa"), emit: faa // raw output from transeq
+    tuple val(meta), path("*_single.faa"), emit: single
+    tuple val(meta), path("*_multiple.faa"), emit: multiple
     path "*.version.txt", emit: version
 
     script:

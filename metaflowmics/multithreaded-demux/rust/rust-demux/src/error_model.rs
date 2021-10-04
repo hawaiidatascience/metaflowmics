@@ -10,7 +10,7 @@ use itertools::izip;
 use seq_io::fastq::{Reader,Record};
 
 extern crate ndarray;
-use ndarray::{Array,Array1,Array2,Array3,Axis,s};
+use ndarray::{Array,Array1,Array3,s};
 
 extern crate pav_regression;
 pub use pav_regression::pav::{Point,IsotonicRegression};
@@ -69,20 +69,23 @@ pub fn count_transitions(
 	counts
 }
 
-pub fn normalize_counts(counts: &Array3<u32>) -> Array3<f64> {
+pub fn normalize_counts(counts: &mut Array3<f64>) {
 	
-	let mut freqs = Array::zeros(counts.raw_dim());
+	// let mut freqs = Array::zeros(counts.raw_dim());
 
 	for i2 in 0..4 {
 		for q in 0..41 {
-			let v = counts.slice(s![.., i2, q]);
-			let sum = v.sum().max(1) as f64;
-			let new_val: Array1<f64> = v.iter().map(|x| *x as f64 / sum).collect();
-			freqs.slice_mut(s![.., i2, q]).assign(&new_val);
+			let new_val: Array1<f64> = {
+				let v = counts.slice(s![.., i2, q]);
+				let sum = v.sum().max(1.) as f64;
+				v.iter().map(|x| *x as f64 / sum).collect()
+			};
+			// let v = counts.slice(s![.., i2, q]);
+			// let sum = v.sum().max(1) as f64;
+			// let new_val: Array1<f64> = v.iter().map(|x| *x as f64 / sum).collect();
+			counts.slice_mut(s![.., i2, q]).assign(&new_val);
 		}
 	}
-
-	freqs
 }
 
 pub fn interpolate_counts(counts: &Array3<f64>) -> Array3<f64>{
@@ -117,20 +120,6 @@ pub fn interpolate_counts(counts: &Array3<f64>) -> Array3<f64>{
 				.map(|xi| (10 as f64).powf(xi))
 				.collect::<Array1<f64>>();
 
-			if i1 == 0 && i2 == 3 {
-				let x1 = vec![0.,1.,2.,3.,4.];
-				let y1 = vec![1., 0.9, 0.7, 0.5, 0.];
-				//let y1 = vec![0.,0.5,0.7,0.9,1.];
-				
-				let points1 = x1.clone().iter().zip(y1.clone())
-					.map(|(xi, yi)| Point::new(*xi as f64, (yi as f64)))
-					.collect::<Vec<Point>>();
-				let model1 = IsotonicRegression::new_descending(&points1);
-				let y_hat1 = x1.iter().map(|xi| model1.interpolate(*xi as f64))
-					.collect::<Array1<f64>>();
-					
-				println!("{} -> {}\nBefore => {:?}\nAfter => {:?}\n\n", i1, i2, &y1, &y_hat1);
-			}
 			interp.slice_mut(s![i1, i2, ..]).assign(&y_hat);
 		}
 	}
