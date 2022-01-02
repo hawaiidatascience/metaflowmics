@@ -16,8 +16,8 @@ include{ VSEARCH_USEARCH_GLOBAL } from "$module_dir/vsearch/usearchGlobal/main.n
     addParams( options: [publish_dir: "interm/contig_processing/lulu"] )
 include{ LULU } from "$module_dir/R/lulu/main.nf" \
     addParams( options: [publish_dir: "interm/contig_processing/lulu"] )
-// include{ DADA2_ASSIGN_TAXONOMY } from "$module_dir/R/dada2/assignTaxonomy/main.nf" \
-//     addParams( options: [publish_dir: "interm/contig_processing/taxonomy"] )
+include{ DADA2_ASSIGN_TAXONOMY } from "$module_dir/R/dada2/assignTaxonomy/main.nf" \
+    addParams( options: [publish_dir: "interm/contig_processing/taxonomy"] )
 include{ SUMMARIZE_TABLE; READ_TRACKING } from "$module_dir/util/misc/main.nf" \
     addParams( options: [publish_dir: "read_tracking"], taxa_are_rows: "T" )
 include{ CONVERT_TO_MOTHUR_FORMAT } from "$module_dir/util/misc/main.nf" \
@@ -28,8 +28,6 @@ include { DADA2 } from "$subworkflow_dir/dada2.nf" \
     addParams( outdir: "$params.outdir/interm/read_processing",
               trunc_len: 0, trunc_quality: 2, min_read_len: 20, paired_end: false,
               early_chimera_removal: true, format: "VSEARCH", min_overlap: -1, max_mismatch: -1 )
-include { TAXONOMY } from "$subworkflow_dir/taxonomy.nf" \
-     addParams( outdir: "$params.outdir/interm/contig_processing/taxonomy" )
 include { HOLOVIEWS } from "$subworkflow_dir/holoviews.nf" \
     addParams( options: [publish_dir: "figures"] )
 include { DIVERSITY } from "$subworkflow_dir/diversity.nf" \
@@ -97,9 +95,8 @@ workflow pipeline_ITS {
 	 ========================================================================================
 	 */		
     unite_db = DOWNLOAD_UNITE()
-    taxonomy = TAXONOMY(
+    taxonomy = DADA2_ASSIGN_TAXONOMY(
         otus_fasta,
-		otus_table,
         unite_db
     ).taxonomy
 
@@ -122,7 +119,7 @@ workflow pipeline_ITS {
     summary = READ_TRACKING( tracked_files )
 
 	// Save fasta to result folder
-	otus_fasta.map{it[1].copyTo("$params.outdir/results/OTUs.${it[0]}.fasta")}
+	otus_fasta.map{it[1].copyTo("$params.outdir/results/OTUs.${it[0].id}.fasta")}
 	
     // Conversion to mothur format
     mothur_files = CONVERT_TO_MOTHUR_FORMAT(

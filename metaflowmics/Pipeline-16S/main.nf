@@ -55,7 +55,8 @@ workflow pipeline_16S {
     otus = MOTHUR(
         asvs.fasta,
         asvs.count_table,
-        db.tax.mix(db.align)
+        db.aln,
+		db.tax
     )
 	
 	/*

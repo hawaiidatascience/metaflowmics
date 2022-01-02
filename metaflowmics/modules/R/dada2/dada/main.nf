@@ -49,7 +49,7 @@ process DADA2_DADA {
     sapply(names(denoised), function(x) saveRDS(denoised[[x]], sprintf("%s${suffix}.denoised.RDS", x)))
 
     # Write counts
-    if ($meta.orient == 1) {
+    if ("$meta.orient" == "R1") {
         counts <- lapply(denoised, getUniques)
         abund <- sapply(counts, sum)
         richness <- sapply(counts, function(x) sum(x>0))

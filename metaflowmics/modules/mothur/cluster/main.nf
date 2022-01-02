@@ -4,7 +4,7 @@ include { initOptions; saveFiles; getSoftwareName } from "./functions"
 options = initOptions(params.options)
 
 process MOTHUR_CLUSTER {
-    tag "${meta.id}.${otu_id}"
+    tag "${otu_id}"
     label "process_high"
     publishDir "${params.outdir}",
         mode: params.publish_dir_mode,
@@ -28,7 +28,7 @@ process MOTHUR_CLUSTER {
 
     script:
 	meta_upd = meta.clone()
-	meta_upd.id = "${meta.id}.${otu_id}"
+	meta_upd.id = "${otu_id}"
 	meta_upd.otu_id = otu_id
     def ext = ["rep.fasta", "cons.taxonomy", "shared", "list", "database"]
     def software = getSoftwareName(task.process)

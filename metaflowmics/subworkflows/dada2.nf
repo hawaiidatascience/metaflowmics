@@ -9,12 +9,12 @@ module_dir = "../modules"
 include{ DADA2_FILTERANDTRIM } from "$module_dir/R/dada2/filterAndTrim/main.nf" \
     addParams( options: [publish_dir: "quality-filtering"] )
 include{ DADA2_DEREPFASTQ } from "$module_dir/R/dada2/derepFastq/main.nf" \
+    addParams( options: [publish_dir: "quality-filtering"] )
+include{ DADA2_CHIMERA } from "$module_dir/R/dada2/removeBimeraDenovo/main.nf" \
     addParams( options: [publish_dir: "chimera"] )
 include{ DADA2_LEARNERRORS } from "$module_dir/R/dada2/learnErrors/main.nf" \
     addParams( options: [publish_dir: "denoising"] )
 include{ DADA2_DADA } from "$module_dir/R/dada2/dada/main.nf" \
-    addParams( options: [publish_dir: "denoising"] )
-include{ DADA2_CHIMERA } from "$module_dir/R/dada2/removeBimeraDenovo/main.nf" \
     addParams( options: [publish_dir: "denoising"] )
 include{ DADA2_MERGEPAIRS } from "$module_dir/R/dada2/mergePairs/main.nf" \
     addParams( options: [publish_dir: "read-merging"] )
@@ -31,53 +31,77 @@ workflow DADA2 {
     main:
     tracked_reads = Channel.empty()
 
-    // Remove low quality reads
+	/*
+	 ========================================================================================
+	 Quality filtering
+	 ========================================================================================
+	 */	
+
     qc = DADA2_FILTERANDTRIM( reads )
     derep = DADA2_DEREPFASTQ( qc.fastq ).rds
 
-    // Swith channel to (meta, read)
-    derep = derep.transpose().map{ meta, read ->
-        def meta_upd = meta.clone() 
-        meta_upd['orient'] = (read.getSimpleName() =~ /_R2/ ? "2" : "1")
-        [meta_upd, read]
-    }
-    
-    // Remove chimera first for ITS pipeline
-    // Requires single end reads or merged paired-end at this stage
+	/*
+	 ========================================================================================
+	 Chimera filtering (ITS pipeline design choice)
+	 ========================================================================================
+	 */
+
+	// Requires single end reads or merged paired-end at this stage
     if ( params.early_chimera_removal ) {
         nochim = DADA2_CHIMERA( derep )
         tracked_reads = tracked_reads.mix(nochim.summary)
         derep = nochim.rds
     }
 
-    if ( params.pool != "F" ) {
-        derep = derep.map{
-            meta, reads ->
-            [[id:"all", orient: meta.orient, paired_end: meta.paired_end], reads]
-        }.groupTuple(by: 0)
+	/*
+	 ========================================================================================
+	 Error model and denoising
+	 ========================================================================================
+	 */
 
-        err = DADA2_LEARNERRORS( derep ).rds
-        dada = DADA2_DADA( derep.join(err) )
-    } else {
-        // Build Illumina reads error model
-        err = DADA2_LEARNERRORS( derep )
-        // Denoising
-        dada = DADA2_DADA( derep.join(err.rds) )
-    }
+	if (params.paired_end) {
+		derep = derep.multiMap {
+			R1: [it[0] + [orient: "R1"], it[1][0]]
+			R2: [it[0] + [orient: "R2"], it[1][1]]
+		}
+		derep = derep.R1.mix(derep.R2)
+	} else {
+		derep = derep.map{[it[0] + [orient: "R1"], it[1]]}
+	}
 
-    // Make raw ASV table
+	if ( params.pool == "F" ) {
+		// error model built on all fastq files independently (N_samples * 1 or 2)
+		err = DADA2_LEARNERRORS( derep )
+	} else {
+		// error model built on all fwd files and all reverse files (1 or 2 models)
+		derep = derep.map{[[id: it[0].orient], it[1]]}.groupTuple(by: 0)
+		err = DADA2_LEARNERRORS( derep )
+	}
+
+	dada = DADA2_DADA( derep.join(err.rds) )
+	
+	/*
+	 ========================================================================================
+	 Read merging
+	 ========================================================================================
+	 */
+	
     merged = DADA2_MERGEPAIRS(
         derep.collect{it[1]},
         dada.denoised.collect{it[1]}
     )
 
-    // Read tracking
+	/*
+	 ========================================================================================
+	 Read tracking
+	 ========================================================================================
+	 */
+	
     merge_summary = SUMMARIZE_TABLE(
         merged.count_table.map{[it[0], "read-merging", it[1]]}
     ).map{it[1]}
-    tracked_reads = tracked_reads.mix(
-        qc.summary.mix(dada.summary).mix(merge_summary)
-    )
+
+    tracked_reads = tracked_reads.mix(qc.summary).mix(dada.summary).mix(merge_summary)
 
     emit:
     fasta = merged.fasta

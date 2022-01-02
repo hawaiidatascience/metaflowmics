@@ -188,7 +188,7 @@ process CONVERT_TO_MOTHUR_FORMAT {
         abund
     )
     colnames(shared) <- c('label', 'Group', 'numOtus', colnames(abund))
-    write.table(shared, "${meta.id}.shared", quote=F, sep='\\t', row.names=F)
+    write.table(shared, "OTUs.${meta.id}.shared", quote=F, sep='\\t', row.names=F)
 
     tax <- data.frame(fread("taxonomy.csv"), row.names=1, check.names=F)
     rownames(tax) <- gsub(';.*', '', rownames(tax))
@@ -202,6 +202,6 @@ process CONVERT_TO_MOTHUR_FORMAT {
     colnames(tax) <- c('OTU', 'Size', 'Taxonomy')
     tax[, 'Taxonomy'] <- gsub('[a-z]__', '', tax[, 'Taxonomy'])
 
-    write.table(tax, "OTU.${meta.id}.taxonomy", quote=F, sep='\\t', row.names=F)
+    write.table(tax, "OTUs.${meta.id}.taxonomy", quote=F, sep='\\t', row.names=F)
     """
 }

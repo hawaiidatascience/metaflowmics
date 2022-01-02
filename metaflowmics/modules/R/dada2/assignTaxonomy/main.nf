@@ -18,7 +18,7 @@ process DADA2_ASSIGN_TAXONOMY {
 
     input:
     tuple val(meta), path(fasta)
-    tuple val(db_meta), path(db)
+    path db
 
     output:
     tuple val(meta), path("taxonomy*.csv"), emit: taxonomy

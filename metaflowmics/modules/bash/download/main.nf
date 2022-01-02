@@ -103,10 +103,9 @@ process DOWNLOAD_UNITE {
     container "nakor/bash:5.1.4"
 
     output:
-    tuple val(meta), path("*.fasta"), emit: fasta
+    path "*.fasta", emit: fasta
 
     script:
-	meta = [db_name: "unite_$params.db_release", db_type: "nucl"]
     def root_url = "https://files.plutof.ut.ee/public/orig"
 
     if (params.db_release == 'fungi') {
@@ -139,14 +138,12 @@ process DOWNLOAD_SILVA_FOR_MOTHUR {
     container "nakor/bash:5.1.4"
 
     output:
-    tuple val(tax_info), path("*.tax"), emit: tax
-    tuple val(aln_info), path("*.align"), emit: align
+    path "*.tax", emit: tax
+    path "*.align", emit: aln
 
     script:
     def url_base = "https://mothur.s3.us-east-2.amazonaws.com/wiki"
 	db_name = "silva.${params.db_release}_v138"
-	tax_info = [id: "${db_name}.tax", db_name: db_name, db_type: "tax"]
-	aln_info = [id: "${db_name}.nucl", db_name: db_name, db_type: "nucl"]	
     """
     wget -qO- ${url_base}/${db_name}.tgz | tar xz
     """

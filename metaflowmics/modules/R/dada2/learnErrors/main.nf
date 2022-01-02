@@ -25,7 +25,7 @@ process DADA2_LEARNERRORS {
 
     script:
     def software = getSoftwareName(task.process)
-    def suffix = meta.paired_end ? "_R${meta.orient}" : ""
+    def suffix = meta.paired_end ? "_${meta.orient}" : ""
     def outprefix = "${meta.id}${suffix}"
     """
     #!/usr/bin/env Rscript

@@ -4,6 +4,7 @@ include { initOptions; saveFiles; getSoftwareName } from "./functions"
 options = initOptions(params.options)
 
 process DADA2_MERGEPAIRS {
+	tag "$meta.id"
     label "process_high"
     publishDir "${params.outdir}",
         mode: params.publish_dir_mode,
@@ -27,7 +28,7 @@ process DADA2_MERGEPAIRS {
     path "*.version.txt", emit: version
 
     script:
-	meta = [id: "OTUs"]
+	meta = [id: "100"]
     def software = getSoftwareName(task.process)
     """
     #!/usr/bin/env Rscript
