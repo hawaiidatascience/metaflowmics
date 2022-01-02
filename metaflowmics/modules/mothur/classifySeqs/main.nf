@@ -6,10 +6,7 @@ options = initOptions(params.options)
 process MOTHUR_CLASSIFY_SEQS {
 	tag "$meta.id"
     label "process_high"
-    publishDir "${params.outdir}",
-        mode: params.publish_dir_mode,
-        saveAs: { filename -> saveFiles(filename:filename, options:params.options,
-                                        publish_dir:getSoftwareName(task.process)) }
+    publishDir "${params.outdir}", mode: params.publish_dir_mode
 
     container "quay.io/biocontainers/mothur:1.44.1--hf0cea05_2"
     conda (params.enable_conda ? "bioconda::mothur:1.44.1" : null)

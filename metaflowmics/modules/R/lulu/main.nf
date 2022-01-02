@@ -12,7 +12,7 @@ process LULU {
                                         publish_dir:getSoftwareName(task.process),
                                         meta:meta) }
 
-    container "nakor/metaflowmics-r:0.0.1"
+    container "nakor/metaflowmics-r:0.0.2"
     // no conda repository for LULU
 
     input:

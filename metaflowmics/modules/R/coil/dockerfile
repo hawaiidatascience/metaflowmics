@@ -1,0 +1,6 @@
+FROM r-base:3.6.2
+LABEL author="carisdak@hawaii.edu"
+
+RUN apt-get update --allow-releaseinfo-change -y && apt-get install -y procps
+
+RUN Rscript -e "install.packages(c('seqinr', 'coil'), dependencies=TRUE, repos='http://cran.rstudio.com/')"

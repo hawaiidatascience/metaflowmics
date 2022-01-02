@@ -34,14 +34,13 @@ workflow TRANSLATE {
         kmer_db
     )
 
-    translated = all_orf.single.mix(mult_orf_picked)
-		.map{it[1]}
-        .collectFile(name: 'translated.faa')
-		.first() // make it a value channel
+	translated_all = all_orf.single.mix(mult_orf_picked).map{it[1]}
 
-	// put the metadata back
-	translated = fasta.combine(translated).map{[it[0], it[2]]}
+    translated_combined = translated_all.collectFile(
+		name: "translated.faa",
+		storeDir: params.outdir
+	).first() // make it a value channel
 
     emit:
-    faa = translated
+    faa = translated_combined
 }

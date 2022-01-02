@@ -3,12 +3,13 @@
 nextflow.enable.dsl=2
 params.options = [:]
 module_dir = "../modules"
+interm_dir = "interm/contig_processing"
 
 // workflows used by mothur main workflow
 include { MSA } from "./msa.nf" \
-     addParams( outdir: "$params.outdir/interm/contig_processing/msa-filter" )
+     addParams( outdir: "$params.outdir/$interm_dir/msa-filter" )
 include { TAXONOMY } from "./taxonomy.nf" \
-     addParams( outdir: "$params.outdir/interm/contig_processing/taxonomy" )
+     addParams( outdir: "$params.outdir/$interm_dir/taxonomy" )
 include { CONSENSUS as CONSENSUS_PRELIM } from "./mothur-util" \
     addParams( outdir: "$params.outdir/raw" )    
 include { CONSENSUS } from "./mothur-util" \
@@ -18,22 +19,22 @@ include { SYNC } from "./mothur-util" \
 
 // modules
 include { MOTHUR_SCREEN_SEQS } from "$module_dir/mothur/screenSeqs/main.nf" \
-    addParams( options: [publish_dir: "msa-filter"] )
+    addParams( options: [publish_dir: "$interm_dir/msa-filter"] )
 include { MOTHUR_CHIMERA } from "$module_dir/mothur/chimera/main.nf" \
-    addParams( options: [publish_dir: "chimera-filter"] )
+    addParams( options: [publish_dir: "$interm_dir/chimera-filter"] )
 include { MOTHUR_CLUSTER } from "$module_dir/mothur/cluster/main.nf" \
-    addParams( options: [publish_dir: "clustering"] )
+    addParams( options: [publish_dir: "$interm_dir/clustering"] )
 include { MOTHUR_REMOVE_LINEAGE } from "$module_dir/mothur/removeLineage/main.nf" \
-    addParams( options: [publish_dir: "lineage-filter"] )
+    addParams( options: [publish_dir: "$interm_dir/lineage-filter"] )
 include { MOTHUR_REMOVE_RARE } from "$module_dir/mothur/removeRare/main.nf" \
-    addParams( options: [publish_dir: "rare-otu-filter"] )
+    addParams( options: [publish_dir: "$interm_dir/rare-otu-filter"] )
 include { GET_SUBSAMPLING_THRESHOLD } from "$module_dir/util/misc/main.nf"
 include { MOTHUR_SUBSAMPLE } from "$module_dir/mothur/subsample/main.nf" \
-    addParams( options: [publish_dir: "subsampling"] )
+    addParams( options: [publish_dir: "$interm_dir/subsampling"] )
 include { MOTHUR_DIST_SEQS } from "$module_dir/mothur/distSeqs/main.nf" \
     addParams( cutoff: 1-params.lulu_min_match/100, format: "vsearch" )
 include { LULU } from "$module_dir/R/lulu/main.nf" \
-    addParams( options: [publish_dir: "lulu-filter"] )
+    addParams( options: [publish_dir: "$interm_dir/lulu-filter"] )
 include { MOTHUR_SUMMARY_SINGLE } from "$module_dir/mothur/summarySingle/main.nf" \
     addParams( calc: "nseqs-sobs" )
 include{ SUMMARIZE_TABLE } from "$module_dir/util/misc/main.nf"
@@ -209,11 +210,6 @@ workflow MOTHUR {
 	 ========================================================================================
 	 */	
     // count tables
-    // tracking_ct = SUMMARIZE_TABLE(
-	// 	msa_filt.count_table.map{["MSA", "", it[1]]}.mix(
-    //     chimera.count_table.map{["chimera-filter", "", it[1]]}
-	// 	)
-	// )
 	tracking_ct = SUMMARIZE_TABLE(
 		msa_filt.count_table.map{[it[0], "MSA", it[1]]}.mix(
 			chimera.count_table.map{[it[0], "chimera-filter", it[1]]}
@@ -235,4 +231,3 @@ workflow MOTHUR {
     shared = shared
     tracking = tracking
 }
-

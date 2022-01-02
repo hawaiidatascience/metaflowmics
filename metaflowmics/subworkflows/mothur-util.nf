@@ -1,9 +1,12 @@
 module_dir = "../modules"
 
 // `compile` sub-workflow
-include { MOTHUR_CLASSIFY_OTUS } from "$module_dir/mothur/classifyOtus/main.nf"
-include { MOTHUR_GET_OTU_REP } from "$module_dir/mothur/getOtuRep/main.nf"
-include { MOTHUR_MAKE_DATABASE } from "$module_dir/mothur/makeDatabase/main.nf"
+include { MOTHUR_CLASSIFY_OTUS } from "$module_dir/mothur/classifyOtus/main.nf" \
+    addParams( options: [publish_dir: "consensus_taxonomy"] )
+include { MOTHUR_GET_OTU_REP } from "$module_dir/mothur/getOtuRep/main.nf" \
+    addParams( options: [publish_dir: "representative_sequences"] )
+include { MOTHUR_MAKE_DATABASE } from "$module_dir/mothur/makeDatabase/main.nf" \
+    addParams( options: [publish_dir: "mothur_db_files"] )
 
 // `sync` sub-workflow
 include { MOTHUR_GET_SEQS } from "$module_dir/mothur/getSeqs/main.nf"
@@ -74,7 +77,7 @@ workflow CONSENSUS {
         ).database
     }
 
-    shared.map{it[1].copyTo("$params.outdir/${it[0].id}.shared")}
+    shared.map{it[1].copyTo("$params.outdir/abundance_tables/${it[0].id}.shared")}
 
     emit:
     constaxonomy=cons.taxonomy

@@ -12,16 +12,30 @@ include{ PEAR } from "$module_dir/pear/main.nf" \
     addParams( options: [publish_dir: "interm/read_processing/merging"] )
 include{ CUTADAPT } from "$module_dir/cutadapt/main.nf" \
     addParams( options: [publish_dir: "interm/read_processing/demux"])
+include{ RDP_CLASSIFY } from "$module_dir/rdp/classify/main.nf" \
+    addParams( options: [publish_dir: "interm/contig_processing/taxonomy"] )
 include{ READ_TRACKING } from "$module_dir/util/misc/main.nf" \
     addParams( options: [publish_dir: "read_tracking"] )
+include{ MOTHUR_CHIMERA } from "$module_dir/mothur/chimera/main.nf" \
+    addParams( options: [publish_dir: "interm/contig_processing/chimera-filter"] )
+include { MOTHUR_CLUSTER } from "$module_dir/mothur/cluster/main.nf" \
+    addParams( options: [publish_dir: "interm/contig_processing/clustering"] )
+include { MOTHUR_REMOVE_LINEAGE } from "$module_dir/mothur/removeLineage/main.nf" \
+    addParams( options: [publish_dir: "interm/contig_processing/lineage-filter"] )
+include { MOTHUR_REMOVE_RARE } from "$module_dir/mothur/removeRare/main.nf" \
+    addParams( options: [publish_dir: "interm/contig_processing/rare-otu-filter"] )
+include { CONSENSUS as MOTHUR_CONSENSUS_1 } from "$subworkflow_dir/mothur-util" \
+    addParams( outdir: "$params.outdir/raw" )    
+include { CONSENSUS as MOTHUR_CONSENSUS_2 } from "$subworkflow_dir/mothur-util" \
+     addParams( outdir: "$params.outdir/results" )
+include { SYNC } from "$subworkflow_dir/mothur-util" \
+     addParams( outdir: "$params.outdir/results" )
 
 // subworkflow imports
 include { DADA2 } from "$subworkflow_dir/dada2.nf" \
     addParams( outdir: "$params.outdir/interm/read_processing",
-              trunc_len: "0", trunc_quality: 2, min_read_len: 20,              
+              trunc_len: "0", trunc_quality: 2, min_read_len: 20,
               early_chimera_removal: false, format: "mothur" )
-include { MOTHUR } from "$subworkflow_dir/mothur.nf" \
-	addParams( is_coding: true, outdir: "$params.outdir/interm/contig_processing" )
 include { HOLOVIEWS } from "$subworkflow_dir/holoviews.nf" \
     addParams( options: [publish_dir: "figures"] )
 include { DIVERSITY } from "$subworkflow_dir/diversity.nf" \
@@ -69,18 +83,48 @@ workflow pipeline_COI {
 			merged.map{"pear,,${it[0].id},${it[1].countFastq()}"}
 		)
     }
-
+	
 	/*
 	 ========================================================================================
      Read trimming, QC, denoising and merging
 	 ========================================================================================
-	 */	
-    asvs = DADA2( merged )
+	 */
 
-    otus = MOTHUR(
-        asvs.fasta,
-        asvs.count_table,
-		db
+    asvs = DADA2( merged )
+	chimera = MOTHUR_CHIMERA(
+        asvs.fasta.join( asvs.count_table )
+    )
+	tax = RDP_CLASSIFY( chimera.fasta, db ).taxonomy
+	
+    cluster = MOTHUR_CLUSTER(
+        chimera.fasta.join(chimera.count_table).join(tax),
+        params.clustering_thresholds.split(",").collect{it as int}
+    )
+
+	/*
+	 ========================================================================================
+	 Prepare variables for optional tasks. We overwrite them each time we have an optional
+	 input executed.
+	 + add OTU identity to all channels
+	 ========================================================================================
+	 */
+    fasta = cluster.fasta
+    count_table = cluster.count_table
+    taxonomy = cluster.taxonomy
+	list = cluster.list
+	shared = cluster.shared
+	
+	/*
+	 ========================================================================================
+	 Intermediate results before all optional steps to provide a first glance at the data
+	 ========================================================================================
+	 */
+    consensus_raw = MOTHUR_CONSENSUS_1(
+        fasta,
+        count_table,
+        taxonomy,
+        list,
+        shared
     )
 	
 	/*
@@ -89,15 +133,15 @@ workflow pipeline_COI {
 	 ========================================================================================
 	 */
 
-	read_tracking = read_tracking.collectFile(newLine: true)
-		.mix(asvs.tracking).collectFile(name: "read_summary.csv")
+	// read_tracking = read_tracking.collectFile(newLine: true)
+	// 	.mix(asvs.tracking).collectFile(name: "read_summary.csv")
 
-    READ_TRACKING(
-		otus.tracking.combine(read_tracking)
-			.map{[it[0], it[1..-1]]}.transpose()
-			.collectFile(){[it[0], it[1]]}
-			.map{[it.getSimpleName(), it]}
-    )
+    // READ_TRACKING(
+	// 	otus.tracking.combine(read_tracking)
+	// 		.map{[it[0], it[1..-1]]}.transpose()
+	// 		.collectFile(){[it[0], it[1]]}
+	// 		.map{[it.getSimpleName(), it]}
+    // )
 
 	
 	/*
@@ -105,20 +149,20 @@ workflow pipeline_COI {
 	 Interactive visualization with holoviews python package
 	 ========================================================================================
 	 */	
-    HOLOVIEWS(
-        otus.shared,
-        otus.constaxonomy
-    )
+    // HOLOVIEWS(
+    //     otus.shared,
+    //     otus.constaxonomy
+    // )
 
 	/*
 	 ========================================================================================
 	 Diversity metrics (alpha, beta + phylogenetic tree)
 	 ========================================================================================
 	 */	
-    DIVERSITY(
-        otus.repfasta,
-        otus.shared
-    )
+    // DIVERSITY(
+    //     otus.repfasta,
+    //     otus.shared
+    // )
     
 }
 
@@ -128,11 +172,13 @@ workflow {
     barcodes = Channel.fromPath(params.barcodes, checkIfExists: true).collect()
 
     // Important: DBs need to be value channels?
-	dbs = Channel.fromPath("${params.db_dir}/*.{afa,tax}")
-		.map{[[db_name: it.getSimpleName(),
-			   db_type: it.getName().tokenize(".")[1],
-			   id: it.getName()],
-			  it]}
+	
+	// dbs = Channel.fromPath("${params.db_dir}/*.{afa,tax}")
+	// 	.map{[[db_name: it.getSimpleName(),
+	// 		   db_type: it.getName().tokenize(".")[1],
+	// 		   id: it.getName()],
+	// 		  it]}
+	db = Channel.fromPath("${params.db_dir}/*.{txt,xml,properties}").collect()
 
-    pipeline_COI(reads, barcodes, dbs)
+    pipeline_COI(reads, barcodes, db)
 }

@@ -7,7 +7,7 @@ process SUMMARIZE_TABLE {
     tag "$step"
     label "process_low"
 
-    container "nakor/metaflowmics-r:0.0.1"
+    container "nakor/metaflowmics-r:0.0.2"
     conda (params.enable_conda ? "conda-forge::r-data.table" : null)
 
     input:
@@ -63,7 +63,7 @@ process READ_TRACKING {
         saveAs: { filename -> saveFiles(filename:filename, options:params.options,
                                         meta:meta) }
 
-    container "nakor/metaflowmics-r:0.0.1"
+    container "nakor/metaflowmics-r:0.0.2"
     conda (params.enable_conda ? "conda-forge::r-dplyr conda-forge::tidyr" : null)
 
     input:
@@ -81,8 +81,8 @@ process READ_TRACKING {
     library(dplyr)
     library(tidyr)
 
-    data <- read.csv("$counts", header=F)
-    colnames(data) <- c('step', 'otu_id', 'sample', 'total', 'nuniq')
+	cols <- c('step', 'otu_id', 'sample', 'total', 'nuniq')
+    data <- read.csv("$counts", header=F, col.names=cols)
 
     # Order the step according to total count and uniques
     col_order <- data %>% replace_na(list(nuniq=Inf)) %>%
@@ -124,7 +124,7 @@ process READ_TRACKING {
 process GET_SUBSAMPLING_THRESHOLD {
     label "process_low"
 
-    container "nakor/metaflowmics-r:0.0.1"
+    container "nakor/metaflowmics-r:0.0.2"
     conda (params.enable_conda ? "conda-forge::r-data.table" : null)
 
     input:
@@ -159,7 +159,7 @@ process CONVERT_TO_MOTHUR_FORMAT {
         mode: params.publish_dir_mode,
         saveAs: { filename -> saveFiles(filename:filename, options:params.options, publish_dir:getSoftwareName(task.process)) }	
 
-    container "nakor/metaflowmics-r:0.0.1"
+    container "nakor/metaflowmics-r:0.0.2"
     conda (params.enable_conda ? "conda-forge::r-data.table" : null)
 
     input:

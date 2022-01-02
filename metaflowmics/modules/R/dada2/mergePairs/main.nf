@@ -11,7 +11,7 @@ process DADA2_MERGEPAIRS {
                                         publish_dir:getSoftwareName(task.process),
                                         meta:meta, publish_by_meta:["id"]) }
 
-    container "nakor/metaflowmics-r:0.0.1"
+    container "nakor/metaflowmics-r:0.0.2"
     conda (params.enable_conda ? "bioconda::bioconductor-dada2=1.18 conda-forge::r-ggplot2 conda-forge::r-stringr conda-forge::r-seqinr conda-forge::r-dplyr conda-forge::r-tidyr" : null)
 
     input:

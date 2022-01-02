@@ -11,7 +11,7 @@ process PHYLOSEQ_UNIFRAC {
         saveAs: { filename -> saveFiles(filename:filename, options:params.options,
                                         publish_dir:getSoftwareName(task.process))}
 
-    container "nakor/metaflowmics-r:0.0.1"
+    container "nakor/metaflowmics-r:0.0.2"
     conda (params.enable_conda ? "bioconda::bioconductor-phyloseq::1.34.0 conda-forge::r-data.table" : null)
 
     input:

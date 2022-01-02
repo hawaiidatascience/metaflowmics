@@ -23,7 +23,7 @@ process DOWNLOAD_IBOL {
     name = "iBOL_phase_${version}_COI.tsv"
     prefix = "iBOL_COI_$version"
     
-    tax_cols = (9..15).collect{"\$$it"}.join('";"')
+    tax_cols = (9..15).findAll{it!=17}.collect{"\$$it"}.join('";"')
     """
     wget -c $url/${name}.zip && unzip ${name}.zip && rm -f ${name}.zip
     
@@ -56,39 +56,42 @@ process DOWNLOAD_IBOL_2 {
     each taxon
     
     output:
-    tuple val(meta), path("iBOL_COI*.fna"), emit: fna
-    path "iBOL_COI*.tsv", emit: tsv
+    tuple val(meta), path("iBOL_COI*.filt.fna"), emit: fna
+    path "iBOL_COI*.filt.tsv", emit: tsv
+    path "iBOL_COI*.raw.tsv", emit: raw
 
     script:
     meta = [id: taxon]
     url = "http://v3.boldsystems.org/index.php/API_Public"
     query = "combined?format=tsv&taxon=$taxon"
     prefix = "iBOL_COI_$taxon"
-    tax_cols = (9..21).step(2).collect{"\$$it"}.join('";"')
+    tax_cols = (9..21).step(2).findAll{it!=17}.collect{"\$$it"}.join('";"')
 
     ext = file("$params.external/${taxon}.tsv")
     dl_cmd = ext.exists() ?
         "cat $ext" :
         "wget -qO- \"$url/$query\""
     """
-    $dl_cmd |
+    $dl_cmd > ${prefix}.raw.tsv
+
+	cat ${prefix}.raw.tsv |
         sed -r 's/\\r//g' |
-        tr -d '\\xa0' | 
+        tr -d '\\xa0' |
         grep -v "SUPPRESSED" |
         sed 's/\\t /\\t/g' |
         sed '/^>/!s/-//g' |
         awk -F'\\t' 'NR==1 ||
         (\$13 != "") &&
         (\$45 ~/^[ACGT-]*\$/) &&
-        (length(\$45) > $params.min_length)' \\
-    > ${prefix}.tsv
+		(length(\$45) > $params.min_length)' \\
+    > ${prefix}.filt.tsv
 
-    tail -n+2 ${prefix}.tsv |
+    tail -n+2 ${prefix}.filt.tsv |
       awk -F'\\t' '{
         if (\$44 ~/ */) \$44=\$42;
         print ">"\$44" Metazoa;"$tax_cols"\\n"\$45
       }' \\
-    > ${prefix}.fna
+    > ${prefix}.filt.fna
     """
 }
 

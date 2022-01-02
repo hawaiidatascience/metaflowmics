@@ -11,7 +11,7 @@ process KMER_FILTER {
         saveAs: { filename -> saveFiles(filename:filename, options:params.options,
                                         publish_dir:getSoftwareName(task.process)) }
 
-    container "nakor/metaflowmics-python:0.0.1"
+    container "nakor/metaflowmics-python:0.0.2"
     conda (params.enable_conda ? "conda-forge::numpy" : null)
 
     input:
@@ -19,10 +19,10 @@ process KMER_FILTER {
     path db
 
     output:
-    tuple val(meta), path("*.fasta")
+    tuple val(meta), path("*.single.fasta")
 
     script:
-    prefix = "${query.getBaseName()}_curated"
+    prefix = "${query.getSimpleName()}.single"
 
     if (params.feature == 'nucl') {
         alphabet = "ACGT"

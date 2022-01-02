@@ -11,7 +11,7 @@ process FILTER_FASTA {
         saveAs: { filename -> saveFiles(filename:filename, options:params.options,
                                         publish_dir:getSoftwareName(task.process)) }
 
-    container "nakor/metaflowmics-python:0.0.1"
+    container "nakor/metaflowmics-python:0.0.2"
     conda (params.enable_conda ? "conda-forge::biopython conda-forge::pandas" : null)
 
     input:

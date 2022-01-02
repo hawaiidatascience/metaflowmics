@@ -13,7 +13,7 @@ process HOLOVIEWS_SCATTER {
         saveAs: { filename -> saveFiles(filename:filename, options:params.options,
                                         meta:meta) }
 
-    container "nakor/metaflowmics-python:0.0.1"
+    container "nakor/metaflowmics-python:0.0.2"
     conda (params.enable_conda ? "conda-forge::datatable pandas>=1" : null)
 
     input:

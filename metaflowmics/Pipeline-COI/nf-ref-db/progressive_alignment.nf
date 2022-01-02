@@ -30,7 +30,7 @@ include {UPDATE_MSA_WITH_REF as UPDATE_ORDER} from "$module_dir/python/biopython
 include {UPDATE_MSA_WITH_REF as UPDATE_FAMILY} from "$module_dir/python/biopython/msa/main.nf" \
     addParams( field: 4, outdir: "$params.outdir/down/4-family" )
 // include {UPDATE_MSA_WITH_REF as UPDATE_SUBFAMILY} from "$module_dir/python/biopython/msa/main.nf" \
-//     addParams( field: 4, outdir: "$params.outdir/down/5-subfamily" )
+//     addParams( field: 5, outdir: "$params.outdir/down/5-subfamily" )
 include {UPDATE_MSA_WITH_REF as UPDATE_GENUS} from "$module_dir/python/biopython/msa/main.nf" \
     addParams( field: 5, outdir: "$params.outdir/down/5-genus" )
 include {UPDATE_MSA_WITH_REF as UPDATE_SPECIES} from "$module_dir/python/biopython/msa/main.nf" \

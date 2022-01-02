@@ -7,6 +7,7 @@ process EMBOSS_TRANSEQ {
     label "process_medium"
     publishDir "${params.outdir}",
         mode: params.publish_dir_mode,
+		pattern: "*.single.faa",
         saveAs: { filename -> saveFiles(filename:filename, options:params.options,
                                         publish_dir:getSoftwareName(task.process)) }
 
@@ -18,13 +19,13 @@ process EMBOSS_TRANSEQ {
 
     output:
     tuple val(meta), path("*.faa"), emit: faa // raw output from transeq
-    tuple val(meta), path("*_single.faa"), emit: single
-    tuple val(meta), path("*_multiple.faa"), emit: multiple
+    tuple val(meta), path("*.single.faa"), emit: single
+    tuple val(meta), path("*.multiple.faa"), emit: multiple
     path "*.version.txt", emit: version
 
     script:
     def software = getSoftwareName(task.process)
-    outprefix = fasta.getBaseName()
+    outprefix = fasta.getSimpleName()
     """
     #!/usr/bin/env bash
 
@@ -42,16 +43,16 @@ process EMBOSS_TRANSEQ {
     > ${outprefix}.faa
 
     ## 4) Discard sequences with stop codons in the middle of the sequence
-    grep -B1 -v '[>*]' --no-group-separator ${outprefix}.faa > ${outprefix}_no_stop.faa
+    grep -B1 -v '[>*]' --no-group-separator ${outprefix}.faa > ${outprefix}.nostop.faa
 
     ## 5) Find the sequence with single or multiple possible ORFs
-    grep '^>' ${outprefix}_no_stop.faa | cut -d' ' -f1 | uniq -c > freqs.txt
+    grep '^>' ${outprefix}.nostop.faa | cut -d' ' -f1 | uniq -c > freqs.txt
     awk '\$1==1' freqs.txt | cut -d'>' -f2 > single_frame.txt
     awk '\$1>1' freqs.txt | cut -d'>' -f2 > multiple_frames.txt
 
     ## 6) Subset the translated sequences with those ids
-    seqtk subseq ${outprefix}_no_stop.faa single_frame.txt > ${outprefix}_single.faa
-    seqtk subseq ${outprefix}_no_stop.faa multiple_frames.txt > ${outprefix}_multiple.faa
+    seqtk subseq ${outprefix}.nostop.faa single_frame.txt > ${outprefix}.single.faa
+    seqtk subseq ${outprefix}.nostop.faa multiple_frames.txt > ${outprefix}.multiple.faa
 
     transeq -h 2>&1 | grep -i version | cut -d':' -f3 > ${software}.version.txt
     """

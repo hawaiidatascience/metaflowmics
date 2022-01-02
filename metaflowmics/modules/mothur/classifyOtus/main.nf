@@ -6,7 +6,10 @@ options = initOptions(params.options)
 process MOTHUR_CLASSIFY_OTUS {
     tag "$meta.id"
     label "process_medium"
-    publishDir "${params.outdir}", mode: params.publish_dir_mode
+    publishDir "${params.outdir}",
+        mode: params.publish_dir_mode,
+        saveAs: { filename -> saveFiles(filename:filename, options:params.options,
+                                        publish_dir:getSoftwareName(task.process)) }
 
     container "quay.io/biocontainers/mothur:1.44.1--hf0cea05_2"
     conda (params.enable_conda ? "bioconda::mothur:1.44.1" : null)

@@ -8,7 +8,7 @@ process TRANSLATE {
     tag "$meta"
     label "process_low"
     publishDir params.outdir, mode: params.publish_dir_mode
-    container "nakor/metaflowmics-python:0.0.1"
+    container "nakor/metaflowmics-python:0.0.2"
     conda (params.enable_conda ? "conda-forge::bipython conda-forge::pandas" : null)
 
     input:
