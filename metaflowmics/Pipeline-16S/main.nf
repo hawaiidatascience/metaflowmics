@@ -70,9 +70,10 @@ workflow pipeline_16S {
 			reads.map{"raw,,${it[0].id},${it[1][0].countFastq()}"}.collectFile(newLine: true)
 				.mix(asvs.tracking).collectFile(name: "summary.csv")
 		)
-			.map{[it[0], it[1..-1]]}.transpose()
-			.collectFile(){[it[0], it[1]]}
-			.map{[it.getSimpleName(), it]}
+			.collectFile(name: "summary_all.csv")
+		// .map{[it[0], it[1..-1]]}.transpose()
+		// .collectFile(){[it[0], it[1]]}
+		// .map{[it.getSimpleName(), it]}
     )
 
 	

@@ -231,7 +231,7 @@ workflow MOTHUR {
 	).summary
 
 	tracking = tracking_ct.mix(tracking_shared)
-		.collectFile(){["${it[0].db_name}_${it[0].db_type}.csv", it[1]]}
+		.collectFile(){["${it[0].id}.csv", it[1]]}
 		.map{[it.getSimpleName(), it]}
 
     emit:

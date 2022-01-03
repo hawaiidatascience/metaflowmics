@@ -67,13 +67,13 @@ process READ_TRACKING {
     conda (params.enable_conda ? "conda-forge::r-dplyr conda-forge::tidyr" : null)
 
     input:
-    tuple val(label), path(counts)
+    path counts
 
     output:
     file('summary-per-sample-per-step*.csv')
 
     script:
-	def outprefix = "summary-per-sample-per-step.$label"
+	def outprefix = "summary-per-sample-per-step"
     """
     #!/usr/bin/env Rscript    
 

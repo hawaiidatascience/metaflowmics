@@ -114,7 +114,6 @@ workflow pipeline_ITS {
         .mix(asvs.tracking)
         .mix(otus_summary)
         .collectFile(name: "summary.csv")
-		.map{["unite", it]}
 
     summary = READ_TRACKING( tracked_files )
 
