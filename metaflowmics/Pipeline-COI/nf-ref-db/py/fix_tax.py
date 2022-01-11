@@ -1,5 +1,5 @@
 import pandas as pd
-from pathlib import tax
+from pathlib import Path
 import argparse
 
 parser = argparse.ArgumentParser()
@@ -10,7 +10,7 @@ tax_file = Path(args.tax)
 
 df = pd.read_csv(tax_file, sep="\t", header=None)
 df.columns = ["acc", "kingdom", "phylum", "class", "order", "family", "genus", "species"]
-df = df.set_index('acc')
+df = df.set_index('acc').dropna(how="all", axis=1)
 
 # remove duplicates (case doesn't matter)
 duplicated = df.applymap(lambda x: x.lower()).duplicated()

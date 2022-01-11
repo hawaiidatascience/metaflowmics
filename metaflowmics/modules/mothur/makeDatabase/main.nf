@@ -6,10 +6,13 @@ options = initOptions(params.options)
 process MOTHUR_MAKE_DATABASE {
     tag "$meta.id"
     label "process_high"
-    publishDir "${params.outdir}", mode: params.publish_dir_mode
+    publishDir "${params.outdir}",
+        mode: params.publish_dir_mode,
+        saveAs: { filename -> saveFiles(filename:filename, options:params.options,
+                                        publish_dir:getSoftwareName(task.process)) }    
 
-    container "quay.io/biocontainers/mothur:1.44.1--hf0cea05_2"
-    conda (params.enable_conda ? "bioconda::mothur:1.44.1" : null)
+    container "quay.io/biocontainers/mothur:1.46.1--h7165306_0"
+    conda (params.enable_conda ? "bioconda::mothur:1.46.1" : null)
 
     input:
     tuple val(meta), file(shared), file(constax), file(repfasta), file(repcount)
@@ -21,7 +24,7 @@ process MOTHUR_MAKE_DATABASE {
     script:
     def software = getSoftwareName(task.process)
     def procname = "${task.process.tokenize(':')[-1].toLowerCase()}"
-    def outprefix = "${procname}.${meta.id}"
+    def outprefix = "OTUs.${meta.id}"
     """
     mothur "#create.database(shared=$shared,repfasta=$repfasta,constaxonomy=$constax,count=$repcount)"
     mv *.database ${outprefix}.database

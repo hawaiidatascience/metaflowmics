@@ -4,19 +4,19 @@ include { initOptions; saveFiles; getSoftwareName } from "./functions"
 options = initOptions(params.options)
 
 process MOTHUR_ALIGN_SEQS {
-	tag "$meta.id"
+    tag "$meta.id"
     label "process_high"
     publishDir "${params.outdir}",
         mode: params.publish_dir_mode,
         saveAs: { filename -> saveFiles(filename:filename, options:params.options,
                                         publish_dir:getSoftwareName(task.process)) }
 
-    container "quay.io/biocontainers/mothur:1.44.1--hf0cea05_2"
-    conda (params.enable_conda ? "bioconda::mothur:1.44.1" : null)
+    container "quay.io/biocontainers/mothur:1.46.1--h7165306_0"
+    conda (params.enable_conda ? "bioconda::mothur:1.46.1" : null)
 
     input:
     tuple val(meta), path(fasta)
-	path db_aln
+    path db_aln
 
     output:
     tuple val(meta), path("*.fasta"), emit: fasta
@@ -28,10 +28,10 @@ process MOTHUR_ALIGN_SEQS {
     def outprefix = "${procname}.${meta.id}"
     """
     mothur "#
-	align.seqs(fasta=$fasta, reference=$db_aln);
-	filter.seqs(fasta=current, vertical=T);"
+    align.seqs(fasta=$fasta, reference=$db_aln);
+    filter.seqs(fasta=current, vertical=T);"
 
-	mv *.filter.fasta ${outprefix}.fasta
+    mv *.filter.fasta ${outprefix}.fasta
 
     # print version
     mothur -v | tail -n+2 | head -1 | cut -d"=" -f2 > ${software}.version.txt

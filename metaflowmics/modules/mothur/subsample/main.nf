@@ -11,8 +11,8 @@ process MOTHUR_SUBSAMPLE {
         saveAs: { filename -> saveFiles(filename:filename, options:params.options,
                                         publish_dir:getSoftwareName(task.process)) }
 
-    container "quay.io/biocontainers/mothur:1.44.1--hf0cea05_2"
-    conda (params.enable_conda ? "bioconda::mothur:1.44.1" : null)
+    container "quay.io/biocontainers/mothur:1.46.1--h7165306_0"
+    conda (params.enable_conda ? "bioconda::mothur:1.46.1" : null)
 
     input:
     tuple val(meta), file(list), file(count)

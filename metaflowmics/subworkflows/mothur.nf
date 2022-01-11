@@ -17,11 +17,11 @@ include { MOTHUR_CLASSIFY_SEQS } from "$module_dir/mothur/classifySeqs/main.nf" 
 include { MOTHUR_CLUSTER } from "$module_dir/mothur/cluster/main.nf" \
     addParams( options: [publish_dir: "$interm_dir/clustering"] )
 include { MOTHUR_CONSENSUS as MOTHUR_CONSENSUS_RAW } from "$module_dir/mothur/consensus/main.nf" \
-    addParams( options: [publish_dir: "raw"] )
+    addParams( options: [publish_dir: "raw/consensus"] )
 include { MOTHUR_CONSENSUS } from "$module_dir/mothur/consensus/main.nf" \
-    addParams( options: [publish_dir: "results"] )
+    addParams( options: [publish_dir: "results/consensus"] )
 include { MOTHUR_SYNC } from "$module_dir/mothur/sync/main.nf" \
-    addParams( options: [publish_dir: "results"] )
+    addParams( options: [publish_dir: "results/detail"] )
 include { MOTHUR_REMOVE_LINEAGE } from "$module_dir/mothur/removeLineage/main.nf" \
     addParams( options: [publish_dir: "$interm_dir/lineage-filter"] )
 include { MOTHUR_REMOVE_RARE } from "$module_dir/mothur/removeRare/main.nf" \
@@ -35,6 +35,9 @@ include { LULU } from "$module_dir/R/lulu/main.nf" \
     addParams( options: [publish_dir: "$interm_dir/lulu-filter"] )
 include { MOTHUR_SUMMARY_SINGLE } from "$module_dir/mothur/summarySingle/main.nf" \
     addParams( calc: "nseqs-sobs" )
+include { MOTHUR_MAKE_DATABASE } from "$module_dir/mothur/makeDatabase/main.nf" \
+    addParams( options: [publish_dir: "results"] )
+
 include{ SUMMARIZE_TABLE } from "$module_dir/util/misc/main.nf"
 
 
@@ -117,14 +120,6 @@ workflow MOTHUR {
 		shared.join(list).join(fasta).join(count_table).join(taxonomy)
 	)
 
-	// consensus_raw = CONSENSUS_PRELIM(
-    //     fasta,
-    //     count_table,
-    //     taxonomy,
-    //     list,
-    //     shared
-    // )
-
 	// prepare read tracking channel for optional steps
 	// tracked = shared.map{[[step: "clustering", otu_id: it[0].otu_id], it[1]]}
 	tracked = shared.map{[it[0], "clustering", it[1]]}
@@ -163,12 +158,15 @@ workflow MOTHUR {
 	 */
 
 	if (!params.skip_subsampling) {
-        subsampling_level = GET_SUBSAMPLING_THRESHOLD( count_table.first().map{it[1]} )
-        (shared, list, count_table) = MOTHUR_SUBSAMPLE(
-            list.join(count_table),
-            subsampling_level
-        )
-        // tracked = tracked.mix(shared.map{[[step: "subsampling", otu_id: it[0].otu_id], it[1]]})
+		if (params.custom_subsampling_level > 0) {
+			subsampling_level = Channel.value(params.custom_subsampling_level)
+		} else {
+			subsampling_level = GET_SUBSAMPLING_THRESHOLD( count_table.first().map{it[1]} )
+		}
+		(shared, list, count_table) = MOTHUR_SUBSAMPLE(
+			list.join(count_table),
+			subsampling_level
+		)
         tracked = tracked.mix(shared.map{[it[0], "subsampling", it[1]]})
     }
 
@@ -211,6 +209,15 @@ workflow MOTHUR {
 	consensus = MOTHUR_CONSENSUS(
 		shared.join(sync.list).join(sync.fasta).join(sync.count_table).join(sync.taxonomy)
 	)
+
+	if (params.compute_mothur_db) {
+		MOTHUR_MAKE_DATABASE(
+			shared
+				.join(consensus.constaxonomy)
+				.join(consensus.repfasta)
+				.join(consensus.repcount_table)
+		)
+	}
 
 	/*
 	 ========================================================================================

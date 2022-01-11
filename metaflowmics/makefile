@@ -7,9 +7,10 @@ override RELEASE = latest
 endif
 
 test:
-	nextflow run multithreaded-demux --inputdir "../tests/demux" -profile $(CONF) --n_per_file 100 --n_bases 1e3
-	nextflow run Pipeline-ITS --reads "../tests/ITS/*R1.fastq.gz" -profile $(CONF)
-	nextflow run Pipeline-16S --reads "../tests/16S/*_R{1,2}.fastq.gz" -profile $(CONF)
+	nextflow run Pipeline-16S -profile $(CONF) --reads "../tests/16S/*_R{1,2}.fastq.gz" --silva_db seed
+	nextflow run Pipeline-ITS -profile $(CONF) --reads "../tests/ITS/*R1.fastq.gz"
+	nextflow run Pipeline-COI -profile $(CONF) --reads "../tests/COI/*_R{1,2}.fastq.gz" --barcodes ../tests/COI/index.fasta --db_dir $(HOME)/db/BOLD/curated_dbs/manual/test/rdp_COI_trained --min_subsampling 100
+	nextflow run multithreaded-demux -profile $(CONF) --inputdir "../tests/demux" --n_per_file 100 --n_bases 1e3
 
 testITS:
 	nextflow run Pipeline-ITS -resume --reads "../tests/ITS/*R1.fastq.gz" -profile $(CONF) \
@@ -32,6 +33,7 @@ clean:
 	rm -rf demultiplexed
 	rm -rf ITS-pipeline_outputs
 	rm -rf 16S-pipeline_outputs
+	rm -rf COI-pipeline_outputs
 
 gcp_wrapper_16S:
 	@ make gcp16S NXF_MODE=google GOOGLE_APPLICATION_CREDENTIALS="${HOME}/.gcp_credentials.json"

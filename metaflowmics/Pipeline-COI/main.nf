@@ -14,8 +14,6 @@ include{ CUTADAPT } from "$module_dir/cutadapt/main.nf" \
     addParams( options: [publish_dir: "interm/read_processing/demux"])
 include{ RDP_CLASSIFY } from "$module_dir/rdp/classify/main.nf" \
     addParams( options: [publish_dir: "interm/contig_processing/taxonomy"] )
-include{ READ_TRACKING } from "$module_dir/util/misc/main.nf" \
-    addParams( options: [publish_dir: "read_tracking"] )
 include{ MOTHUR_CHIMERA } from "$module_dir/mothur/chimera/main.nf" \
     addParams( options: [publish_dir: "interm/contig_processing/chimera-filter"] )
 include { MOTHUR_CLUSTER } from "$module_dir/mothur/cluster/main.nf" \
@@ -24,22 +22,31 @@ include { MOTHUR_REMOVE_LINEAGE } from "$module_dir/mothur/removeLineage/main.nf
     addParams( options: [publish_dir: "interm/contig_processing/lineage-filter"] )
 include { MOTHUR_REMOVE_RARE } from "$module_dir/mothur/removeRare/main.nf" \
     addParams( options: [publish_dir: "interm/contig_processing/rare-otu-filter"] )
-include { CONSENSUS as MOTHUR_CONSENSUS_1 } from "$subworkflow_dir/mothur-util" \
-    addParams( outdir: "$params.outdir/raw" )    
-include { CONSENSUS as MOTHUR_CONSENSUS_2 } from "$subworkflow_dir/mothur-util" \
-     addParams( outdir: "$params.outdir/results" )
-include { SYNC } from "$subworkflow_dir/mothur-util" \
-     addParams( outdir: "$params.outdir/results" )
+include { GET_SUBSAMPLING_THRESHOLD } from "$module_dir/util/misc/main.nf"
+include { MOTHUR_SUBSAMPLE } from "$module_dir/mothur/subsample/main.nf" \
+    addParams( options: [publish_dir: "interm/contig_processing/subsampling"] )
+include { MOTHUR_CONSENSUS as MOTHUR_CONSENSUS_RAW } from "$module_dir/mothur/consensus/main.nf" \
+    addParams( options: [publish_dir: "results/consensus"] )    
+include { MOTHUR_CONSENSUS } from "$module_dir/mothur/consensus/main.nf" \
+     addParams( options: [publish_dir: "results/consensus"] )
+include { MOTHUR_SYNC } from "$module_dir/mothur/sync/main.nf" \
+    addParams( options: [publish_dir: "results/detail"] )
+
+include { MOTHUR_SUMMARY_SINGLE } from "$module_dir/mothur/summarySingle/main.nf" \
+    addParams( calc: "nseqs-sobs" )
+include{ SUMMARIZE_TABLE } from "$module_dir/util/misc/main.nf"
+include{ READ_TRACKING } from "$module_dir/util/misc/main.nf" \
+	addParams( options: [publish_dir: "read_tracking"] )
 
 // subworkflow imports
 include { DADA2 } from "$subworkflow_dir/dada2.nf" \
     addParams( outdir: "$params.outdir/interm/read_processing",
-              trunc_len: "0", trunc_quality: 2, min_read_len: 20,
+              // trunc_len: "0,0", trunc_quality: 2, min_read_len: 20, paired_end: false,
               early_chimera_removal: false, format: "mothur" )
 include { HOLOVIEWS } from "$subworkflow_dir/holoviews.nf" \
     addParams( options: [publish_dir: "figures"] )
 include { DIVERSITY } from "$subworkflow_dir/diversity.nf" \
-    addParams( options: [publish_dir: "postprocessing"] )
+    addParams( options: [publish_dir: "postprocessing"], skip_unifrac: true )
 
 // Main workflow
 workflow pipeline_COI {
@@ -51,7 +58,7 @@ workflow pipeline_COI {
     main:
 
     // For read tracking through the pipeline
-    read_tracking = Channel.empty()
+    tracking_reads = Channel.empty()
     
 	/*
 	 ========================================================================================
@@ -68,21 +75,14 @@ workflow pipeline_COI {
         .groupTuple(by: 0)
         .map{[[id: it[0], paired_end: params.paired_end], it[1]]}
 
-	read_tracking = read_tracking.mix(
+	tracking_reads = tracking_reads.mix(
 		sample_reads.map{"demux,,${it[0].id},${it[1][0].countFastq()}"}
-	)
+	).collectFile(newLine: true)
 	
-    if (params.single_end || params.merge_with != "PEAR") {
-        merged = sample_reads
-    }
-    else {
-        merged = PEAR( sample_reads ).assembled.map{
-            {[[id: it[0].id, paired_end: false], it[1]]}
-        }
-		read_tracking = read_tracking.mix(
-			merged.map{"pear,,${it[0].id},${it[1].countFastq()}"}
-		)
-    }
+    // merged = PEAR( sample_reads ).assembled
+	// tracking_reads = tracking_reads.mix(
+	// 	merged.map{"pear,,${it[0].id},${it[1].countFastq()}"}
+	// ).collectFile(newLine: true)
 	
 	/*
 	 ========================================================================================
@@ -90,7 +90,8 @@ workflow pipeline_COI {
 	 ========================================================================================
 	 */
 
-    asvs = DADA2( merged )
+	asvs = DADA2( sample_reads )
+    // asvs = DADA2( merged )
 	chimera = MOTHUR_CHIMERA(
         asvs.fasta.join( asvs.count_table )
     )
@@ -119,65 +120,142 @@ workflow pipeline_COI {
 	 Intermediate results before all optional steps to provide a first glance at the data
 	 ========================================================================================
 	 */
-    consensus_raw = MOTHUR_CONSENSUS_1(
-        fasta,
-        count_table,
-        taxonomy,
-        list,
-        shared
+    consensus_raw = MOTHUR_CONSENSUS_RAW(
+		shared.join(list).join(fasta).join(count_table).join(taxonomy)
     )
-	
+
+	// prepare read tracking channel for optional steps
+	tracked = shared.map{[it[0], "clustering", it[1]]}
+
 	/*
 	 ========================================================================================
-     Read tracking through the pipeline
+	 Optional: remove contigs matching specific taxonomic keywords 
+	 (e.g. mitochondria, chloroplasts) or not matching (e.g. unknown kingdom)
 	 ========================================================================================
 	 */
 
-	// read_tracking = read_tracking.collectFile(newLine: true)
-	// 	.mix(asvs.tracking).collectFile(name: "read_summary.csv")
+	if ( params.taxa_to_filter != "" ) {
+        (count_table, taxonomy, list, shared) = MOTHUR_REMOVE_LINEAGE(
+            count_table.join(taxonomy).join(list)
+        )
+		tracked = tracked.mix(shared.map{[it[0], "taxa-filter", it[1]]})		
+    }
 
-    // READ_TRACKING(
-	// 	otus.tracking.combine(read_tracking)
-	// 		.map{[it[0], it[1..-1]]}.transpose()
-	// 		.collectFile(){[it[0], it[1]]}
-	// 		.map{[it.getSimpleName(), it]}
-    // )
+	/*
+	 ========================================================================================
+	 Optional: discard rare contigs
+	 ========================================================================================
+	 */
 
+	(list, shared, count_table) = MOTHUR_REMOVE_RARE(
+        list.join(count_table)
+    )
+	tracked = tracked.mix(shared.map{[it[0], "rare-otus-filter", it[1]]})		
+
+	/*
+	 ========================================================================================
+	 Optional: subsampling
+	 ========================================================================================
+	 */
+
+	if (!params.skip_subsampling) {
+		if (params.custom_subsampling_level > 0) {
+			subsampling_level = Channel.value(params.custom_subsampling_level)
+		} else {
+			subsampling_level = GET_SUBSAMPLING_THRESHOLD( count_table.first().map{it[1]} )
+		}
+		(shared, list, count_table) = MOTHUR_SUBSAMPLE(
+			list.join(count_table),
+			subsampling_level
+		)
+        tracked = tracked.mix(shared.map{[it[0], "subsampling", it[1]]})
+    }
+
+	/*
+	 ========================================================================================
+	 Subset OTUs to make them the same between files
+	 (since filtering is not always done on all the files each time)
+	 ========================================================================================
+	 */	
+
+	sync = MOTHUR_SYNC(
+		shared.join(list).join(fasta).join(count_table).join(taxonomy)
+	)
+
+	/*
+	 ========================================================================================
+	 Consensus to provide:
+	 - representative OTU sequence 
+	 - consensus taxonomy
+	 - database file if the option is set
+	 ========================================================================================
+	 */	
+
+	consensus = MOTHUR_CONSENSUS(
+		shared.join(sync.list).join(sync.fasta).join(sync.count_table).join(sync.taxonomy)
+	)
+
+	if (params.compute_mothur_db) {
+		MOTHUR_MAKE_DATABASE(
+			shared
+				.join(consensus.constaxonomy)
+				.join(consensus.repfasta)
+				.join(consensus.repcount_table)
+		)
+	}
+
+	/*
+	 ========================================================================================
+	 Read tracking through the pipeline
+	 ========================================================================================
+	 */
+
+	// reads
+	tracking_reads = tracking_reads
+		.mix(asvs.tracking)
+		.collectFile(name: "tracking.csv")
+
+	// count tables
+	tracking_ct = SUMMARIZE_TABLE(
+		chimera.count_table.map{[it[0], "chimera-filter", it[1]]}
+	).map{it[1]}
+
+    // shared
+	tracking_shared = MOTHUR_SUMMARY_SINGLE(
+		tracked
+	).summary.map{it[1]}
+	
+	tracking = READ_TRACKING(
+		tracking_reads.mix(tracking_ct).mix(tracking_shared)
+			.collectFile(name: "tracking_all.csv")
+	)
 	
 	/*
 	 ========================================================================================
 	 Interactive visualization with holoviews python package
 	 ========================================================================================
 	 */	
-    // HOLOVIEWS(
-    //     otus.shared,
-    //     otus.constaxonomy
-    // )
+    HOLOVIEWS(
+        shared,
+        consensus.constaxonomy,
+    )
 
 	/*
 	 ========================================================================================
 	 Diversity metrics (alpha, beta + phylogenetic tree)
 	 ========================================================================================
 	 */	
-    // DIVERSITY(
-    //     otus.repfasta,
-    //     otus.shared
-    // )
-    
+    DIVERSITY(
+        consensus.repfasta,
+        shared
+    )
 }
 
 workflow {
     reads = Channel.fromFilePairs(params.reads, size: params.single_end ? 1 : 2)
-        .map{[ [id: it[0]], it[1] ]}
+        .map{[ [id: it[0], paired_end: params.paired_end], it[1] ]}
     barcodes = Channel.fromPath(params.barcodes, checkIfExists: true).collect()
 
-    // Important: DBs need to be value channels?
-	
-	// dbs = Channel.fromPath("${params.db_dir}/*.{afa,tax}")
-	// 	.map{[[db_name: it.getSimpleName(),
-	// 		   db_type: it.getName().tokenize(".")[1],
-	// 		   id: it.getName()],
-	// 		  it]}
 	db = Channel.fromPath("${params.db_dir}/*.{txt,xml,properties}").collect()
 
     pipeline_COI(reads, barcodes, db)

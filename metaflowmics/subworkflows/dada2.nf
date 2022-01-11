@@ -74,7 +74,7 @@ workflow DADA2 {
 		err = DADA2_LEARNERRORS( derep )
 	} else {
 		// error model built on all fwd files and all reverse files (1 or 2 models)
-		derep = derep.map{[[id: it[0].orient], it[1]]}.groupTuple(by: 0)
+		derep = derep.map{[it[0] + [id: "pooled"], it[1]]}.groupTuple(by: 0)
 		err = DADA2_LEARNERRORS( derep )
 	}
 

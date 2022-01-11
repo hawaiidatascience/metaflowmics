@@ -12,8 +12,8 @@ process DADA2_FILTERANDTRIM {
                                         publish_dir:getSoftwareName(task.process),
                                         meta:meta, publish_by_meta:["id"]) }
 
-    container "quay.io/biocontainers/bioconductor-dada2:1.18.0--r40h399db7b_1"
-    conda (params.enable_conda ? "bioconda::bioconductor-dada2=1.18 conda-forge::r-ggplot2" : null)
+    container "quay.io/biocontainers/bioconductor-dada2:1.22.0--r41h399db7b_0"
+    conda (params.enable_conda ? "bioconda::bioconductor-dada2=1.22 conda-forge::r-ggplot2" : null)
 
     input:
     tuple val(meta), path(reads)

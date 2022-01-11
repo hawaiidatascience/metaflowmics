@@ -17,12 +17,14 @@ process PEAR {
     tuple val(meta), path(fastq)
 
     output:
-    tuple val(meta), path("*.assembled.fastq"), emit: assembled
-    tuple val(meta), path("*.unassembled.*.fastq"), optional: true, emit: unassembled
-    tuple val(meta), path("*.discarded.fastq"), optional: true, emit: discarded
+    tuple val(meta_upd), path("*.assembled.fastq"), emit: assembled
+    tuple val(meta_upd), path("*.unassembled.*.fastq"), optional: true, emit: unassembled
+    tuple val(meta_upd), path("*.discarded.fastq"), optional: true, emit: discarded
     path "*.version.txt", emit: version
 
     script:
+	meta_upd = meta + [paired_end: false]
+
     def software = getSoftwareName(task.process)
     """
     #!/usr/bin/env bash

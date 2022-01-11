@@ -8,12 +8,13 @@ process DADA2_DEREPFASTQ {
     label "process_low"
     publishDir "${params.outdir}",
         mode: params.publish_dir_mode,
+        pattern: "*.RDS",
         saveAs: { filename -> saveFiles(filename:filename, options:params.options,
                                         publish_dir:getSoftwareName(task.process),
                                         meta:meta, publish_by_meta:["id"]) }
 
-    container "quay.io/biocontainers/bioconductor-dada2:1.18.0--r40h399db7b_1"
-    conda (params.enable_conda ? "bioconda::bioconductor-dada2=1.18 conda-forge::r-stringr" : null)
+    container "quay.io/biocontainers/bioconductor-dada2:1.22.0--r41h399db7b_0"
+    conda (params.enable_conda ? "bioconda::bioconductor-dada2=1.22 conda-forge::r-stringr" : null)
 
     input:
     tuple val(meta), path(reads)

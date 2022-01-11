@@ -4,16 +4,22 @@ include { initOptions; saveFiles; getSoftwareName } from "./functions"
 options = initOptions(params.options)
 
 process MOTHUR_SUMMARY_SINGLE {
+    tag "$meta.id"
     label "process_low"
+    publishDir "${params.outdir}",
+        mode: params.publish_dir_mode,
+        pattern: "*.summary",
+        saveAs: { filename -> saveFiles(filename:filename, options:params.options,
+                                        publish_dir:getSoftwareName(task.process)) }
 
-    container "quay.io/biocontainers/mothur:1.44.1--hf0cea05_2"
-    conda (params.enable_conda ? "bioconda::mothur:1.44.1" : null)
+    container "quay.io/biocontainers/mothur:1.46.1--h7165306_0"
+    conda (params.enable_conda ? "bioconda::mothur:1.46.1" : null)
 
     input:
     tuple val(meta), val(step), file(shared)
 
     output:
-    tuple val(meta), path("*.csv"), emit: summary
+    tuple val(meta), path("*.{csv,summary}"), emit: summary
     path "*.version.txt", emit: version
 
     script:
@@ -30,7 +36,7 @@ process MOTHUR_SUMMARY_SINGLE {
         > ${ext}.csv
         rm -f *.groups.summary
     else
-        mv *.summary alpha-diversity_${meta.otu_id}.csv
+        mv *.summary alpha-diversity.${meta.otu_id}.summary
     fi
 
     # print version

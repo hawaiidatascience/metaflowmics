@@ -11,8 +11,8 @@ process MOTHUR_CLUSTER {
         saveAs: { filename -> saveFiles(filename:filename, options:params.options,
                                         publish_dir:getSoftwareName(task.process)) }
 
-    container "quay.io/biocontainers/mothur:1.44.1--hf0cea05_2"
-    conda (params.enable_conda ? "bioconda::mothur:1.44.1" : null)
+    container "quay.io/biocontainers/mothur:1.46.1--h7165306_0"
+    conda (params.enable_conda ? "bioconda::mothur:1.46.1" : null)
 
     input:
     tuple val(meta), path(fasta), path(count), path(tax)
@@ -21,15 +21,13 @@ process MOTHUR_CLUSTER {
     output:
     tuple val(meta_upd), path("*.list"), emit: list
     tuple val(meta_upd), path("*.shared"), emit: shared
-	tuple val(meta_upd), path(fasta), emit:fasta
-	tuple val(meta_upd), path(count), emit:count_table
-	tuple val(meta_upd), path(tax), emit:taxonomy
+    tuple val(meta_upd), path(fasta), emit:fasta
+    tuple val(meta_upd), path(count), emit:count_table
+    tuple val(meta_upd), path(tax), emit:taxonomy
     path "*.version.txt", emit: version
 
     script:
-	meta_upd = meta.clone()
-	meta_upd.id = "${otu_id}"
-	meta_upd.otu_id = otu_id
+    meta_upd = meta + [id: "${otu_id}", otu_id: otu_id]
     def ext = ["rep.fasta", "cons.taxonomy", "shared", "list", "database"]
     def software = getSoftwareName(task.process)
     def procname = "${task.process.tokenize(':')[-1].toLowerCase()}"

@@ -4,7 +4,7 @@ include { initOptions; saveFiles; getSoftwareName } from "./functions"
 options = initOptions(params.options)
 
 process DADA2_MERGEPAIRS {
-	tag "$meta.id"
+    tag "$meta.id"
     label "process_high"
     publishDir "${params.outdir}",
         mode: params.publish_dir_mode,
@@ -13,7 +13,7 @@ process DADA2_MERGEPAIRS {
                                         meta:meta, publish_by_meta:["id"]) }
 
     container "nakor/metaflowmics-r:0.0.2"
-    conda (params.enable_conda ? "bioconda::bioconductor-dada2=1.18 conda-forge::r-ggplot2 conda-forge::r-stringr conda-forge::r-seqinr conda-forge::r-dplyr conda-forge::r-tidyr" : null)
+    conda (params.enable_conda ? "bioconda::bioconductor-dada2=1.22 conda-forge::r-ggplot2 conda-forge::r-stringr conda-forge::r-seqinr conda-forge::r-dplyr conda-forge::r-tidyr" : null)
 
     input:
     path(derep)
@@ -23,12 +23,12 @@ process DADA2_MERGEPAIRS {
     path "*.RDS", emit: rds
     tuple val(meta), path("ASVs-100.{count_table,tsv}"), emit: count_table
     tuple val(meta), path("ASVs-100.fasta"), emit: fasta
-	tuple val(meta), path("ASVs_duplicates_to_cluster.fasta"), optional: true, emit: fasta_dup
+    tuple val(meta), path("ASVs_duplicates_to_cluster.fasta"), optional: true, emit: fasta_dup
     path "*_summary.tsv", emit: merge_summary, optional: true
     path "*.version.txt", emit: version
 
     script:
-	meta = [id: "100"]
+    meta = [id: "100"]
     def software = getSoftwareName(task.process)
     """
     #!/usr/bin/env Rscript

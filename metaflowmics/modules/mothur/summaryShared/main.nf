@@ -6,15 +6,19 @@ options = initOptions(params.options)
 process MOTHUR_SUMMARY_SHARED {
     tag "$meta.id"
     label "process_low"
+    publishDir "${params.outdir}",
+        mode: params.publish_dir_mode,
+        saveAs: { filename -> saveFiles(filename:filename, options:params.options,
+                                        publish_dir:getSoftwareName(task.process)) }
 
-    container "quay.io/biocontainers/mothur:1.44.1--hf0cea05_2"
-    conda (params.enable_conda ? "bioconda::mothur:1.44.1" : null)
+    container "quay.io/biocontainers/mothur:1.46.1--h7165306_0"
+    conda (params.enable_conda ? "bioconda::mothur:1.46.1" : null)
 
     input:
     tuple val(meta), file(shared)
 
     output:
-    path "*.csv", emit: csv
+    path "*.summary", emit: summary
     path "*.version.txt", emit: version
 
     script:
@@ -22,8 +26,7 @@ process MOTHUR_SUMMARY_SHARED {
     def ext = shared.getBaseName()
     """
     mothur "#summary.shared(shared=$shared, calc=${params.calc}, distance=lt)"
-
-    mv *.summary beta-diversity.${meta.id}.csv
+    mv *.summary beta-diversity.${meta.otu_id}.summary
 
     # print version
     mothur -v | tail -n+2 | head -1 | cut -d"=" -f2 > ${software}.version.txt

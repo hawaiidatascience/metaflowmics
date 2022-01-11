@@ -11,8 +11,8 @@ process MOTHUR_CONSENSUS {
         saveAs: { filename -> saveFiles(filename:filename, options:params.options,
                                         publish_dir:getSoftwareName(task.process)) }
 
-    container "quay.io/biocontainers/mothur:1.44.1--hf0cea05_2"
-    conda (params.enable_conda ? "bioconda::mothur:1.44.1" : null)
+    container "quay.io/biocontainers/mothur:1.46.1--h7165306_0"
+    conda (params.enable_conda ? "bioconda::mothur:1.46.1" : null)
 
     input:
     tuple val(meta), file(shared), file(list), file(fasta), file(count), file(tax)
@@ -20,7 +20,7 @@ process MOTHUR_CONSENSUS {
     output:
     tuple val(meta), path("*.rep.fasta"), emit: repfasta
     tuple val(meta), path("*.rep.count_table"), emit: repcount_table
-	tuple val(meta), path("*.cons.taxonomy"), emit: constaxonomy
+    tuple val(meta), path("*.cons.taxonomy"), emit: constaxonomy
     path "*.version.txt", emit: version
 
     script:
@@ -28,8 +28,8 @@ process MOTHUR_CONSENSUS {
     outprefix = "OTUs.${meta.id}"
     """
     mothur "#
-	classify.otu(taxonomy=$tax, list=$list, count=$count, probs=f);
-	get.oturep(fasta=$fasta, list=current, count=current, method=abundance, rename=t)"
+    classify.otu(taxonomy=$tax, list=$list, count=$count, probs=f);
+    get.oturep(fasta=$fasta, list=current, count=current, method=abundance, rename=t)"
 
     mv *.rep.fasta ${outprefix}.rep.fasta
     mv *.rep.count_table ${outprefix}.rep.count_table

@@ -7,20 +7,17 @@ params.paired_end = !(params.single_end)
 module_dir = "../modules"
 subworkflow_dir = "../subworkflows"
 
-// DADA2 module imports
-include { DADA2 } from "$subworkflow_dir/dada2.nf" \
-    addParams( outdir: "$params.outdir/interm/read_processing",
-              early_chimera_removal: false, format: "mothur" )
-// mothur module imports
-include { MOTHUR } from "$subworkflow_dir/mothur.nf"
-
-// Other imports
+// Modules imports
 include{ DOWNLOAD_SILVA_FOR_MOTHUR } from "$module_dir/bash/download/main.nf" \
     addParams( db_release: params.silva_db )
 include{ READ_TRACKING } from "$module_dir/util/misc/main.nf" \
     addParams( options: [publish_dir: "read_tracking"] )
 
 // Subworkflows
+include { DADA2 } from "$subworkflow_dir/dada2.nf" \
+    addParams( outdir: "$params.outdir/interm/read_processing",
+              early_chimera_removal: false, format: "mothur" )
+include { MOTHUR } from "$subworkflow_dir/mothur.nf"
 include { HOLOVIEWS } from "$subworkflow_dir/holoviews.nf" \
     addParams( options: [publish_dir: "figures"] )
 include { DIVERSITY } from "$subworkflow_dir/diversity.nf" \

@@ -12,11 +12,11 @@ def parse_args():
 
 args = parse_args()
 
-accessions = pd.read_csv(args.tax, sep="\t", index_col=0).index
+accessions = pd.read_csv(args.tax, sep="\t", index_col=0).index.astype(str)
 
 with open(args.fasta, "r") as reader, open("rawSeq.fasta", "w") as writer:
     for (title, seq) in SimpleFastaParser(reader):
-        acc = int(title.split()[0])
+        acc = title.split()[0]
 
         if acc in accessions:
             writer.write(f">{acc}\n{seq}\n")

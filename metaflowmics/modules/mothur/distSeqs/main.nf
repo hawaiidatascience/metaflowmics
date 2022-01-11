@@ -7,8 +7,8 @@ process MOTHUR_DIST_SEQS {
     tag "$meta.id"
     label "process_high"
 
-    container "quay.io/biocontainers/mothur:1.44.1--hf0cea05_2"
-    conda (params.enable_conda ? "bioconda::mothur:1.44.1" : null)
+    container "quay.io/biocontainers/mothur:1.46.1--h7165306_0"
+    conda (params.enable_conda ? "bioconda::mothur:1.46.1" : null)
 
     input:
     tuple val(meta), file(fasta)
@@ -21,7 +21,7 @@ process MOTHUR_DIST_SEQS {
     def software = getSoftwareName(task.process)
     def cutoff = params.cutoff ?: 1
     def procname = "${task.process.tokenize(':')[-1].toLowerCase()}"
-    outprefix = "${procname}.${meta.id}"	
+    outprefix = "${procname}.${meta.id}"    
     """
     # Manually rename sequences
     # sed "/^>/s/.*\\(Otu[0-9]*\\)\\(.*\\)/>\\1\\t\\1\\2/" $fasta > renamed.fasta
