@@ -31,6 +31,9 @@ process HOLOVIEWS_PREPARE {
     ranks = ["Kingdom", "Phylum", "Class", "Order", "Family", "Genus", "Species"]
     otu_meta = dt.fread("$tax", columns=dict(Size=None)).to_pandas()
     otu_meta = otu_meta.set_index("OTU").Taxonomy.str.rstrip(";").str.split(";", expand=True)
+
+    if len(otu_meta.columns) > len(ranks):
+        ranks = ["Domain"] + ranks
     otu_meta.columns = ranks[:otu_meta.shape[1]]
 
     # Load count data

@@ -22,7 +22,7 @@ process CUTADAPT {
     output:
     tuple val(meta), path('*.fastq.gz'), emit: reads
     path '*.log', emit: log
-    path '*.version.txt'                    , emit: version
+    path '*.version.txt', emit: version
 
     script:
     def software = getSoftwareName(task.process)
@@ -49,6 +49,7 @@ process CUTADAPT {
     }
 
     demux_opt += params.single_end ? " --rc" : " --pair-adapters"
+
     """
     cutadapt --discard-untrimmed $demux_opt \\
         --cores $task.cpus \\

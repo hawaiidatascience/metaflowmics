@@ -26,11 +26,15 @@ include { GET_SUBSAMPLING_THRESHOLD } from "$module_dir/util/misc/main.nf"
 include { MOTHUR_SUBSAMPLE } from "$module_dir/mothur/subsample/main.nf" \
     addParams( options: [publish_dir: "interm/contig_processing/subsampling"] )
 include { MOTHUR_CONSENSUS as MOTHUR_CONSENSUS_RAW } from "$module_dir/mothur/consensus/main.nf" \
-    addParams( options: [publish_dir: "results/consensus"] )    
+    addParams( options: [publish_dir: "raw/consensus"] )    
 include { MOTHUR_CONSENSUS } from "$module_dir/mothur/consensus/main.nf" \
      addParams( options: [publish_dir: "results/consensus"] )
 include { MOTHUR_SYNC } from "$module_dir/mothur/sync/main.nf" \
     addParams( options: [publish_dir: "results/detail"] )
+include { MOTHUR_MAKE_DATABASE as MOTHUR_MAKE_DATABASE_RAW } from "$module_dir/mothur/makeDatabase/main.nf" \
+    addParams( options: [publish_dir: "raw"] )
+include { MOTHUR_MAKE_DATABASE } from "$module_dir/mothur/makeDatabase/main.nf" \
+    addParams( options: [publish_dir: "results"] )
 
 include { MOTHUR_SUMMARY_SINGLE } from "$module_dir/mothur/summarySingle/main.nf" \
     addParams( calc: "nseqs-sobs" )
@@ -64,17 +68,22 @@ workflow pipeline_COI {
 	 ========================================================================================
 	 Demultiplexing and read merging
 	 ========================================================================================
-	 */	
-    demux = CUTADAPT(
-        reads,
-        barcodes
-    )
-    // Convert reads from (dataset, all_reads) to channel emitting (sample_name, reads)
-    sample_reads = demux.reads.map{ it[1] }.flatten()
-        .map{[it.getSimpleName().replaceFirst(/_R[12]$/, ""), it]}
-        .groupTuple(by: 0)
-        .map{[[id: it[0], paired_end: params.paired_end], it[1]]}
+	 */
 
+	if (!params.skip_demux) {
+		demux = CUTADAPT(
+			reads,
+			barcodes
+		)
+		// Convert reads from (dataset, all_reads) to channel emitting (sample_name, reads)
+		sample_reads = demux.reads.map{ it[1] }.flatten()
+			.map{[it.getSimpleName().replaceFirst(/_R[12]$/, ""), it]}
+			.groupTuple(by: 0)
+			.map{[[id: it[0], paired_end: params.paired_end], it[1]]}
+	} else {
+		sample_reads = reads
+	}
+		
 	tracking_reads = tracking_reads.mix(
 		sample_reads.map{"demux,,${it[0].id},${it[1][0].countFastq()}"}
 	).collectFile(newLine: true)
@@ -123,6 +132,15 @@ workflow pipeline_COI {
     consensus_raw = MOTHUR_CONSENSUS_RAW(
 		shared.join(list).join(fasta).join(count_table).join(taxonomy)
     )
+
+	if (params.compute_mothur_db) {
+		MOTHUR_MAKE_DATABASE_RAW(
+			shared
+				.join(consensus_raw.constaxonomy)
+				.join(consensus_raw.repfasta)
+				.join(consensus_raw.repcount_table)
+		)
+	}
 
 	// prepare read tracking channel for optional steps
 	tracked = shared.map{[it[0], "clustering", it[1]]}
