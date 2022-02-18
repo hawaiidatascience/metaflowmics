@@ -10,7 +10,7 @@ subworkflow_dir = "../subworkflows"
 // module imports
 include{ PEAR } from "$module_dir/pear/main.nf" \
     addParams( options: [publish_dir: "interm/read_processing/merging"] )
-include{ CUTADAPT } from "$module_dir/cutadapt/main.nf" \
+include{ CUTADAPT; CUTADAPT_JAMP } from "$module_dir/cutadapt/main.nf" \
     addParams( options: [publish_dir: "interm/read_processing/demux"])
 include{ RDP_CLASSIFY } from "$module_dir/rdp/classify/main.nf" \
     addParams( options: [publish_dir: "interm/contig_processing/taxonomy"] )
@@ -71,10 +71,10 @@ workflow pipeline_COI {
 	 */
 
 	if (!params.skip_demux) {
-		demux = CUTADAPT(
-			reads,
-			barcodes
-		)
+		demux = params.jamp_demux ?
+			CUTADAPT_JAMP(reads, barcodes) :
+			CUTADAPT(reads, barcodes)
+		
 		// Convert reads from (dataset, all_reads) to channel emitting (sample_name, reads)
 		sample_reads = demux.reads.map{ it[1] }.flatten()
 			.map{[it.getSimpleName().replaceFirst(/_R[12]$/, ""), it]}
@@ -272,7 +272,7 @@ workflow pipeline_COI {
 workflow {
     reads = Channel.fromFilePairs(params.reads, size: params.single_end ? 1 : 2)
         .map{[ [id: it[0], paired_end: params.paired_end], it[1] ]}
-    barcodes = Channel.fromPath(params.barcodes, checkIfExists: true).collect()
+    barcodes = Channel.fromPath(params.barcodes).collect()
 
 	db = Channel.fromPath("${params.db_dir}/*.{txt,xml,properties}").collect()
 
