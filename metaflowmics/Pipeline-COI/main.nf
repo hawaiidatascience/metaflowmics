@@ -52,6 +52,8 @@ include { HOLOVIEWS } from "$subworkflow_dir/holoviews.nf" \
 include { DIVERSITY } from "$subworkflow_dir/diversity.nf" \
     addParams( options: [publish_dir: "postprocessing"], skip_unifrac: true )
 
+include { helpMessage ; saveParams } from "./util.nf"
+
 // Main workflow
 workflow pipeline_COI {
     take:
@@ -70,8 +72,8 @@ workflow pipeline_COI {
 	 ========================================================================================
 	 */
 
-	if (!params.skip_demux) {
-		demux = params.jamp_demux ?
+	if (params.demux) {
+		demux = params.demux.toLowerCase() == "jamp" ?
 			CUTADAPT_JAMP(reads, barcodes) :
 			CUTADAPT(reads, barcodes)
 		
@@ -272,9 +274,13 @@ workflow pipeline_COI {
 workflow {
     reads = Channel.fromFilePairs(params.reads, size: params.single_end ? 1 : 2)
         .map{[ [id: it[0], paired_end: params.paired_end], it[1] ]}
-    barcodes = Channel.fromPath(params.barcodes).collect()
+	
+    barcodes = params.demux ?
+		Channel.fromPath(params.barcodes).collect() :
+		Channel.empty()
 
 	db = Channel.fromPath("${params.db_dir}/*.{txt,xml,properties}").collect()
 
+    saveParams()
     pipeline_COI(reads, barcodes, db)
 }
