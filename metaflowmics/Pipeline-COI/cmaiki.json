@@ -1,635 +1,638 @@
 {
-    "id": "COI-pipeline-uhhpc-1.0",
-    "name": "COI-pipeline-uhhpc",
-    "icon": null,
-    "parallelism": "SERIAL",
-    "defaultProcessorsPerNode": 1,
-    "defaultMemoryPerNode": 16,
-    "defaultNodeCount": 1,
-    "defaultMaxRunTime": "72:00:00",
-    "defaultQueue": "shared",
-    "version": "1.0",
-    "isPublic": false,
-    "helpURI": "https://metagenomics-pipelines.readthedocs.io/en/latest/pipeline_COI.html",
-    "label": "Run COI pipeline",
-    "owner": "carisdak",
-    "shortDescription": "Analysis pipeline for COI data",
-    "longDescription": "Analysis pipeline for COI data",
-    "tags": [
-        "COI",
-        "metagenomics"
-    ],
-    "ontology": [],
-    "executionType": "HPC",
-    "executionSystem": "agave-new-uhhpc-execution",
-    "deploymentPath": "COI-pipeline-app-v1.0",
-    "deploymentSystem": "cmaiki-apps-deploy-storage",
-    "templatePath": "wrapper.sh",
-    "testPath": "test/test.sh",
-    "checkpointable": false,
-    "modules": [],
-    "inputs": [
-        {
-            "id": "reads",
-            "value": {
-                "visible": true,
-                "required": true,
-                "order": 0,
-                "enquote": false,
-                "default": "test/data"
-            },
-            "details": {
-                "label": "Path to the folder containing reads (fastq.gz format)",
-                "description": null,
-                "argument": null,
-                "showArgument": false,
-                "repeatArgument": false
-            },
-            "semantics": {
-                "minCardinality": 1,
-                "maxCardinality": 1,
-                "ontology": [],
-                "fileTypes": []
-            }
-        }
-    ],
-    "parameters": [
-        {
-            "id": "single_end",
-            "value": {
-                "visible": true,
-                "required": false,
-                "type": "bool",
-                "order": 0,
-                "enquote": false,
-                "default": false,
-                "validator": null
-            },
-            "details": {
-                "label": "Single-end",
-                "description": null,
-                "argument": "",
-                "showArgument": false,
-                "repeatArgument": false
-            },
-            "semantics": {
-                "minCardinality": 0,
-                "maxCardinality": 1,
-                "ontology": []
-            }
-        },
-        {
-            "id": "trunc_fwd",
-            "value": {
-                "visible": true,
-                "required": false,
-                "type": "number",
-                "order": 0,
-                "enquote": false,
-                "default": 220,
-                "validator": null
-            },
-            "details": {
-                "label": "Where do you want to truncate the forward read?",
-                "description": null,
-                "argument": null,
-                "showArgument": false,
-                "repeatArgument": false
-            },
-            "semantics": {
-                "minCardinality": 0,
-                "maxCardinality": 1,
-                "ontology": []
-            }
-        },
-        {
-            "id": "trunc_rev",
-            "value": {
-                "visible": true,
-                "required": false,
-                "type": "number",
-                "order": 0,
-                "enquote": false,
-                "default": 190,
-                "validator": null
-            },
-            "details": {
-                "label": "Where do you want to truncate the reverse read?",
-                "description": null,
-                "argument": null,
-                "showArgument": false,
-                "repeatArgument": false
-            },
-            "semantics": {
-                "minCardinality": 0,
-                "maxCardinality": 1,
-                "ontology": []
-            }
-        },
-        {
-        "id": "min_read_len",
-        "value": {
-            "visible": true,
-            "required": false,
-            "type": "number",
-            "order": 0,
-            "enquote": false,
-            "default": 20,
-            "validator": null
-        },
-      "details": {
-          "label": "Minimum read length for filtering",
-          "description": null,
-          "argument": null,
-          "showArgument": false,
-          "repeatArgument": false
+  "id": "COI-pipeline-uhhpc-0.0.1",
+  "name": "COI-pipeline-uhhpc",
+  "icon": null,
+  "parallelism": "SERIAL",
+  "defaultProcessorsPerNode": 16,
+  "defaultMemoryPerNode": 1,
+  "defaultNodeCount": 1,
+  "defaultMaxRunTime": "03:00:00",
+  "defaultQueue": "shared",
+  "version": "0.0.1",
+  "isPublic": false,
+  "helpURI": "https://metagenomics-pipelines.readthedocs.io/en/latest/",
+  "label": "Run COI pipeline",
+  "owner": "carisdak",
+  "shortDescription": "Analysis pipeline for metazoan COI data",
+  "longDescription": "Analysis pipeline for metazoan COI data",
+  "tags": [
+    "COI",
+    "metagenomics",
+    "metazoa",
+    "C-MAIKI"
+  ],
+  "ontology": [],
+  "executionType": "CLI",
+  "executionSystem": "agave-new-uhhpc-execution",
+  "deploymentPath": "COI-pipeline-app-v0.0.1",
+  "deploymentSystem": "cmaiki-apps-deploy-storage",
+  "templatePath": "wrapper.sh",
+  "testPath": "test/test.sh",
+  "checkpointable": false,
+  "modules": [],
+  "inputs": [
+    {
+      "id": "reads",
+      "value": {
+        "validator": null,
+        "visible": true,
+        "required": true,
+        "order": 0,
+        "enquote": false,
+        "default": "test/data"
       },
-            "semantics": {
-                "minCardinality": 0,
-                "maxCardinality": 1,
-                "ontology": []
-            }
-        },
-        {
-            "id": "max_expected_error",
-            "value": {
-                "visible": true,
-                "required": false,
-                "type": "number",
-                "order": 0,
-                "enquote": false,
-                "default": 3,
-                "validator": null
-            },
-            "details": {
-                "label": "Maximum number of expected errors per read (> 0)",
-                "description": null,
-                "argument": null,
-                "showArgument": false,
-                "repeatArgument": false
-            },
-            "semantics": {
-                "minCardinality": 0,
-                "maxCardinality": 1,
-                "ontology": []
-            }
-        },
-        {
-            "id": "min_overlap",
-            "value": {
-                "visible": true,
-                "required": false,
-                "type": "number",
-                "order": 0,
-                "enquote": false,
-                "default": 20,
-                "validator": null
-            },
-            "details": {
-                "label": "Minimum overlap for merging reads into contigs",
-                "description": null,
-                "argument": null,
-                "showArgument": false,
-                "repeatArgument": false
-            },
-            "semantics": {
-                "minCardinality": 0,
-                "maxCardinality": 1,
-                "ontology": []
-            }
-        },
-        {
-            "id": "max_mismatch",
-            "value": {
-                "visible": true,
-                "required": false,
-                "type": "number",
-                "order": 0,
-                "enquote": false,
-                "default": 1,
-                "validator": null
-            },
-            "details": {
-                "label": "Number of allowed mismatches between forward and reverse read when merging",
-                "description": null,
-                "argument": null,
-                "showArgument": false,
-                "repeatArgument": false
-            },
-            "semantics": {
-                "minCardinality": 0,
-                "maxCardinality": 1,
-                "ontology": []
-            }
-        },
-        {
-            "id": "min_abundance",
-            "value": {
-                "visible": true,
-                "required": false,
-                "type": "number",
-                "order": 0,
-                "enquote": false,
-                "default": 2,
-                "validator": null
-            },
-            "details": {
-                "label": "Minimum OTU abundance",
-                "description": null,
-                "argument": null,
-                "showArgument": false,
-                "repeatArgument": false
-            },
-            "semantics": {
-                "minCardinality": 0,
-                "maxCardinality": 1,
-                "ontology": []
-            }
-        },
-        {
-            "id": "clustering_thresholds",
-            "value": {
-                "visible": true,
-                "required": false,
-                "type": "string",
-                "order": 0,
-                "enquote": false,
-                "default": "100,97",
-                "validator": null
-            },
-            "details": {
-                "label": "Sequence similarity thresholds for OTU clustering (comma separated)",
-                "description": null,
-                "argument": null,
-                "showArgument": false,
-                "repeatArgument": false
-            },
-            "semantics": {
-                "minCardinality": 0,
-                "maxCardinality": -1,
-                "ontology": []
-            }
-        },
-        {
-            "id": "chimera_tool",
-            "value": {
-                "visible": true,
-                "required": false,
-                "type": "string",
-                "order": 0,
-                "enquote": false,
-                "default": "vsearch",
-                "validator": null
-            },
-            "details": {
-                "label": "Chimera flagging tool (experimental). See Mothur documentation for all available options",
-                "description": null,
-                "argument": null,
-                "showArgument": false,
-                "repeatArgument": false
-            },
-            "semantics": {
-                "minCardinality": 0,
-                "maxCardinality": -1,
-                "ontology": []
-            }
-        },
-        {
-            "id": "skip_subsampling",
-            "value": {
-                "visible": true,
-                "required": false,
-                "type": "bool",
-                "order": 0,
-                "enquote": false,
-                "default": false,
-                "validator": null
-            },
-            "details": {
-                "label": "Skip subsampling?",
-                "description": null,
-                "argument": null,
-                "showArgument": false,
-                "repeatArgument": false
-            },
-            "semantics": {
-                "minCardinality": 0,
-                "maxCardinality": 1,
-                "ontology": []
-            }
-        },
-        {
-            "id": "custom_subsampling_level",
-            "value": {
-                "visible": true,
-                "required": false,
-                "type": "number",
-                "order": 0,
-                "enquote": false,
-                "default": 0,
-                "validator": null
-            },
-            "details": {
-                "label": "Exact subsampling level (overrides the next 2 parameters if set)",
-                "description": null,
-                "argument": null,
-                "showArgument": false,
-                "repeatArgument": false
-            },
-            "semantics": {
-                "minCardinality": 0,
-                "maxCardinality": 1,
-                "ontology": []
-            }
-        },
-        {
-            "id": "min_subsampling",
-            "value": {
-                "visible": true,
-                "required": false,
-                "type": "number",
-                "order": 0,
-                "enquote": false,
-                "default": 5000,
-                "validator": null
-            },
-            "details": {
-                "label": "Minimum number of sequence for subsampling. Used if the automatic subsampling level falls below this value",
-                "description": null,
-                "argument": null,
-                "showArgument": false,
-                "repeatArgument": false
-            },
-            "semantics": {
-                "minCardinality": 0,
-                "maxCardinality": 1,
-                "ontology": []
-            }
-        },
-        {
-            "id": "subsampling_quantile",
-            "value": {
-                "visible": true,
-                "required": false,
-                "type": "string",
-                "order": 0,
-                "enquote": false,
-                "default": "0.1",
-                "validator": null
-            },
-            "details": {
-                "label": "Automatic subsampling threshold (quantile of the sample sizes distributions). Ignored if an exact subsampling level is chosen",
-                "description": "Number between 0 and 1",
-                "argument": null,
-                "showArgument": false,
-                "repeatArgument": false
-            },
-            "semantics": {
-                "minCardinality": 0,
-                "maxCardinality": 1,
-                "ontology": []
-            }
-        },
-        {
-            "id": "remove_unknown",
-            "value": {
-                "visible": true,
-                "required": false,
-                "type": "bool",
-                "order": 0,
-                "enquote": false,
-                "default": true,
-                "validator": null
-            },
-            "details": {
-                "label": "Remove unknown OTUs (at the domain level)?",
-                "description": null,
-                "argument": null,
-                "showArgument": false,
-                "repeatArgument": false
-            },
-            "semantics": {
-                "minCardinality": 1,
-                "maxCardinality": 1,
-                "ontology": []
-            }
-        },
-        {
-            "id": "remove_chloroplasts",
-            "value": {
-                "visible": true,
-                "required": false,
-                "type": "bool",
-                "order": 0,
-                "enquote": false,
-                "default": true,
-                "validator": null
-            },
-            "details": {
-                "label": "Remove chloroplasts?",
-                "description": null,
-                "argument": null,
-                "showArgument": false,
-                "repeatArgument": false
-            },
-            "semantics": {
-                "minCardinality": 0,
-                "maxCardinality": -1,
-                "ontology": []
-            }
-        },
-        {
-            "id": "remove_mitochondria",
-            "value": {
-                "visible": true,
-                "required": false,
-                "type": "bool",
-                "order": 0,
-                "enquote": false,
-                "default": true,
-                "validator": null
-            },
-            "details": {
-                "label": "Remove mitochondria?",
-                "description": null,
-                "argument": null,
-                "showArgument": false,
-                "repeatArgument": false
-            },
-            "semantics": {
-                "minCardinality": 0,
-                "maxCardinality": -1,
-                "ontology": []
-            }
-        },
-        {
-            "id": "taxa_to_filter",
-            "value": {
-                "visible": true,
-                "required": false,
-                "type": "string",
-                "order": 0,
-                "enquote": false,
-                "default": "\"\"",
-                "validator": null
-            },
-            "details": {
-                "label": "Experimental: Other taxa to filter? (Mothur syntax with commas instead of semicolons)",
-                "description": null,
-                "argument": null,
-                "showArgument": false,
-                "repeatArgument": false
-            },
-            "semantics": {
-                "minCardinality": 1,
-                "maxCardinality": -1,
-                "ontology": []
-            }
-        },
-        {
-            "id": "skip_lulu",
-            "value": {
-                "visible": true,
-                "required": false,
-                "type": "bool",
-                "order": 0,
-                "enquote": false,
-                "default": false,
-                "validator": null
-            },
-            "details": {
-                "label": "Skip LULU step?",
-                "description": null,
-                "argument": null,
-                "showArgument": false,
-                "repeatArgument": false
-            },
-            "semantics": {
-                "minCardinality": 0,
-                "maxCardinality": -1,
-                "ontology": []
-            }
-        },
-        {
-            "id": "skip_unifrac",
-            "value": {
-                "visible": true,
-                "required": false,
-                "type": "bool",
-                "order": 0,
-                "enquote": false,
-                "default": false,
-                "validator": null
-            },
-            "details": {
-                "label": "Skip tree and unifrac distances computation ? (recommended)",
-                "description": null,
-                "argument": null,
-                "showArgument": false,
-                "repeatArgument": false
-            },
-            "semantics": {
-                "minCardinality": 0,
-                "maxCardinality": -1,
-                "ontology": []
-            }
-        },
-        {
-            "id": "alpha_diversity",
-            "value": {
-                "visible": true,
-                "required": false,
-                "type": "string",
-                "order": 0,
-                "enquote": false,
-                "default": "nseqs-sobs-chao-shannon-shannoneven",
-                "validator": null
-            },
-            "details": {
-                "label": "Alpha diversity metrics to compute (available in mothur)",
-                "description": null,
-                "argument": null,
-                "showArgument": false,
-                "repeatArgument": false
-            },
-            "semantics": {
-                "minCardinality": 0,
-                "maxCardinality": -1,
-                "ontology": []
-            }
-        },
-        {
-            "id": "beta_diversity",
-            "value": {
-                "visible": true,
-                "required": false,
-                "type": "string",
-                "order": 0,
-                "enquote": false,
-                "default": "braycurtis-thetayc-sharedsobs-sharedchao",
-                "validator": null
-            },
-            "details": {
-                "label": "Beta diversity metrics to compute (available in mothur)",
-                "description": null,
-                "argument": null,
-                "showArgument": false,
-                "repeatArgument": false
-            },
-            "semantics": {
-                "minCardinality": 0,
-                "maxCardinality": -1,
-                "ontology": []
-            }
-        },
-        {
-            "id": "compute_mothur_db",
-            "value": {
-                "visible": true,
-                "required": false,
-                "type": "bool",
-                "order": 0,
-                "enquote": false,
-                "default": false,
-                "validator": null
-            },
-            "details": {
-                "label": "Compute mothur database summary file?",
-                "description": null,
-                "argument": null,
-                "showArgument": false,
-                "repeatArgument": false
-            },
-            "semantics": {
-                "minCardinality": 0,
-                "maxCardinality": -1,
-                "ontology": []
-            }
-        },
-        {
-            "id": "is_test",
-            "value": {
-                "visible": true,
-                "required": false,
-                "type": "bool",
-                "order": 0,
-                "enquote": false,
-                "default": false,
-                "validator": null
-            },
-            "details": {
-                "label": "This is a test",
-                "description": null,
-                "argument": null,
-                "showArgument": false,
-                "repeatArgument": false
-            },
-            "semantics": {
-                "minCardinality": 0,
-                "maxCardinality": -1,
-                "ontology": []
-            }
-        }
-    ],
-    "outputs": []
+      "details": {
+        "label": "Path to the folder containing reads (fastq.gz format)",
+        "description": null,
+        "argument": null,
+        "showArgument": false,
+        "repeatArgument": false
+      },
+      "semantics": {
+        "minCardinality": 1,
+        "maxCardinality": 1,
+        "ontology": [],
+        "fileTypes": []
+      }
+    },
+    {
+      "id": "barcodes",
+      "value": {
+        "validator": null,
+        "visible": true,
+        "required": false,
+        "order": 0,
+        "enquote": false,
+        "default": "test/data"
+      },
+      "details": {
+        "label": "Path to the barcodes (fasta format) if demultiplexing",
+        "description": null,
+        "argument": null,
+        "showArgument": false,
+        "repeatArgument": false
+      },
+      "semantics": {
+        "minCardinality": 1,
+        "maxCardinality": 1,
+        "ontology": [],
+        "fileTypes": []
+      }
+    }
+  ],
+  "parameters": [
+    {
+      "id": "single_end",
+      "value": {
+        "visible": true,
+        "required": false,
+        "type": "bool",
+        "order": 0,
+        "enquote": false,
+        "default": false,
+        "validator": null
+      },
+      "details": {
+        "label": "Single-end",
+        "description": null,
+        "argument": "",
+        "showArgument": false,
+        "repeatArgument": false
+      },
+      "semantics": {
+        "minCardinality": 0,
+        "maxCardinality": 1,
+        "ontology": []
+      }
+    },
+    {
+      "id": "jamp",
+      "value": {
+        "visible": true,
+        "required": false,
+        "type": "bool",
+        "order": 0,
+        "enquote": false,
+        "default": false,
+        "validator": null
+      },
+      "details": {
+        "label": "JAMP multiplexed reads",
+        "description": null,
+        "argument": "",
+        "showArgument": false,
+        "repeatArgument": false
+      },
+      "semantics": {
+        "minCardinality": 0,
+        "maxCardinality": 1,
+        "ontology": []
+      }
+    },
+    {
+      "id": "trunc_fwd",
+      "value": {
+        "visible": true,
+        "required": false,
+        "type": "number",
+        "order": 0,
+        "enquote": false,
+        "default": 220,
+        "validator": null
+      },
+      "details": {
+        "label": "Where do you want to truncate the forward read?",
+        "description": null,
+        "argument": null,
+        "showArgument": false,
+        "repeatArgument": false
+      },
+      "semantics": {
+        "minCardinality": 0,
+        "maxCardinality": 1,
+        "ontology": []
+      }
+    },
+    {
+      "id": "trunc_rev",
+      "value": {
+        "visible": true,
+        "required": false,
+        "type": "number",
+        "order": 0,
+        "enquote": false,
+        "default": 190,
+        "validator": null
+      },
+      "details": {
+        "label": "Where do you want to truncate the reverse read?",
+        "description": null,
+        "argument": null,
+        "showArgument": false,
+        "repeatArgument": false
+      },
+      "semantics": {
+        "minCardinality": 0,
+        "maxCardinality": 1,
+        "ontology": []
+      }
+    },
+    {
+      "id": "min_read_len",
+      "value": {
+        "visible": true,
+        "required": false,
+        "type": "number",
+        "order": 0,
+        "enquote": false,
+        "default": 20,
+        "validator": null
+      },
+      "details": {
+        "label": "Minimum read length for filtering",
+        "description": null,
+        "argument": null,
+        "showArgument": false,
+        "repeatArgument": false
+      },
+      "semantics": {
+        "minCardinality": 0,
+        "maxCardinality": 1,
+        "ontology": []
+      }
+    },
+    {
+      "id": "max_expected_error",
+      "value": {
+        "visible": true,
+        "required": false,
+        "type": "number",
+        "order": 0,
+        "enquote": false,
+        "default": 3,
+        "validator": null
+      },
+      "details": {
+        "label": "Maximum number of expected errors per read (> 0)",
+        "description": null,
+        "argument": null,
+        "showArgument": false,
+        "repeatArgument": false
+      },
+      "semantics": {
+        "minCardinality": 0,
+        "maxCardinality": 1,
+        "ontology": []
+      }
+    },
+    {
+      "id": "pooling",
+      "value": {
+        "visible": true,
+        "required": false,
+        "type": "bool",
+        "order": 0,
+        "enquote": false,
+        "default": true,
+        "validator": null
+      },
+      "details": {
+        "label": "Pool samples for denoising (recommended for < 500 samples)",
+        "description": null,
+        "argument": null,
+        "showArgument": false,
+        "repeatArgument": false
+      },
+      "semantics": {
+        "minCardinality": 0,
+        "maxCardinality": 1,
+        "ontology": []
+      }
+    },
+    {
+      "id": "min_overlap",
+      "value": {
+        "visible": true,
+        "required": false,
+        "type": "number",
+        "order": 0,
+        "enquote": false,
+        "default": 20,
+        "validator": null
+      },
+      "details": {
+        "label": "Minimum overlap for merging reads into contigs",
+        "description": null,
+        "argument": null,
+        "showArgument": false,
+        "repeatArgument": false
+      },
+      "semantics": {
+        "minCardinality": 0,
+        "maxCardinality": 1,
+        "ontology": []
+      }
+    },
+    {
+      "id": "max_mismatch",
+      "value": {
+        "visible": true,
+        "required": false,
+        "type": "number",
+        "order": 0,
+        "enquote": false,
+        "default": 1,
+        "validator": null
+      },
+      "details": {
+        "label": "Number of allowed mismatches between forward and reverse read when merging",
+        "description": null,
+        "argument": null,
+        "showArgument": false,
+        "repeatArgument": false
+      },
+      "semantics": {
+        "minCardinality": 0,
+        "maxCardinality": 1,
+        "ontology": []
+      }
+    },
+    {
+      "id": "min_abundance",
+      "value": {
+        "visible": true,
+        "required": false,
+        "type": "number",
+        "order": 0,
+        "enquote": false,
+        "default": 2,
+        "validator": null
+      },
+      "details": {
+        "label": "Minimum OTU abundance",
+        "description": null,
+        "argument": null,
+        "showArgument": false,
+        "repeatArgument": false
+      },
+      "semantics": {
+        "minCardinality": 0,
+        "maxCardinality": 1,
+        "ontology": []
+      }
+    },
+    {
+      "id": "clustering_thresholds",
+      "value": {
+        "visible": true,
+        "required": false,
+        "type": "string",
+        "order": 0,
+        "enquote": false,
+        "default": "100,97",
+        "validator": null
+      },
+      "details": {
+        "label": "Sequence similarity thresholds for OTU clustering (comma separated)",
+        "description": null,
+        "argument": null,
+        "showArgument": false,
+        "repeatArgument": false
+      },
+      "semantics": {
+        "minCardinality": 0,
+        "maxCardinality": -1,
+        "ontology": []
+      }
+    },
+    {
+      "id": "chimera_tool",
+      "value": {
+        "visible": true,
+        "required": false,
+        "type": "string",
+        "order": 0,
+        "enquote": false,
+        "default": "vsearch",
+        "validator": null
+      },
+      "details": {
+        "label": "Chimera flagging tool (experimental). See Mothur documentation for all available options",
+        "description": null,
+        "argument": null,
+        "showArgument": false,
+        "repeatArgument": false
+      },
+      "semantics": {
+        "minCardinality": 0,
+        "maxCardinality": -1,
+        "ontology": []
+      }
+    },
+    {
+      "id": "skip_subsampling",
+      "value": {
+        "visible": true,
+        "required": false,
+        "type": "bool",
+        "order": 0,
+        "enquote": false,
+        "default": false,
+        "validator": null
+      },
+      "details": {
+        "label": "Skip subsampling?",
+        "description": null,
+        "argument": null,
+        "showArgument": false,
+        "repeatArgument": false
+      },
+      "semantics": {
+        "minCardinality": 0,
+        "maxCardinality": 1,
+        "ontology": []
+      }
+    },
+    {
+      "id": "custom_subsampling_level",
+      "value": {
+        "visible": true,
+        "required": false,
+        "type": "number",
+        "order": 0,
+        "enquote": false,
+        "default": 0,
+        "validator": null
+      },
+      "details": {
+        "label": "Exact subsampling level (overrides the next 2 parameters if set)",
+        "description": null,
+        "argument": null,
+        "showArgument": false,
+        "repeatArgument": false
+      },
+      "semantics": {
+        "minCardinality": 0,
+        "maxCardinality": 1,
+        "ontology": []
+      }
+    },
+    {
+      "id": "min_subsampling",
+      "value": {
+        "visible": true,
+        "required": false,
+        "type": "number",
+        "order": 0,
+        "enquote": false,
+        "default": 5000,
+        "validator": null
+      },
+      "details": {
+        "label": "Minimum number of sequence for subsampling. Used if the automatic subsampling level falls below this value",
+        "description": null,
+        "argument": null,
+        "showArgument": false,
+        "repeatArgument": false
+      },
+      "semantics": {
+        "minCardinality": 0,
+        "maxCardinality": 1,
+        "ontology": []
+      }
+    },
+    {
+      "id": "subsampling_quantile",
+      "value": {
+        "visible": true,
+        "required": false,
+        "type": "string",
+        "order": 0,
+        "enquote": false,
+        "default": "0.1",
+        "validator": null
+      },
+      "details": {
+        "label": "Automatic subsampling threshold (quantile of the sample sizes distributions). Ignored if an exact subsampling level is chosen",
+        "description": "Number between 0 and 1",
+        "argument": null,
+        "showArgument": false,
+        "repeatArgument": false
+      },
+      "semantics": {
+        "minCardinality": 0,
+        "maxCardinality": 1,
+        "ontology": []
+      }
+    },
+    {
+      "id": "remove_unknown",
+      "value": {
+        "visible": true,
+        "required": false,
+        "type": "bool",
+        "order": 0,
+        "enquote": false,
+        "default": true,
+        "validator": null
+      },
+      "details": {
+        "label": "Remove unknown OTUs (at the domain level)?",
+        "description": null,
+        "argument": null,
+        "showArgument": false,
+        "repeatArgument": false
+      },
+      "semantics": {
+        "minCardinality": 1,
+        "maxCardinality": 1,
+        "ontology": []
+      }
+    },
+    {
+      "id": "taxa_to_filter",
+      "value": {
+        "visible": true,
+        "required": false,
+        "type": "string",
+        "order": 0,
+        "enquote": false,
+        "default": "\"\"",
+        "validator": null
+      },
+      "details": {
+        "label": "Experimental: Other taxa to filter? (Mothur syntax with commas instead of semicolons)",
+        "description": null,
+        "argument": null,
+        "showArgument": false,
+        "repeatArgument": false
+      },
+      "semantics": {
+        "minCardinality": 1,
+        "maxCardinality": -1,
+        "ontology": []
+      }
+    },
+    {
+      "id": "skip_lulu",
+      "value": {
+        "visible": true,
+        "required": false,
+        "type": "bool",
+        "order": 0,
+        "enquote": false,
+        "default": false,
+        "validator": null
+      },
+      "details": {
+        "label": "Skip LULU step?",
+        "description": null,
+        "argument": null,
+        "showArgument": false,
+        "repeatArgument": false
+      },
+      "semantics": {
+        "minCardinality": 0,
+        "maxCardinality": -1,
+        "ontology": []
+      }
+    },
+    {
+      "id": "alpha_diversity",
+      "value": {
+        "visible": true,
+        "required": false,
+        "type": "string",
+        "order": 0,
+        "enquote": false,
+        "default": "nseqs-sobs-chao-shannon-shannoneven",
+        "validator": null
+      },
+      "details": {
+        "label": "Alpha diversity metrics to compute (available in mothur)",
+        "description": null,
+        "argument": null,
+        "showArgument": false,
+        "repeatArgument": false
+      },
+      "semantics": {
+        "minCardinality": 0,
+        "maxCardinality": -1,
+        "ontology": []
+      }
+    },
+    {
+      "id": "beta_diversity",
+      "value": {
+        "visible": true,
+        "required": false,
+        "type": "string",
+        "order": 0,
+        "enquote": false,
+        "default": "braycurtis-thetayc-sharedsobs-sharedchao",
+        "validator": null
+      },
+      "details": {
+        "label": "Beta diversity metrics to compute (available in mothur)",
+        "description": null,
+        "argument": null,
+        "showArgument": false,
+        "repeatArgument": false
+      },
+      "semantics": {
+        "minCardinality": 0,
+        "maxCardinality": -1,
+        "ontology": []
+      }
+    },
+    {
+      "id": "compute_mothur_db",
+      "value": {
+        "visible": true,
+        "required": false,
+        "type": "bool",
+        "order": 0,
+        "enquote": false,
+        "default": false,
+        "validator": null
+      },
+      "details": {
+        "label": "Compute mothur database summary file?",
+        "description": null,
+        "argument": null,
+        "showArgument": false,
+        "repeatArgument": false
+      },
+      "semantics": {
+        "minCardinality": 0,
+        "maxCardinality": -1,
+        "ontology": []
+      }
+    },
+    {
+      "id": "is_test",
+      "value": {
+        "visible": true,
+        "required": false,
+        "type": "bool",
+        "order": 0,
+        "enquote": false,
+        "default": false,
+        "validator": null
+      },
+      "details": {
+        "label": "This is a test",
+        "description": null,
+        "argument": null,
+        "showArgument": false,
+        "repeatArgument": false
+      },
+      "semantics": {
+        "minCardinality": 0,
+        "maxCardinality": -1,
+        "ontology": []
+      }
+    }
+  ],
+  "outputs": []
 }

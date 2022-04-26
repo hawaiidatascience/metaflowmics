@@ -11,8 +11,8 @@ process MOTHUR_CHIMERA {
         saveAs: { filename -> saveFiles(filename:filename, options:params.options,
                                         publish_dir:getSoftwareName(task.process)) }
 
-    container "quay.io/biocontainers/mothur:1.46.1--h7165306_0"
-    conda (params.enable_conda ? "bioconda::mothur:1.46.1" : null)
+    container "quay.io/biocontainers/mothur:1.47.0--hb64bf22_2"
+    conda (params.enable_conda ? "bioconda::mothur:1.47.0" : null)
 
     input:
     tuple val(meta), path(fasta), path(count)
@@ -27,13 +27,11 @@ process MOTHUR_CHIMERA {
     def procname = "${task.process.tokenize(':')[-1].toLowerCase()}"
     outprefix = "${procname}.${meta.id}"
     """
-    mothur "#
-    chimera.${params.chimera_tool}(fasta=$fasta, count=$count, dereplicate=t);
-    remove.seqs(fasta=current, accnos=current, dups=f)"
+    mothur "#chimera.${params.chimera_tool}(fasta=$fasta, count=$count, dereplicate=t)"
 
     # rename outputs
-    mv *.pick.fasta ${outprefix}.fasta
-    mv *.denovo.${params.chimera_tool}.pick.count_table ${outprefix}.count_table
+    mv *.${params.chimera_tool}*.fasta ${outprefix}.fasta
+    mv *.${params.chimera_tool}*.count_table ${outprefix}.count_table
 
     # print version
     mothur -v | tail -n+2 | head -1 | cut -d"=" -f2 > ${software}.version.txt

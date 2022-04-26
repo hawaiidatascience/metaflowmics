@@ -123,6 +123,7 @@ process READ_TRACKING {
 
 process GET_SUBSAMPLING_THRESHOLD {
     label "process_low"
+	tag "$params.subsampling_quantile"
 
     container "nakor/metaflowmics-r:0.0.2"
     conda (params.enable_conda ? "conda-forge::r-data.table" : null)
@@ -141,7 +142,7 @@ process GET_SUBSAMPLING_THRESHOLD {
 
     table <- data.frame(fread("$count", drop=c(2)), row.names=1, check.names=F)
     sample_sizes <- colSums(table)
-    threshold <- floor(quantile(sample_sizes, ${params.subsampling_quantile}, names=F))
+    threshold <- floor(quantile(sample_sizes, $params.subsampling_quantile, names=F))
 
     if (threshold < $params.min_subsampling) {
         threshold <- ifelse($params.min_subsampling < max(sample_sizes), 

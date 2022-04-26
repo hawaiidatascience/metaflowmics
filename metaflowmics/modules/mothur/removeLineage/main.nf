@@ -11,8 +11,8 @@ process MOTHUR_REMOVE_LINEAGE {
         saveAs: { filename -> saveFiles(filename:filename, options:params.options,
                                         publish_dir:getSoftwareName(task.process)) }
 
-    container "quay.io/biocontainers/mothur:1.46.1--h7165306_0"
-    conda (params.enable_conda ? "bioconda::mothur:1.46.1" : null)
+    container "quay.io/biocontainers/mothur:1.47.0--hb64bf22_2"
+    conda (params.enable_conda ? "bioconda::mothur:1.47.0" : null)
 
     input:
     tuple val(meta), file(count), file(taxonomy), file(list)

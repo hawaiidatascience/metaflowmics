@@ -49,7 +49,7 @@ process CUTADAPT {
     demux_opt += params.single_end ? " --rc" : " --pair-adapters"
 
     """
-    cutadapt --discard-untrimmed \\
+    cutadapt --discard-untrimmed $demux_opt \\
         --cores $task.cpus \\
         -e $params.max_error_rate \\
         $trimmed \\
