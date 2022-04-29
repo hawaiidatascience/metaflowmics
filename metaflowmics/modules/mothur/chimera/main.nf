@@ -30,7 +30,12 @@ process MOTHUR_CHIMERA {
     mothur "#chimera.${params.chimera_tool}(fasta=$fasta, count=$count, dereplicate=t)"
 
     # rename outputs
-    mv *.${params.chimera_tool}*.fasta ${outprefix}.fasta
+	if compgen -G "*.${params.chimera_tool}*.fasta" > /dev/null; then
+        mv *.${params.chimera_tool}*.fasta ${outprefix}.fasta
+	else
+		cp $fasta ${outprefix}.fasta
+	fi
+
     mv *.${params.chimera_tool}*.count_table ${outprefix}.count_table
 
     # print version
