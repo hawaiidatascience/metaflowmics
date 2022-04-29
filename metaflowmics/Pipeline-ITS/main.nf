@@ -31,7 +31,7 @@ include { DADA2 } from "$subworkflow_dir/dada2.nf" \
 include { HOLOVIEWS } from "$subworkflow_dir/holoviews.nf" \
     addParams( options: [publish_dir: "figures"] )
 include { DIVERSITY } from "$subworkflow_dir/diversity.nf" \
-    addParams( options: [publish_dir: "postprocessing"], skip_unifrac: true, unifrac: '' )
+    addParams( options: [publish_dir: "postprocessing"], skip_unifrac: true)
 
 // Functions
 include { helpMessage; saveParams } from "./util.nf"
