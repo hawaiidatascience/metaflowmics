@@ -20,8 +20,8 @@ process DADA2_MAKESEQUENCETABLE {
     path merged_rds
 
     output:
-    tuple val(100), path("dada2_ESVs-100.fasta"), emit: fasta
-    tuple val(100), path("dada2_ESVs-100.csv"), emit: abundance
+    tuple val(100), path("dada2_ESVs.100.fasta"), emit: fasta
+    tuple val(100), path("dada2_ESVs.100.csv"), emit: abundance
     path "*.version.txt", emit: version
 
     script:
@@ -38,10 +38,10 @@ process DADA2_MAKESEQUENCETABLE {
     not_empty_samples <- rowSums(esvTable)>0
     esvTable <- esvTable[not_empty_samples, ]
 
-    write.csv(esvTable,"dada2_ESVs-100.csv")
+    write.csv(esvTable,"dada2_ESVs.100.csv")
 
     esv_ids <- sprintf("esv_%s", c(1:dim(esvTable)[2]))
-    uniquesToFasta(esvTable, "dada2_ESVs-100.fasta", ids=esv_ids)
+    uniquesToFasta(esvTable, "dada2_ESVs.100.fasta", ids=esv_ids)
     colnames(esvTable) <- esv_ids
 
     writeLines(paste0(packageVersion("dada2")), "${software}.version.txt")

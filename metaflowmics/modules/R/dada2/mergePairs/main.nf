@@ -21,8 +21,8 @@ process DADA2_MERGEPAIRS {
 
     output:
     path "*.RDS", emit: rds
-    tuple val(meta), path("ASVs-100.{count_table,tsv}"), emit: count_table
-    tuple val(meta), path("ASVs-100.fasta"), emit: fasta
+    tuple val(meta), path("ASVs.100.{count_table,tsv}"), emit: count_table
+    tuple val(meta), path("ASVs.100.fasta"), emit: fasta
     tuple val(meta), path("ASVs_duplicates_to_cluster.fasta"), optional: true, emit: fasta_dup
     path "*_summary.tsv", emit: merge_summary, optional: true
     path "*.version.txt", emit: version
@@ -84,7 +84,7 @@ process DADA2_MERGEPAIRS {
 
     ## Write ASV sequences
     asv_ids <- sprintf("ASV_%s", c(1:dim(asv_table)[2]))
-    uniquesToFasta(asv_table, "ASVs-100.fasta", ids=asv_ids)
+    uniquesToFasta(asv_table, "ASVs.100.fasta", ids=asv_ids)
 
     ## Compute count table
     count_table <- t(asv_table)
@@ -94,9 +94,9 @@ process DADA2_MERGEPAIRS {
     colnames(count_table) <- c("Representative_Sequence", "total", sample_names)
 
     if ("${params.format.toLowerCase()}" == "mothur") {
-        write.table(count_table, file="ASVs-100.count_table", row.names=F, col.names=T, quote=F, sep="\\t")
+        write.table(count_table, file="ASVs.100.count_table", row.names=F, col.names=T, quote=F, sep="\\t")
     } else {
-        write.table(count_table[, -c(2)], "ASVs-100.tsv", quote=F, row.names=F, sep="\\t")
+        write.table(count_table[, -c(2)], "ASVs.100.tsv", quote=F, row.names=F, sep="\\t")
 
         # Write duplicated fasta sequences with header formatted for VSEARCH
         list.fasta <- list()
