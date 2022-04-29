@@ -7,7 +7,7 @@ override RELEASE = latest
 endif
 
 test:
-	nextflow run Pipeline-COI -profile $(CONF) --reads "../tests/COI/*_R{1,2}.fastq.gz" --barcodes ../tests/COI/index.fasta --db_dir $(HOME)/db/BOLD/curated_dbs/manual/test/rdp_COI_trained --min_subsampling 100
+	nextflow run Pipeline-COI -profile $(CONF) --reads "../tests/COI/*_R{1,2}.fastq.gz" --barcodes ../tests/COI/index.fasta --db_dir $(HOME)/db/BOLD/curated_dbs/manual/test/rdp_COI_trained --min_subsampling 100 --demux jamp
 	nextflow run Pipeline-16S -profile $(CONF) --reads "../tests/16S/*_R{1,2}.fastq.gz" --silva_db seed
 	nextflow run Pipeline-ITS -profile $(CONF) --reads "../tests/ITS/*R1.fastq.gz"
 	nextflow run multithreaded-demux -profile $(CONF) --inputdir "../tests/demux" --n_per_file 100 --n_bases 1e3
