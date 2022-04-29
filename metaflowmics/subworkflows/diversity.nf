@@ -7,9 +7,9 @@ module_dir = "../modules"
 
 include{ FASTTREE } from "$module_dir/fasttree/main.nf"
 include{ PHYLOSEQ_UNIFRAC as PHYLOSEQ_UNIFRAC_WEIGHTED } from "$module_dir/R/phyloseq/unifrac/main.nf" \
-    addParams( method: "weighted" )
+    addParams( unifrac: "weighted" )
 include{ PHYLOSEQ_UNIFRAC as PHYLOSEQ_UNIFRAC_UNWEIGHTED } from "$module_dir/R/phyloseq/unifrac/main.nf" \
-    addParams( method: "unweighted" )
+    addParams( unifrac: "unweighted" )
 include{ MOTHUR_SUMMARY_SINGLE } from "$module_dir/mothur/summarySingle/main.nf" \
     addParams( calc: params.alpha_diversity )
 include{ MOTHUR_SUMMARY_SHARED } from "$module_dir/mothur/summaryShared/main.nf" \
