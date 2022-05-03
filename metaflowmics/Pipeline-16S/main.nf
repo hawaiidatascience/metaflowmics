@@ -8,8 +8,6 @@ module_dir = "../modules"
 subworkflow_dir = "../subworkflows"
 
 // Modules imports
-include{ DOWNLOAD_SILVA_FOR_MOTHUR } from "$module_dir/bash/download/main.nf" \
-    addParams( db_release: params.silva_db )
 include{ READ_TRACKING } from "$module_dir/util/misc/main.nf" \
     addParams( options: [publish_dir: "read_tracking"] )
 
@@ -46,15 +44,7 @@ workflow pipeline_16S {
 	 ========================================================================================
 	 */	
 	
-    // Download SILVA db for mothur
-    db = DOWNLOAD_SILVA_FOR_MOTHUR()
-
-    otus = MOTHUR(
-        asvs.fasta,
-        asvs.count_table,
-        db.aln,
-		db.tax
-    )
+    otus = MOTHUR( asvs.fasta, asvs.count_table )
 	
 	/*
 	 ========================================================================================
