@@ -27,6 +27,7 @@ process DADA2_DADA {
     script:
     def software = getSoftwareName(task.process)
     def suffix = meta.paired_end ? "_${meta.orient}" : ""
+	def pool = params.pool == "pseudo" ? "'pseudo'" : params.pool
     """
     #!/usr/bin/env Rscript
 
@@ -40,7 +41,7 @@ process DADA2_DADA {
 
     err <- readRDS("$errors")
 
-    denoised <- dada(derep, err=err, multithread=TRUE, pool=$params.pool)
+    denoised <- dada(derep, err=err, multithread=TRUE, pool=$pool)
 
     if (length(sample_names) == 1) {
         denoised <- list($meta.id=denoised)
