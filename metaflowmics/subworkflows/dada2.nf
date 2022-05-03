@@ -69,12 +69,12 @@ workflow DADA2 {
 		derep = derep.map{[it[0] + [orient: "R1"], it[1]]}
 	}
 
-	if ( params.pool == "F" ) {
+	if ( params.pool =~ /(?i)^(F|FALSE)$/ ) {
 		// error model built on all fastq files independently (N_samples * 1 or 2)
 		err = DADA2_LEARNERRORS( derep )
 	} else {
 		// error model built on all fwd files and all reverse files (1 or 2 models)
-		derep = derep.map{[it[0] + [id: "pooled"], it[1]]}.groupTuple(by: 0)
+		derep = derep.map{[it[0] + [id: params.pool], it[1]]}.groupTuple(by: 0)
 		err = DADA2_LEARNERRORS( derep )
 	}
 
