@@ -6,6 +6,8 @@ module_dir = "../modules"
 interm_dir = "interm/contig_processing"
 
 // modules
+include{ DOWNLOAD_SILVA_FOR_MOTHUR } from "$module_dir/bash/download/main.nf" \
+    addParams( db_release: params.silva_db )
 include { MOTHUR_ALIGN_SEQS } from "$module_dir/mothur/alignSeqs/main.nf" \
 	addParams( options: [publish_dir: "$interm_dir/msa-filter"] )
 include { MOTHUR_SCREEN_SEQS } from "$module_dir/mothur/screenSeqs/main.nf" \
@@ -45,10 +47,11 @@ workflow MOTHUR {
     take:
     fasta
     count_table
-	db_aln
-	db_tax
 
     main:
+    // Download SILVA db for mothur
+    db = DOWNLOAD_SILVA_FOR_MOTHUR()
+
 	/*
 	 ========================================================================================
 	 Multiple sequence alignment: subworkflow also used for ITS and COI
@@ -57,7 +60,7 @@ workflow MOTHUR {
 
 	msa = MOTHUR_ALIGN_SEQS(
 		fasta,
-		db_aln
+		db.aln
 	)
 
     msa_filt = MOTHUR_SCREEN_SEQS(
@@ -81,8 +84,8 @@ workflow MOTHUR {
 
 	tax = MOTHUR_CLASSIFY_SEQS(
         chimera.fasta.join(chimera.count_table),
-		db_aln,
-		db_tax
+		db.aln,
+		db.tax
     ).taxonomy
 
 	/*
