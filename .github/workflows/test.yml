@@ -1,0 +1,17 @@
+name: test-16S
+
+on:
+  push:
+    paths:
+      - metaflowmics/Pipeline-16S/**
+      
+jobs:
+  main_16S:
+    container: nextflow/nextflow:22.04.0
+    steps:
+      - name: checkout repo
+        uses: actions/checkout@v3
+      - name: Test 16S pipeline
+        working-directory: ./metaflowmics
+        run: make test16S
+        
