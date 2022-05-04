@@ -1,18 +1,18 @@
-name: test-16S
+name: test
 
-on:
-  push:
-    paths:
-      - metaflowmics/Pipeline-16S/**
-      
+on: push
+  
 jobs:
   main_16S:
     runs-on: ubuntu-latest
-    container: nextflow/nextflow:22.04.0
     steps:
+      - name: install java
+        run: apt-get update && apt install default-jdk
+      - name: install nextflow
+        run: curl -s https://get.nextflow.io | bash && cp nextflow /usr/local/bin
       - name: checkout repo
         uses: actions/checkout@v3
-      - name: Test 16S pipeline
+      - name: Test
         working-directory: ./metaflowmics
         run: make test16S
-        
+
