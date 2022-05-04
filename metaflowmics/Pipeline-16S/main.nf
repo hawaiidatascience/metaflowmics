@@ -11,7 +11,6 @@ subworkflow_dir = "../subworkflows"
 include{ READ_TRACKING } from "$module_dir/util/misc/main.nf" \
     addParams( options: [publish_dir: "read_tracking"] )
 
-
 // Subworkflows
 include { DADA2 } from "$subworkflow_dir/dada2.nf" \
     addParams( outdir: "$params.outdir/interm/read_processing",
