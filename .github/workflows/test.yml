@@ -22,16 +22,16 @@ jobs:
         with:
           swap-size-gb: 10
       - uses: actions/checkout@v3
-      - name: Test ITS pipeline
-        working-directory: ./metaflowmics
-        run: make testITS
-      - name: Test 16S pipeline
-        working-directory: ./metaflowmics
-        run: make test16S
-      - name: Test COI pipeline
-        working-directory: ./metaflowmics
-        run: make testCOI
       - name: Test demux pipeline
         working-directory: ./metaflowmics
         run: make testdemux
+      - name: Test 16S pipeline
+        working-directory: ./metaflowmics
+        run: make test16S
+      - name: Test ITS pipeline
+        working-directory: ./metaflowmics
+        run: make testITS
+      - name: Test COI pipeline
+        working-directory: ./metaflowmics
+        run: make testCOI
 
