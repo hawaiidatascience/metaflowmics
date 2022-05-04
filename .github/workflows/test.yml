@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: install java
-        run: apt-get update && apt install default-jdk
+        run: sudo apt-get update && sudo apt install default-jdk
       - name: install nextflow
         run: curl -s https://get.nextflow.io | bash && cp nextflow /usr/local/bin
       - name: checkout repo
