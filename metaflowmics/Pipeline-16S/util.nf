@@ -11,7 +11,6 @@ def helpMessage() {
     
     ---------------------------------- Mandatory arguments ----------------------------------------
     --reads         Path to input data (glob pattern)
-    --silva_db      Name of SILVA reference database (seed or nr)
 
     ---------------------------------- Optional arguments ----------------------------------------
     --outdir        Path to output directory. Default: "./16S-pipeline_outputs"
@@ -67,6 +66,8 @@ def helpMessage() {
     --lulu_min_rel_cooccurence   Proportion of the parent samples where daughter occurs. 
                                    Default: 1
     [Other]
+    --silva_release      Name of SILVA reference database (seed or nr)
+    --silva_version      Version of silva (e.g. 138_1)
     --min_abundance      Remove OTUs with a total abundance equal or below <minAbundance>. Default: 2
     --compute_mothur_db  Compute mothur database summary file. Can be memory intensive. Default: false
     --skip_unifrac       Skip unifrac calculation. Recommended if your memory is limited and
@@ -83,7 +84,7 @@ if (params.help){
 
 def saveParams() {
     def summary = [:]
-    summary['silva database'] = params.silva_db
+    summary['silva database'] = "${params.silva_release}_v${params.silva_version}"
     summary['paired end'] = params.paired_end
     summary['min reads per sample'] = params.min_read_count
     summary['min read length'] = params.min_read_len
@@ -123,10 +124,6 @@ def saveParams() {
     summary['Alpha diversity metrics'] = params.alpha_diversity
     summary['Beta diversity metrics'] = params.beta_diversity
 
-    if (!params.skip_unifrac) {
-        summary['Unifrac'] = params.unifrac
-    }    
-    
     file(params.outdir).mkdir()
     File f = new File("${params.outdir}/parameters_summary.log")
     f.write("====== Parameter summary =====\n")

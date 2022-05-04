@@ -12,8 +12,8 @@ process CUTADAPT {
         mode: params.publish_dir_mode,
         saveAs: { filename -> saveFiles(filename:filename, options:params.options, publish_dir:getSoftwareName(task.process)) }
 
-    conda (params.enable_conda ? 'bioconda::cutadapt=3.2' : null)
-    container 'quay.io/biocontainers/cutadapt:3.2--py38h0213d0e_0'
+    conda (params.enable_conda ? 'bioconda::cutadapt=3.4' : null)
+    container 'quay.io/biocontainers/cutadapt:4.0--py37h8902056_0'
 
     input:
     tuple val(meta), path(reads)
@@ -67,8 +67,8 @@ process CUTADAPT_JAMP {
         mode: params.publish_dir_mode,
         saveAs: { filename -> saveFiles(filename:filename, options:params.options, publish_dir:getSoftwareName(task.process)) }
 
-    conda (params.enable_conda ? 'bioconda::cutadapt=3.2' : null)
-    container 'quay.io/biocontainers/cutadapt:3.2--py38h0213d0e_0'
+    conda (params.enable_conda ? 'bioconda::cutadapt=3.4' : null)
+    container 'quay.io/biocontainers/cutadapt:4.0--py37h8902056_0'
 
     input:
     tuple val(meta), path(reads)

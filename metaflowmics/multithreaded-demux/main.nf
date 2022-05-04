@@ -9,7 +9,7 @@ module_dir = "../modules"
 include { helpMessage; saveParams } from "./util.nf"
 
 // Modules
-include{ FASTQC } from "$module_dir/util/demux/main.nf"
+include{ FASTQC } from "$module_dir/fastqc/main.nf"
 include{ GUESS_MATCH_ORDER } from "$module_dir/util/demux/main.nf"
 include{ TO_H5 } from "$module_dir/util/demux/main.nf"
 include{ ERROR_MODEL } from "$module_dir/util/demux/main.nf"
@@ -33,7 +33,7 @@ workflow demux {
 
     main:
 
-    FASTQC( reads.map{it[1..-1]} )
+    FASTQC( reads.map{[it[0], it[1..-1]]} )
 
     barcodes = GUESS_MATCH_ORDER(
         index.map{it[1..-1]},

@@ -6,8 +6,7 @@ module_dir = "../modules"
 interm_dir = "interm/contig_processing"
 
 // modules
-include{ DOWNLOAD_SILVA_FOR_MOTHUR } from "$module_dir/bash/download/main.nf" \
-    addParams( db_release: params.silva_db )
+include{ DOWNLOAD_SILVA_FOR_MOTHUR } from "$module_dir/bash/download/main.nf"
 include { MOTHUR_ALIGN_SEQS } from "$module_dir/mothur/alignSeqs/main.nf" \
     addParams( options: [publish_dir: "$interm_dir/msa-filter"] )
 include { MOTHUR_SCREEN_SEQS } from "$module_dir/mothur/screenSeqs/main.nf" \

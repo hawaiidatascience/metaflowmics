@@ -131,7 +131,7 @@ process DOWNLOAD_UNITE {
 }
 
 process DOWNLOAD_SILVA_FOR_MOTHUR {
-    tag "$params.db_release"
+    tag "$db_name"
     label "process_low"
 
     conda (params.enable_conda ? "bash:5.0.018" : null)
@@ -143,7 +143,7 @@ process DOWNLOAD_SILVA_FOR_MOTHUR {
 
     script:
     def url_base = "https://mothur.s3.us-east-2.amazonaws.com/wiki"
-	db_name = "silva.${params.db_release}_v138"
+	db_name = "silva.${params.silva_release}_v${params.silva_version}"
     """
     wget -qO- ${url_base}/${db_name}.tgz | tar xz
     """

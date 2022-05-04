@@ -46,11 +46,11 @@ workflow pipeline_ITS {
     tracked_files = Channel.empty()
     raw_counts = reads.map{["raw", it[1][0].countFastq(), it]}
 
-	/*
-	 ========================================================================================
-	 Read trimming, QC, denoising and merging
-	 ========================================================================================
-	 */	
+    /*
+     ========================================================================================
+     Read trimming, QC, denoising and merging
+     ========================================================================================
+     */    
     // ===== Extract ITS marker =====
     its = ITSXPRESS(
         raw_counts.filter{it[1] > params.min_read_count}.map{it[2]}
@@ -59,20 +59,20 @@ workflow pipeline_ITS {
     // ===== Denoising into ASVs =====
     asvs = DADA2(its.fastq)
 
-	/*
-	 ========================================================================================
-	 Contigs processing
-	 ========================================================================================
-	 */		
+    /*
+     ========================================================================================
+     Contigs processing
+     ========================================================================================
+     */        
     otus = VSEARCH_CLUSTER(
         asvs.fasta_dup,
         params.clustering_thresholds.split(",").findAll({it!="100"}).collect{it as int}
     )
     otus_fasta = asvs.fasta.mix(otus.fasta)
     otus_table = asvs.count_table.mix(otus.tsv).map{
-		it[0].otu_id = it[0].otu_id ?: 100
-		it
-	}
+        it[0].otu_id = it[0].otu_id ?: 100
+        it
+    }
 
     otus_summary = SUMMARIZE_TABLE(otus_table.map{[it[0], "clustering", it[1]]}).map{it[1]}
 
@@ -89,22 +89,22 @@ workflow pipeline_ITS {
         otus_table = lulu.abundance
     }
 
-	/*
-	 ========================================================================================
-	 Taxonomic assignment (VSEARCH's sintax)
-	 ========================================================================================
-	 */		
+    /*
+     ========================================================================================
+     Taxonomic assignment (VSEARCH's sintax)
+     ========================================================================================
+     */        
     unite_db = DOWNLOAD_UNITE()
     taxonomy = DADA2_ASSIGN_TAXONOMY(
         otus_fasta,
         unite_db
     ).taxonomy
 
-	/*
-	 ========================================================================================
-	 Read tracking through the pipeline
-	 ========================================================================================
-	 */		
+    /*
+     ========================================================================================
+     Read tracking through the pipeline
+     ========================================================================================
+     */        
     tracked_files = tracked_files
         .mix(
             raw_counts.map{"raw,,${it[2][0].id},${it[1]}"}
@@ -117,29 +117,29 @@ workflow pipeline_ITS {
 
     summary = READ_TRACKING( tracked_files )
 
-	// Save fasta to result folder
-	otus_fasta.map{it[1].copyTo("$params.outdir/results/OTUs.${it[0].id}.fasta")}
-	
+    // Save fasta to result folder
+    otus_fasta.map{it[1].copyTo("$params.outdir/results/OTUs.${it[0].id}.fasta")}
+    
     // Conversion to mothur format
     mothur_files = CONVERT_TO_MOTHUR_FORMAT(
         otus_table.join(taxonomy)
     )
 
-	/*
-	 ========================================================================================
-	 Diversity metrics (alpha, beta)
-	 ========================================================================================
-	 */		
+    /*
+     ========================================================================================
+     Diversity metrics (alpha, beta)
+     ========================================================================================
+     */        
     DIVERSITY(
         otus_fasta,
         mothur_files.shared
     )
     
-	/*
-	 ========================================================================================
-	 Interactive visualization with holoviews python package
-	 ========================================================================================
-	 */	
+    /*
+     ========================================================================================
+     Interactive visualization with holoviews python package
+     ========================================================================================
+     */    
     HOLOVIEWS(
         mothur_files.shared,
         mothur_files.taxonomy

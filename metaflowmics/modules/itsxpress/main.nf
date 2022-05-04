@@ -13,7 +13,7 @@ process ITSXPRESS {
                                         meta:meta, publish_by_meta:['id']) }
 
     conda (params.enable_conda ? "bioconda::bbmap=38.69 bioconda::itsxpress=1.8.0" : null)
-    container "quay.io/biocontainers/itsxpress:1.8.0--py_1"
+    container "quay.io/biocontainers/itsxpress:1.8.0--pyhdfd78af_2"
 
     input:
     tuple val(meta), path(reads)
