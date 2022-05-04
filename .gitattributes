@@ -1,0 +1,6 @@
+db/COI filter=lfs diff=lfs merge=lfs -text
+db/COI/logWordPrior.txt filter=lfs diff=lfs merge=lfs -text
+db/COI/rRNAClassifier.properties filter=lfs diff=lfs merge=lfs -text
+db/COI/wordConditionalProbIndexArr.txt filter=lfs diff=lfs merge=lfs -text
+db/COI/bergeyTrainingTree.xml filter=lfs diff=lfs merge=lfs -text
+db/COI/genus_wordConditionalProbList.txt filter=lfs diff=lfs merge=lfs -text
