@@ -1,9 +1,9 @@
 name: test
 
-on: push
+on: [push]
   
 jobs:
-  main_16S:
+  Test-16S:
     runs-on: ubuntu-latest
     steps:
       - name: install java
