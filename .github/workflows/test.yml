@@ -12,6 +12,9 @@ jobs:
           java-version: '11'
       - name: install nextflow
         run: curl -s https://get.nextflow.io | bash && cp nextflow /usr/local/bin
+      - uses: eWaterCycle/setup-singularity@v7
+        with:
+          singularity-version: 3.8.3
       - uses: actions/checkout@v3
       - name: Test
         working-directory: ./metaflowmics
