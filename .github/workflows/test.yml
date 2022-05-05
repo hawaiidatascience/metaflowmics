@@ -22,6 +22,8 @@ jobs:
         with:
           auto-activate-base: true
           activate-environment: ""
+          mamba-version: "*"
+          channels: conda-forge,bioconda,defaults
       - uses: actions/checkout@v3
       - name: Test demux pipeline
         working-directory: ./metaflowmics
