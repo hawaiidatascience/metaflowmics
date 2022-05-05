@@ -17,24 +17,20 @@ jobs:
           java-version: '11'
       - name: Setup nextflow
         run: curl -s https://get.nextflow.io | bash && cp nextflow /usr/local/bin
-      - name: Setup miniconda
-        uses: conda-incubator/setup-miniconda@v2
-        with:
-          auto-activate-base: true
-          activate-environment: ""
-          mamba-version: "*"
-          channels: conda-forge,bioconda,defaults
-      - uses: actions/checkout@v3
+      - name: Setup docker
+        uses: docker-practice/actions-setup-docker@master
+      - name: Pull repository
+        uses: actions/checkout@v3
       - name: Test demux pipeline
         working-directory: ./metaflowmics
-        run:  nextflow run multithreaded-demux -profile local,conda,testDemux
+        run:  nextflow run multithreaded-demux -profile local,docker,testDemux
       - name: Test 16S pipeline
         working-directory: ./metaflowmics
-        run: nextflow run Pipeline-16S -profile local,conda,test16S --skip_lulu
+        run: nextflow run Pipeline-16S -profile local,docker,test16S --skip_lulu
       - name: Test ITS pipeline
         working-directory: ./metaflowmics
-        run: nextflow run Pipeline-ITS -profile local,conda,testITS --skip_lulu
+        run: nextflow run Pipeline-ITS -profile local,docker,testITS --skip_lulu
       - name: Test COI pipeline
         working-directory: ./metaflowmics
-        run: nextflow run Pipeline-COI -profile local,conda,testCOI
+        run: nextflow run Pipeline-COI -profile local,docker,testCOI
 
