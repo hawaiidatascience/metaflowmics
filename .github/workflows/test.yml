@@ -25,14 +25,14 @@ jobs:
       - uses: actions/checkout@v3
       - name: Test demux pipeline
         working-directory: ./metaflowmics
-        run: make testdemux
+        run:  nextflow run multithreaded-demux -profile local,conda,testDemux
       - name: Test 16S pipeline
         working-directory: ./metaflowmics
-        run: make test16S
+        run: nextflow run Pipeline-16S -profile local,conda,test16S --skip_lulu
       - name: Test ITS pipeline
         working-directory: ./metaflowmics
-        run: make testITS
+        run: nextflow run Pipeline-ITS -profile local,conda,testITS --skip_lulu
       - name: Test COI pipeline
         working-directory: ./metaflowmics
-        run: make testCOI
+        run: nextflow run Pipeline-COI -profile local,conda,testCOI
 

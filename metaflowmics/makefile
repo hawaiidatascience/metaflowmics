@@ -1,4 +1,4 @@
-CONF ?= local,conda
+CONF ?= local,singularity
 
 test:
 	mkdir -p testrun
