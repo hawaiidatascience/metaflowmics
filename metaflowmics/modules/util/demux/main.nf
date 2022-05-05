@@ -26,7 +26,7 @@ process GUESS_MATCH_ORDER {
     publishDir "${params.outdir}/interm/guess_matching_order", mode: "copy"
     label "process_low"
 
-    conda (params.enable_conda ? "bash:5.0.018" : null)
+    conda (params.enable_conda ? "conda-forge::bash='5.1'" : null)
     container "nakor/bash:5.1.4"
     
     input:
@@ -697,7 +697,7 @@ process WRITE_SAMPLES_TO_FASTQ {
 process GZIP {
     publishDir "${params.outdir}/fastqs", mode: "copy"
     label "high_computation"
-    conda (params.enable_conda ? "bash:5.0.018" : null)
+    conda (params.enable_conda ? "conda-forge::bash='5.1'" : null)
     container "nakor/bash:5.1.4"
 
     input:

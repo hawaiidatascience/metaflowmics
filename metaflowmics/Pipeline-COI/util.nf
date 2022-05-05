@@ -121,10 +121,6 @@ def saveParams() {
     summary['Alpha diversity metrics'] = params.alpha_diversity
     summary['Beta diversity metrics'] = params.beta_diversity
 
-    if (!params.skip_unifrac) {
-        summary['Unifrac'] = params.unifrac
-    }    
-    
     file(params.outdir).mkdir()
     File f = new File("${params.outdir}/parameters_summary.log")
     f.write("====== Parameter summary =====\n")

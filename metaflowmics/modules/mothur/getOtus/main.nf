@@ -8,7 +8,7 @@ process MOTHUR_GET_OTUS {
     label "process_low"
 
     container "quay.io/biocontainers/mothur:1.47.0--hb64bf22_2"
-    conda (params.enable_conda ? "bioconda::mothur:1.47.0" : null)
+    conda (params.enable_conda ? "bioconda::mothur=1.47.0" : null)
 
     input:
     tuple val(meta), file(ref), file(filt)

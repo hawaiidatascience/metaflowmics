@@ -1,5 +1,5 @@
 // Import generic module functions
-include { initOptions; saveFiles; getSoftwareName } from './functions'
+include { initOptions; saveFiles; getSoftwareName } from "./functions"
 
 options = initOptions(params.options)
 
@@ -14,20 +14,20 @@ process SUMMARIZE_TABLE {
     tuple val(meta), val(step), path(table)
 
     output:
-    tuple val(meta), file('summary.csv')
+    tuple val(meta), file("summary.csv")
 
     script:
-    drop = 'NULL'
-    sep = 'auto'
+    drop = "NULL"
+    sep = "auto"
     rownames = 1
-    taxa_are_rows = 'T'
-	otu_id = meta.otu_id ?: ''
+    taxa_are_rows = "T"
+	otu_id = meta.otu_id ?: ""
     
-    if (table.getExtension() == 'count_table') {
+    if (table.getExtension() == "count_table") {
         drop = "'total'"
-        sep = '\\t'
+        sep = "\\t"
         rownames = 1
-        taxa_are_rows = 'T'
+        taxa_are_rows = "T"
     }
     """
     #!/usr/bin/env Rscript
@@ -35,7 +35,7 @@ process SUMMARIZE_TABLE {
     library(data.table)
 
     table <- data.frame(
-        fread("$table", drop=$drop, sep='$sep'),
+        fread("$table", drop=$drop, sep="$sep"),
         row.names=$rownames, check.names=F
     )
 
@@ -44,14 +44,14 @@ process SUMMARIZE_TABLE {
     }
     
     summary <- cbind(
-        rep('$step', ncol(table)),
-        rep('$otu_id', ncol(table)),
+        rep("$step", ncol(table)),
+        rep("$otu_id", ncol(table)),
         colnames(table),
         colSums(table),
         colSums(table > 0)
     )
 
-    write.table(summary, 'summary.csv', quote=F, row.names=F, col.names=F, sep=',')    
+    write.table(summary, "summary.csv", quote=F, row.names=F, col.names=F, sep=",")    
     """
     
 }
@@ -64,41 +64,43 @@ process READ_TRACKING {
                                         meta:meta) }
 
     container "nakor/metaflowmics-r:0.0.2"
-    conda (params.enable_conda ? "conda-forge::r-dplyr conda-forge::tidyr" : null)
+    conda (params.enable_conda ? "conda-forge::r-dplyr'=1.0.9' conda-forge::r-tidyr'=1.2' conda-forge::r-stringr" : null)
 
     input:
     path counts
 
     output:
-    file('summary-per-sample-per-step*.csv')
+    file("summary-per-sample-per-step*.csv")
 
     script:
 	def outprefix = "summary-per-sample-per-step"
     """
-    #!/usr/bin/env Rscript    
+    #!/usr/bin/env Rscript
 
     library(stringr)
     library(dplyr)
     library(tidyr)
 
-	cols <- c('step', 'otu_id', 'sample', 'total', 'nuniq')
+    cols <- c("step", "otu_id", "sample", "total", "nuniq")
     data <- read.csv("$counts", header=F, col.names=cols)
 
     # Order the step according to total count and uniques
-    col_order <- data %>% replace_na(list(nuniq=Inf)) %>%
+    col_order <- data %>%
+        mutate(nuniq=as.numeric(nuniq)) %>%
+        replace_na(list(nuniq=Inf)) %>%
         group_by(step) %>% summarise(m1=sum(total), m2=sum(nuniq)) %>%
-        arrange(desc(m1), desc(m2)) %>% 
+        arrange(desc(m1), desc(m2)) %>%
         pull(step) %>% as.character
 
     # Reshape the table into wide format
-    summary <- data %>% 
+    summary <- data %>%
       mutate(
         step=factor(step, col_order),
         label=ifelse(is.na(nuniq), total, sprintf("%s (%s uniques)", total, nuniq))
       ) %>% 
-      select(step, sample, label, otu_id) %>% 
+      select(step, sample, label, otu_id) %>%
       arrange(step)
-    
+
     # Split summary per clustering ids
     before_clustering <- summary %>% filter(is.na(otu_id))
     after_clustering <- summary %>% filter(!is.na(otu_id))
@@ -110,13 +112,13 @@ process READ_TRACKING {
               bind_rows(after_clustering %>% filter(otu_id==id)) %>%
               select(-otu_id) %>%
               pivot_wider(names_from=step, values_from=label, values_fill="0")
-            write.table(summary_i, sprintf('${outprefix}.%s.csv', id), quote=F, row.names=F, sep=',')
+            write.table(summary_i, sprintf("${outprefix}.%s.csv", id), quote=F, row.names=F, sep=",")
         }
     } else { # reads were all filtered before clustering
         summary <- summary %>% 
             select(-otu_id) %>% 
             pivot_wider(names_from=step, values_from=label, values_fill="0")
-        write.table(summary, '${outprefix}.csv', quote=F, row.names=F, sep=',')
+        write.table(summary, "${outprefix}.csv", quote=F, row.names=F, sep=",")
     }
     """
 }
@@ -188,21 +190,21 @@ process CONVERT_TO_MOTHUR_FORMAT {
         rep(ncol(abund), nrow(abund)),
         abund
     )
-    colnames(shared) <- c('label', 'Group', 'numOtus', colnames(abund))
-    write.table(shared, "OTUs.${meta.id}.shared", quote=F, sep='\\t', row.names=F)
+    colnames(shared) <- c("label", "Group", "numOtus", colnames(abund))
+    write.table(shared, "OTUs.${meta.id}.shared", quote=F, sep="\\t", row.names=F)
 
     tax <- data.frame(fread("taxonomy.csv"), row.names=1, check.names=F)
-    rownames(tax) <- gsub(';.*', '', rownames(tax))
+    rownames(tax) <- gsub(";.*", "", rownames(tax))
     rank_names <- colnames(tax)
 
     tax <- cbind(
         rownames(tax), 
         colSums(abund), 
-        apply(tax, 1, function(x) paste(x, collapse=';'))
+        apply(tax, 1, function(x) paste(x, collapse=";"))
     )
-    colnames(tax) <- c('OTU', 'Size', 'Taxonomy')
-    tax[, 'Taxonomy'] <- gsub('[a-z]__', '', tax[, 'Taxonomy'])
+    colnames(tax) <- c("OTU", "Size", "Taxonomy")
+    tax[, "Taxonomy"] <- gsub("[a-z]__", "", tax[, "Taxonomy"])
 
-    write.table(tax, "OTUs.${meta.id}.taxonomy", quote=F, sep='\\t', row.names=F)
+    write.table(tax, "OTUs.${meta.id}.taxonomy", quote=F, sep="\\t", row.names=F)
     """
 }

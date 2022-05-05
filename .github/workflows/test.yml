@@ -6,6 +6,10 @@ jobs:
   Test-all:
     runs-on: ubuntu-latest
     steps:
+      - name: Set swap space
+        uses: pierotofy/set-swap-space@master
+        with:
+          swap-size-gb: 10
       - name: Setup java
         uses: actions/setup-java@v3
         with:
@@ -13,14 +17,11 @@ jobs:
           java-version: '11'
       - name: Setup nextflow
         run: curl -s https://get.nextflow.io | bash && cp nextflow /usr/local/bin
-      - name: Setup singularity
-        uses: eWaterCycle/setup-singularity@v7
+      - name: Setup miniconda
+        uses: conda-incubator/setup-miniconda@v2
         with:
-          singularity-version: 3.8.3
-      - name: Set Swap Space
-        uses: pierotofy/set-swap-space@master
-        with:
-          swap-size-gb: 10
+          auto-activate-base: true
+          activate-environment: ""
       - uses: actions/checkout@v3
       - name: Test demux pipeline
         working-directory: ./metaflowmics

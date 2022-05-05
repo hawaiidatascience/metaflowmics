@@ -14,7 +14,7 @@ process HOLOVIEWS_SCATTER {
                                         meta:meta) }
 
     container "nakor/metaflowmics-python:0.0.2"
-    conda (params.enable_conda ? "conda-forge::datatable pandas>=1" : null)
+    conda (params.enable_conda ? "conda-forge::datatable pandas'>=1' holoviews" : null)
 
     input:
     tuple val(meta), file(mg)

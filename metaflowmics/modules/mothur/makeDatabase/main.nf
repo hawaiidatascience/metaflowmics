@@ -12,7 +12,7 @@ process MOTHUR_MAKE_DATABASE {
                                         publish_dir:getSoftwareName(task.process)) }    
 
     container "quay.io/biocontainers/mothur:1.47.0--hb64bf22_2"
-    conda (params.enable_conda ? "bioconda::mothur:1.47.0" : null)
+    conda (params.enable_conda ? "bioconda::mothur=1.47.0" : null)
 
     input:
     tuple val(meta), file(shared), file(constax), file(repfasta), file(repcount)

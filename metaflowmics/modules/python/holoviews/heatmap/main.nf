@@ -4,7 +4,6 @@ include { initOptions; saveFiles; getSoftwareName } from "./functions"
 
 options = initOptions(params.options)
 
-
 process HOLOVIEWS_CLUSTERMAP {
     tag "$meta.id"
     label "process_low"
@@ -15,7 +14,7 @@ process HOLOVIEWS_CLUSTERMAP {
                                         meta:meta) }
 
     container "nakor/metaflowmics-python:0.0.2"
-    conda (params.enable_conda ? "conda-forge::datatable pandas>=1" : null)
+    conda (params.enable_conda ? "conda-forge::datatable pandas'>=1' scipy holoviews" : null)
 
     input:
     tuple val(meta), file(mg)

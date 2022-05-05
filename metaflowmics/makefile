@@ -1,49 +1,11 @@
-CONF ?= local_test
-PATTERN ?= R{1,2}
-ARGS ?=
+CONF ?= local,conda
 
 test:
-	@make testITS PATTERN=R1
-	@make test16S
-	@make testdemux
-	@make testCOI
-
-test16S:
 	mkdir -p testrun
-	cd $(shell mktemp -d -p testrun) && \
-	nextflow run $(PWD)/Pipeline-16S -resume -profile $(CONF) \
-	  --reads "$(PWD)/../tests/16S/*_$(PATTERN).fastq.gz" --silva_release seed $(ARGS)
-
-testITS:
-	mkdir -p testrun
-	cd $(shell mktemp -d -p testrun) && \
-	 nextflow run $(PWD)/Pipeline-ITS -resume -profile $(CONF) \
-	  --reads "$(PWD)/../tests/ITS/*_$(PATTERN).fastq.gz" $(ARGS)
-
-testCOI:
-	mkdir -p testrun
-	cd $(shell mktemp -d -p testrun) && \
-	nextflow run $(PWD)/Pipeline-COI -resume -profile $(CONF) \
-	  --reads "$(PWD)/../tests/COI/*_$(PATTERN).fastq.gz" \
-	  --barcodes $(PWD)/../tests/COI/index.fasta \
-	  --db_dir $(PWD)/../db/COI \
-	  --min_subsampling 100 --demux jamp $(ARGS)
-
-testdemux:
-	mkdir -p testrun
-	cd $(shell mktemp -d -p testrun) && \
-	nextflow run $(PWD)/multithreaded-demux -resume -profile $(CONF) \
-	  --inputdir "$(PWD)/../tests/demux" --n_per_file 100 --n_bases 1e3 $(ARGS)
-
-test16Sall:
-	@make test16S
-	@make test16S ARGS="--pool T --compute_mothur_db --skip_unifrac"
-	@make test16S ARGS="--single_end --skip_subsampling --skip_lulu"
-
-testITSall:
-	@make testITS
-	@make testITS ARGS="--pool T --paired_end --skip_lulu"
-	@make testITS ARGS="--skip_lulu"
+	nextflow run Pipeline-16S -resume -profile $(CONF),test16S --outdir testrun/16S --skip_lulu
+	nextflow run Pipeline-ITS -resume -profile $(CONF),testITS --outdir testrun/ITS --skip_lulu
+	nextflow run Pipeline-COI -resume -profile $(CONF),testCOI --outdir testrun/COI
+	nextflow run multithreaded-demux -resume -profile $(CONF),testDemux --outdir testrun/demux
 
 clean:
 	rm -rf work .nextflow* testrun

@@ -10,7 +10,7 @@ process HOLOVIEWS_PREPARE {
     label "plot"
 
     container "nakor/metaflowmics-python:0.0.2"
-    conda (params.enable_conda ? "conda-forge::datatable pandas>=1" : null)
+    conda (params.enable_conda ? "conda-forge::datatable pandas'>=1'" : null)
 
     input:
     tuple val(meta), file(shared), file(tax)

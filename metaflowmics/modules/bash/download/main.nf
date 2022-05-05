@@ -7,7 +7,7 @@ process DOWNLOAD_IBOL {
     label "process_low"
     publishDir "${params.outdir}/download", mode: params.publish_dir_mode
     
-    conda (params.enable_conda ? "bash:5.0.018" : null)
+    conda (params.enable_conda ? "conda-forge::bash=5.1" : null)
     container "nakor/bash:5.1.4"
 
     input:
@@ -49,7 +49,7 @@ process DOWNLOAD_IBOL_2 {
     label "process_low"
     publishDir "${params.outdir}/download", mode: params.publish_dir_mode
     
-    conda (params.enable_conda ? "bash:5.0.018" : null)
+    conda (params.enable_conda ? "conda-forge::bash=5.1" : null)
     container "nakor/bash:5.1.4"
 
     input:
@@ -99,7 +99,7 @@ process DOWNLOAD_UNITE {
     tag "$params.db_release"
     label "process_low"
 
-    conda (params.enable_conda ? "bash:5.0.018" : null)
+    conda (params.enable_conda ? "conda-forge::bash=5.1" : null)
     container "nakor/bash:5.1.4"
 
     output:
@@ -113,7 +113,7 @@ process DOWNLOAD_UNITE {
         file = "1E662B6EB320312A61E7E3218327F34C7DB09CFF8E4686A89EF47886822DA6AB.gz"
         """
         wget -qO- $url_base/$file | tar xz
-        iconv -f utf-8 -t ascii sh_general_release*/*.fasta \
+        iconv -f utf-8 -t ascii//TRANSLIT sh_general_release*/*.fasta \\
             > unite_fungi.fasta
         rm -rf sh_general_release*
         """
@@ -134,7 +134,7 @@ process DOWNLOAD_SILVA_FOR_MOTHUR {
     tag "$db_name"
     label "process_low"
 
-    conda (params.enable_conda ? "bash:5.0.018" : null)
+    conda (params.enable_conda ? "conda-forge::bash=5.1" : null)
     container "nakor/bash:5.1.4"
 
     output:
@@ -153,7 +153,7 @@ process DOWNLOAD_RDP_FOR_DADA2 {
     tag "$params.db_release"
     label "process_low"
 
-    conda (params.enable_conda ? "bash:5.0.018" : null)
+    conda (params.enable_conda ? "conda-forge::bash=5.1" : null)
     container "nakor/bash:5.1.4"
 
     output:
