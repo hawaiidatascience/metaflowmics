@@ -92,7 +92,7 @@ process TO_H5 {
     label "process_medium"
 
     container "nakor/metaflowmics-python:0.0.1"
-    // conda (params.enable_conda ? "conda-forge::" : null)
+    conda (params.enable_conda ? "conda-forge::biopython conda-forge::h5py conda-forge::numpy" : null)
 
     input:
     tuple val(split), file(index)
