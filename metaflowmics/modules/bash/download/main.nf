@@ -113,7 +113,7 @@ process DOWNLOAD_UNITE {
         file = "1E662B6EB320312A61E7E3218327F34C7DB09CFF8E4686A89EF47886822DA6AB.gz"
         """
         wget -qO- $url_base/$file | tar xz
-        iconv -f utf-8 -t ascii//TRANSLIT sh_general_release*/*.fasta \\
+        iconv -f utf-8 -t ascii sh_general_release*/*.fasta \\
             > unite_fungi.fasta
         rm -rf sh_general_release*
         """

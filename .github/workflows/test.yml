@@ -21,16 +21,16 @@ jobs:
         uses: docker-practice/actions-setup-docker@master
       - name: Pull repository
         uses: actions/checkout@v3
-      - name: Test demux pipeline
-        working-directory: ./metaflowmics
-        run:  nextflow run multithreaded-demux -profile local,docker,testDemux
-      - name: Test 16S pipeline
-        working-directory: ./metaflowmics
-        run: nextflow run Pipeline-16S -profile local,docker,test16S --skip_lulu
       - name: Test ITS pipeline
         working-directory: ./metaflowmics
         run: nextflow run Pipeline-ITS -profile local,docker,testITS --skip_lulu
       - name: Test COI pipeline
         working-directory: ./metaflowmics
         run: nextflow run Pipeline-COI -profile local,docker,testCOI
+      - name: Test demux pipeline
+        working-directory: ./metaflowmics
+        run:  nextflow run multithreaded-demux -profile local,docker,testDemux
+      - name: Test 16S pipeline
+        working-directory: ./metaflowmics
+        run: nextflow run Pipeline-16S -profile local,docker,test16S --skip_lulu
 
