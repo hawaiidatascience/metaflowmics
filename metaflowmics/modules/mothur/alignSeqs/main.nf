@@ -11,7 +11,7 @@ process MOTHUR_ALIGN_SEQS {
         saveAs: { filename -> saveFiles(filename:filename, options:params.options,
                                         publish_dir:getSoftwareName(task.process)) }
 
-    container "quay.io/biocontainers/mothur=1.47.0--hb64bf22_2"
+    container "quay.io/biocontainers/mothur:1.47.0--hb64bf22_2"
     conda (params.enable_conda ? "bioconda::mothur=1.47.0" : null)
 
     input:
