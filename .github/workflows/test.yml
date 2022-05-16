@@ -1,7 +1,10 @@
 name: test
 
-on: [push]
-  
+on: push:
+  paths:
+    - **.nf
+    - **.config
+
 jobs:
   Test-all:
     runs-on: ubuntu-latest
