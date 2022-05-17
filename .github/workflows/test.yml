@@ -1,9 +1,10 @@
 name: test
 
-on: push:
-  paths:
-    - '**.nf'
-    - '**.config'
+on:
+  push:
+    paths:
+      - '**.nf'
+      - '**.config'
 
 jobs:
   Test-all:
