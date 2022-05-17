@@ -2,8 +2,8 @@ name: test
 
 on: push:
   paths:
-    - **.nf
-    - **.config
+    - '**.nf'
+    - '**.config'
 
 jobs:
   Test-all:
