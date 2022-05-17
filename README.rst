@@ -3,8 +3,8 @@ MetaFlow|mics: Nextflow pipelines for metagenomics
 .. image:: https://readthedocs.org/projects/metagenomics-pipelines/badge/?version=latest
    :target: https://metagenomics-pipelines.readthedocs.io/en/latest/?badge=latest
 
-.. |github-actions| image:: https://img.shields.io/github/workflow/status/hawaiidatascience/metaflowmics/test
-    :target: https://github.com/hawaiidatascience/metaflowmics/actions?query=workflow
+.. |tests| image:: https://img.shields.io/github/workflow/status/hawaiidatascience/metaflowmics/test
+   :target: https://github.com/hawaiidatascience/metaflowmics/actions?query=workflow
 
 
 Cite
