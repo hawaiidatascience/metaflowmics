@@ -52,7 +52,7 @@ process UPDATE_MSA_WITH_REF {
     label "process_low"
     publishDir params.outdir, mode: params.publish_dir_mode
 
-    container "nakor/metaflowmics-python:0.0.1"
+    container "nakor/metaflowmics-python:0.0.2"
     conda (params.enable_conda ? "conda-forge::biopython conda-forge:pandas" : null)
 
     input:

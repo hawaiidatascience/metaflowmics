@@ -91,7 +91,7 @@ process TO_H5 {
     tag "$split"
     label "process_medium"
 
-    container "nakor/metaflowmics-python:0.0.1"
+    container "nakor/metaflowmics-python:0.0.2"
     conda (params.enable_conda ? "conda-forge::biopython conda-forge::h5py conda-forge::numpy" : null)
 
     input:
@@ -183,7 +183,7 @@ process ERROR_MODEL {
     publishDir "${params.outdir}/interm/error_model", mode: "copy"
     label "process_high"
 
-    container "nakor/metaflowmics-python:0.0.1"
+    container "nakor/metaflowmics-python:0.0.2"
     conda (params.enable_conda ? "conda-forge::pandas conda-forge::h5py conda-forge::scikit-learn conda-forge::bokeh" : null)
 
     input:
@@ -417,7 +417,7 @@ process MAP_INDEX_TO_SAMPLE {
     label "process_high"
     stageInMode "copy"
 
-    container "nakor/metaflowmics-python:0.0.1"
+    container "nakor/metaflowmics-python:0.0.2"
     conda (params.enable_conda ? "conda-forge::pandas conda-forge::h5py" : null)
 
     input:
@@ -544,7 +544,7 @@ process SAMPLE_SIZE_DISTRIBUTION {
     publishDir "${params.outdir}/figures", mode: "copy"
     label "process_low"
 
-    container "nakor/metaflowmics-python:0.0.1"
+    container "nakor/metaflowmics-python:0.0.2"
     conda (params.enable_conda ? "conda-forge::pandas conda-forge::bokeh" : null)
 
     input:
@@ -631,7 +631,7 @@ process WRITE_SAMPLES_TO_FASTQ {
     tag "$split"
     label "process_low"
 
-    container "nakor/metaflowmics-python:0.0.1"
+    container "nakor/metaflowmics-python:0.0.2"
     conda (params.enable_conda ? "conda-forge::biopython conda-forge::pandas" : null)
 
     input:
