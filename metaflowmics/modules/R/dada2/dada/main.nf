@@ -5,7 +5,7 @@ options = initOptions(params.options)
 
 process DADA2_DADA {
     tag "$meta.id"
-    label "process_medium"
+    label "${params.pool == 'F' ? 'process_medium' : 'process_high'}"
     publishDir "${params.outdir}",
         mode: params.publish_dir_mode,
         saveAs: { filename -> saveFiles(filename:filename, options:params.options,
