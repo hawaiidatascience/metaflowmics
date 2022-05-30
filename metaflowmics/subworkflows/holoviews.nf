@@ -9,7 +9,7 @@ include{ HOLOVIEWS_BARS } from "$moduledir/bars/main.nf" \
     addParams( min_abund: 0.01 )
 include{ HOLOVIEWS_SCATTER } from "$moduledir/scatter/main.nf"
 include{ HOLOVIEWS_CLUSTERMAP } from "$moduledir/heatmap/main.nf" \
-    addParams( min_abund: 0.01 )
+    addParams( min_abund: 0.01, max_otu_plot: 500 )
 
 
 workflow HOLOVIEWS {

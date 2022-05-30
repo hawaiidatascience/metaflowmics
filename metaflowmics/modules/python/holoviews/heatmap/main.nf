@@ -36,8 +36,8 @@ process HOLOVIEWS_CLUSTERMAP {
     data = pd.read_csv("${mg}")
     
     # Filter OTUs
-    scores = data.groupby("OTU").relabund.agg(max_abd=max, sd="std")
-    otus = scores.index[(scores.max_abd > $params.min_abund) & (scores.sd > 0)]
+    scores = data.groupby("OTU").relabund.agg(max_abd=max, sd="std").sort_values(by="max_abd")
+    otus = scores.index[(scores.max_abd > $params.min_abund) & (scores.sd > 0)][:$params.max_otu_plot]
     data = data[data.OTU.isin(otus)].set_index(["Group", "OTU"])
 
     # Compute z_scores

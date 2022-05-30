@@ -38,7 +38,7 @@ process HOLOVIEWS_PREPARE {
 
     # Load count data
     abund = dt.fread("$shared", columns=dict(label=None, numOtus=None), 
-                     memory_limit=$max_mem)
+                     memory_limit=$max_mem, nthreads=$task.cpus)
     abund = abund.to_pandas().melt(id_vars="Group", var_name="OTU", value_name="count")
 
     # binary columns are set to bool by fread --> convert to int
