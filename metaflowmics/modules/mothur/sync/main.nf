@@ -29,7 +29,7 @@ process MOTHUR_SYNC {
     def outprefix = "OTUs.${meta.id}"
     """
     mothur "#
-    list.otus(shared=$shared);
+    list.otulabels(shared=$shared);
     get.otus(accnos=current, list=$list);
     list.seqs(list=current);
     get.seqs(accnos=current, fasta=$fasta);    

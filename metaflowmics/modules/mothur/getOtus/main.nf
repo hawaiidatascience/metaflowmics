@@ -20,6 +20,6 @@ process MOTHUR_GET_OTUS {
     def ref_ext = ref.getExtension()
     def arg = filt.getExtension()
     """
-    mothur "#list.otus(${ref_ext}=$ref);get.otus(accnos=current,$arg=$filt)"
+    mothur "#list.otulabels(${ref_ext}=$ref);get.otus(accnos=current,$arg=$filt)"
     """
 }

@@ -26,7 +26,7 @@ process MOTHUR_SUMMARY_SINGLE {
     def software = getSoftwareName(task.process)
     def ext = shared.getBaseName()
     """
-    mothur "#summary.single(shared=$shared, calc=$params.calc)"
+    mothur "#make.shared(shared=$shared); summary.single(shared=current, calc=$params.calc)"
 
     # summary
     if [ "$params.calc" = "nseqs-sobs" ]; then

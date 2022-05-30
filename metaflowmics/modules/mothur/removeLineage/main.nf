@@ -29,7 +29,9 @@ process MOTHUR_REMOVE_LINEAGE {
     def procname = "${task.process.tokenize(':')[-1].toLowerCase()}"
     outprefix = "${procname}.${meta.id}"
     """
-    mothur "#remove.lineage(taxonomy=$taxonomy, count=$count, list=$list, taxon="$params.taxa_to_filter"); make.shared(list=current, count=current)"
+    mothur "#
+	remove.lineage(taxonomy=$taxonomy, count=$count, list=$list, taxon="$params.taxa_to_filter"); 
+	make.shared(list=current, count=current)"
 
     # rename outputs
     mv *.pick.taxonomy ${outprefix}.taxonomy
