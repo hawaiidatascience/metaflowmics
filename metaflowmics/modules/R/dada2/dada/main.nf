@@ -44,7 +44,7 @@ process DADA2_DADA {
     denoised <- dada(derep, err=err, multithread=TRUE, pool=$pool)
 
     if (length(sample_names) == 1) {
-        denoised <- list($meta.id=denoised)
+        denoised <- list("$meta.id"=denoised)
     }
 
     sapply(names(denoised), function(x) saveRDS(denoised[[x]], sprintf("%s${suffix}.denoised.RDS", x)))
