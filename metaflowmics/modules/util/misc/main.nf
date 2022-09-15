@@ -83,6 +83,9 @@ process READ_TRACKING {
 
     cols <- c("step", "otu_id", "sample", "total", "nuniq")
     data <- read.csv("$counts", header=F, col.names=cols)
+    
+    # Since mothur replaces "-" with "_", make sample names consistent
+    data\$sample <- gsub("-", "_", data\$sample)
 
     # Order the step according to total count and uniques
     col_order <- data %>%
