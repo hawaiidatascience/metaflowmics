@@ -12,6 +12,9 @@ include{ PEAR } from "$module_dir/pear/main.nf" \
     addParams( options: [publish_dir: "interm/read_processing/merging"] )
 include{ CUTADAPT; CUTADAPT_JAMP } from "$module_dir/cutadapt/main.nf" \
     addParams( options: [publish_dir: "interm/read_processing/demux"])
+include{ DOWNLOAD_MIDORI_RDP } from "$module_dir/bash/download/main.nf" \
+    addParams( options: [publish_dir: "interm/contig_processing/taxonomy"] )
+include{ RDP_TRAIN } from "$module_dir/rdp/train/main.nf"
 include{ RDP_CLASSIFY } from "$module_dir/rdp/classify/main.nf" \
     addParams( options: [publish_dir: "interm/contig_processing/taxonomy"] )
 include{ MOTHUR_CHIMERA } from "$module_dir/mothur/chimera/main.nf" \
@@ -279,7 +282,12 @@ workflow {
         Channel.fromPath(params.barcodes).collect() :
         Channel.empty()
 
-    db = Channel.fromPath("${params.db_dir}/*.{txt,xml,properties}").collect()
+	if (params.use_midori) {
+		db_raw = DOWNLOAD_MIDORI_RDP()
+		db = RDP_TRAIN(db_raw)
+	} else {
+		db = Channel.fromPath("${params.db_dir}/*.{txt,xml,properties}").collect()
+	}
 
     saveParams()
     pipeline_COI(reads, barcodes, db)
