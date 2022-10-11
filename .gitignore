@@ -22,3 +22,4 @@ data
 target
 *.npy
 *.html
+*.lock
