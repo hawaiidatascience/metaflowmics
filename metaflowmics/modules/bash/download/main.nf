@@ -168,3 +168,25 @@ process DOWNLOAD_RDP_FOR_DADA2 {
     """
 }
 
+process DOWNLOAD_MIDORI_RDP {
+	tag "$params.marker"
+	cpus 1
+	memory "2.GB"
+	time "1.h"
+
+	conda (params.enable_conda ? "conda-forge::bash=5.1" : null)
+	container "nakor/bash:5.1.4"
+
+    output:
+    path "RDP_*.{fasta,txt}"
+
+    script:
+    url_base = "http://www.reference-midori.info/download/Databases/GenBank251/RDP_sp/uniq"
+    """
+	wget -qO- $url_base/MIDORI2_NUC_SP_GB251_RDP_taxon_file.txt.gz |
+		gunzip > RDP_taxon_file.txt
+
+	wget -qO- $url_base/MIDORI2_UNIQ_NUC_SP_GB251_${params.marker}_RDP.fasta.gz |
+		gunzip > RDP_seqs.fasta
+    """
+}
