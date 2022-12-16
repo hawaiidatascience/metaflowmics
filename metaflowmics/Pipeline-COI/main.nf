@@ -109,7 +109,14 @@ workflow pipeline_COI {
     chimera = MOTHUR_CHIMERA(
         asvs.fasta.join( asvs.count_table )
     )
-    tax = RDP_CLASSIFY( chimera.fasta, db ).taxonomy
+
+    // Split then combine
+    fasta_chunks = chimera.fasta.splitFasta(by: 5000, elem: 1, file: true)
+    tax = RDP_CLASSIFY( fasta_chunks, db ).taxonomy
+        .collectFile(){ ["mothur_chimeras.${it[0].id}.taxonomy", it[1]] }
+    // Re-add the meta info that was lost
+    // A bit hacky
+    tax = chimera.fasta.map{it[0]}.combine(tax).filter{it[0].id == it[1].getBaseName()}
     
     cluster = MOTHUR_CLUSTER(
         chimera.fasta.join(chimera.count_table).join(tax),
