@@ -95,7 +95,7 @@ workflow MOTHUR {
 
     cluster = MOTHUR_CLUSTER(
         chimera.fasta.join(chimera.count_table).join(tax),
-        params.clustering_thresholds.split(",").collect{it as int}
+        "$params.clustering_thresholds".split(",").collect{it as int}
     )
 
     /*
