@@ -116,7 +116,7 @@ workflow pipeline_COI {
         .collectFile(){ ["mothur_chimeras.${it[0].id}.taxonomy", it[1]] }
     // Re-add the meta info that was lost
     // A bit hacky
-    tax = chimera.fasta.map{it[0]}.combine(tax).filter{"${it[0].id}" == "${it[1].getBaseName().getExtension()}"}
+    tax = chimera.fasta.map{it[0]}.combine(tax).filter{"${it[0].id}" == (it[1].baseName =~ /[0-9]+/)[0]}
     
     cluster = MOTHUR_CLUSTER(
         chimera.fasta.join(chimera.count_table).join(tax),
