@@ -26,19 +26,6 @@ Clone the repository:
 
     git clone https://github.com/hawaiidatascience/metaflowmics.git
 
-Silva Database
-^^^^^^^^^^^^^^
-
-In addition, you will need to download the Silva reference database available on the `Mothur website <https://mothur.org/wiki/silva_reference_files>`_:
-
-.. code-block:: bash
-
-	mkdir -p databases/silva/v138 && cd databases/silva/v138
-	wget https://mothur.s3.us-east-2.amazonaws.com/wiki/silva.nr_v138.tgz
-	tar -xvzf silva.nr_v138.tgz && rm -f silva.nr_v138.tgz
-
-For species assignments, the database is available on `Zenodo <https://zenodo.org/record/3731176#.Xp3KBKtKjOR>`_ (silva_species_assignment_v138.fa.gz)
-
 Usage
 -----
 
@@ -46,7 +33,7 @@ To run the pipeline on your data, simply enter the following command:
 
 .. code-block:: bash
 
-    nextflow run 16S-pipeline -profile <config> --reads "<path_to_reads/glob_pattern>" --referenceAln databases/silva/v138/silva.nr_v138.align --referenceTax databases/silva/v138/silva.nr_v138.tax
+    nextflow run 16S-pipeline -profile <config> --reads "<path_to_reads/glob_pattern>"
 
 The input reads need to be in the `.fastq` format (preferably gzipped) in a single folder. Reads can be single or paired-end. In the former case, the flag `--singleEnd` must be set and in the latter case, the glob pattern needs to group the R1 and R2 reads using the syntax `*R{1,2}*`. 
 	
